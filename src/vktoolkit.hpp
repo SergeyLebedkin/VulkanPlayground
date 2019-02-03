@@ -56,6 +56,7 @@ typedef struct VulkanSwapchain {
 	VkPresentModeKHR           presentMode;
 	VkSurfaceCapabilitiesKHR   surfaceCapabilities;
 	VkSwapchainKHR             swapchain;
+	VkRenderPass               renderPass;
 	VkImage                    imageDS;
 	VmaAllocation              allocationDS;
 	VkImageView                imageViewDS;

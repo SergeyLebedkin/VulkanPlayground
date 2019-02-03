@@ -51,6 +51,10 @@ typedef struct VulkanBuffer {
 	VkBufferView  bufferView;
 } VulkanBuffer;
 
+typedef struct VulkanSemaphore {
+	VkSemaphore semaphore;
+} VulkanSemaphore;
+
 typedef struct VulkanSwapchain {
 	VkSurfaceFormatKHR         surfaceFormat;
 	VkPresentModeKHR           presentMode;
@@ -64,10 +68,6 @@ typedef struct VulkanSwapchain {
 	std::vector<VkImageView>   imageViews;
 	std::vector<VkFramebuffer> framebuffers;
 } VulkanSwapchain;
-
-typedef struct VulkanRenderPass {
-	VkRenderPass renderPass;
-} VulkanRenderPass;
 
 typedef struct VulkanPipeline {
 	VkPipeline            pipeline;
@@ -103,6 +103,16 @@ void vulkanDeviceDestroy(
 	VulkanDevice* device
 );
 
+void vulkanSemaphoreCreate(
+	VulkanDevice* device,
+	VulkanSemaphore* semaphore
+);
+
+void vulkanSemaphoreDestroy(
+	VulkanDevice* device,
+	VulkanSemaphore* semaphore
+);
+
 void vulkanSwapchainCreate(
 	VulkanDevice*    device,
 	VulkanSurface*   surface,
@@ -112,6 +122,20 @@ void vulkanSwapchainCreate(
 void vulkanSwapchainDestroy(
 	VulkanDevice*    device,
 	VulkanSwapchain* swapchain
+);
+
+VkFramebuffer vulkanSwapchainBeginFrame(
+	VulkanDevice*    device,
+	VulkanSwapchain* swapchain,
+	VulkanSemaphore* semaphore,
+	uint32_t&        frameIndex
+);
+
+void vulkanSwapchainEndFrame(
+	VulkanDevice*    device,
+	VulkanSwapchain* swapchain,
+	VulkanSemaphore* semaphore,
+	uint32_t         frameIndex
 );
 
 // init utils

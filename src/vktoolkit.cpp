@@ -191,6 +191,36 @@ void vulkanDeviceDestroy(
 	device->physicalDevice = VK_NULL_HANDLE;
 }
 
+// vulkanSemaphoreCreate
+void vulkanSemaphoreCreate(VulkanDevice* device, VulkanSemaphore* semaphore)
+{
+	// check handles
+	assert(device);
+	assert(semaphore);
+
+	// VkSemaphoreCreateInfo
+	VkSemaphoreCreateInfo semaphoreCreateInfo{};
+	semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	semaphoreCreateInfo.pNext = VK_NULL_HANDLE;
+	semaphoreCreateInfo.flags = 0;
+
+	// vkCreateSemaphore
+	VKT_CHECK(vkCreateSemaphore(device->device, &semaphoreCreateInfo, VK_NULL_HANDLE, &semaphore->semaphore));
+	assert(semaphore->semaphore);
+}
+
+// vulkanSemaphoreDestroy
+void vulkanSemaphoreDestroy(VulkanDevice* device, VulkanSemaphore* semaphore)
+{
+	// check handles
+	assert(device);
+	assert(semaphore);
+	// destroy handles
+	vkDestroySemaphore(device->device, semaphore->semaphore, VK_NULL_HANDLE);
+	// clear handles
+	semaphore->semaphore = VK_NULL_HANDLE;
+}
+
 // vulkanSwapchainCreate
 void vulkanSwapchainCreate(
 	VulkanDevice* device,
@@ -246,8 +276,8 @@ void vulkanSwapchainCreate(
 	attachmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	attachmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR;
+	attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR;
 	// depth-stencil attachment
 	attachmentDescriptions[1].flags = 0;
 	attachmentDescriptions[1].format = VK_FORMAT_D24_UNORM_S8_UINT;
@@ -256,8 +286,8 @@ void vulkanSwapchainCreate(
 	attachmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	attachmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR;
+	attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR;
 
 	// VkAttachmentReference - color
 	std::array<VkAttachmentReference, 1> colorAttachmentReferences;
@@ -433,6 +463,48 @@ void vulkanSwapchainDestroy(
 	swapchain->surfaceCapabilities = {};
 	swapchain->presentMode = {};
 	swapchain->surfaceFormat = {};
+}
+
+// vulkanSwapchainBeginFrame
+VkFramebuffer vulkanSwapchainBeginFrame(
+	VulkanDevice* device,
+	VulkanSwapchain* swapchain,
+	VulkanSemaphore* semaphore,
+	uint32_t& frameIndex)
+{
+	// check handles
+	assert(device);
+	assert(swapchain);
+	assert(semaphore);
+
+	// vkAcquireNextImageKHR
+	VKT_CHECK(vkAcquireNextImageKHR(device->device, swapchain->swapchain, UINT64_MAX, semaphore->semaphore, VK_NULL_HANDLE, &frameIndex));
+	return swapchain->framebuffers[frameIndex];
+}
+
+// vulkanSwapchainEndFrame
+void vulkanSwapchainEndFrame(
+	VulkanDevice* device,
+	VulkanSwapchain* swapchain,
+	VulkanSemaphore* semaphore,
+	uint32_t frameIndex)
+{
+	// check handles
+	assert(device);
+	assert(swapchain);
+	assert(semaphore);
+
+	// VkPresentInfoKHR
+	VkPresentInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &semaphore->semaphore;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &swapchain->swapchain;
+	presentInfo.pImageIndices = &frameIndex;
+	presentInfo.pResults = nullptr; // Optional
+	VKT_CHECK(vkQueuePresentKHR(device->queueGraphics, &presentInfo));
+	VKT_CHECK(vkQueueWaitIdle(device->queueGraphics));
 }
 
 // vulkanInitDeviceQueueCreateInfo

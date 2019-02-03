@@ -35,17 +35,19 @@ int main(void)
 	std::vector<const char *> enabledInstanceLayerNames{ "VK_LAYER_LUNARG_standard_validation" };
 	std::vector<const char *> enabledInstanceExtensionNames{ VK_EXT_DEBUG_REPORT_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_EXTENSION_NAME, VK_KHR_SURFACE_EXTENSION_NAME };
 	std::vector<const char *> enabledDeviceExtensionNames{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
+	// VkPhysicalDeviceFeatures
 	VkPhysicalDeviceFeatures physicalDeviceFeatures{};
 	physicalDeviceFeatures.wideLines = VK_TRUE;
 
 	// init vulkan
-	VulkanInstance instance{};
-	vulkanInstanceCreate(enabledInstanceLayerNames, enabledInstanceExtensionNames, &instance);
-	VulkanDevice device{};
-	vulkanDeviceCreate(&instance, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, physicalDeviceFeatures, enabledDeviceExtensionNames, &device);
-	VulkanSurface surface{};
-	glfwCreateWindowSurface(instance.instance, window, NULL, &surface.surface);
+	VulkanInstance  instance{};
+	VulkanSurface   surface{};
+	VulkanDevice    device{};
 	VulkanSwapchain swapchain{};
+	vulkanInstanceCreate(enabledInstanceLayerNames, enabledInstanceExtensionNames, &instance);
+	glfwCreateWindowSurface(instance.instance, window, NULL, &surface.surface);
+	vulkanDeviceCreate(&instance, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, physicalDeviceFeatures, enabledDeviceExtensionNames, &device);
 	vulkanSwapchainCreate(&device, &surface, &swapchain);
 
 	// main loop

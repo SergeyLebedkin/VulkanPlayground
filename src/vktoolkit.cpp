@@ -41,7 +41,6 @@ void vulkanInstanceCreate(
 	// get physical devices list
 	instance->physicalDevices.resize(physicalDevicesCount);
 	VKT_CHECK(vkEnumeratePhysicalDevices(instance->instance, &physicalDevicesCount, instance->physicalDevices.data()));
-
 }
 
 // vulkanInstanceDestroy

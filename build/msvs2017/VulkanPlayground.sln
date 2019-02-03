@@ -13,6 +13,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{4A5792C2-2
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyobjloader", "deps\tinyobjloader\tinyobjloader.vcxproj", "{764136A6-7C58-4EEE-A823-92D875FD22A1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0D3E1A70-DCA9-4067-80C9-58895E88EAE8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vma", "deps\vma\vma.vcxproj", "{016DD20C-D8B5-4F1F-883A-A6561B03877B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -45,6 +49,14 @@ Global
 		{764136A6-7C58-4EEE-A823-92D875FD22A1}.Release|x64.Build.0 = Release|x64
 		{764136A6-7C58-4EEE-A823-92D875FD22A1}.Release|x86.ActiveCfg = Release|Win32
 		{764136A6-7C58-4EEE-A823-92D875FD22A1}.Release|x86.Build.0 = Release|Win32
+		{016DD20C-D8B5-4F1F-883A-A6561B03877B}.Debug|x64.ActiveCfg = Debug|x64
+		{016DD20C-D8B5-4F1F-883A-A6561B03877B}.Debug|x64.Build.0 = Debug|x64
+		{016DD20C-D8B5-4F1F-883A-A6561B03877B}.Debug|x86.ActiveCfg = Debug|Win32
+		{016DD20C-D8B5-4F1F-883A-A6561B03877B}.Debug|x86.Build.0 = Debug|Win32
+		{016DD20C-D8B5-4F1F-883A-A6561B03877B}.Release|x64.ActiveCfg = Release|x64
+		{016DD20C-D8B5-4F1F-883A-A6561B03877B}.Release|x64.Build.0 = Release|x64
+		{016DD20C-D8B5-4F1F-883A-A6561B03877B}.Release|x86.ActiveCfg = Release|Win32
+		{016DD20C-D8B5-4F1F-883A-A6561B03877B}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -53,6 +65,7 @@ Global
 		{FF28B23B-156B-4AD6-BBDB-3EADC48C33D8} = {4A5792C2-2FD7-4422-865C-EEAAB0682CE9}
 		{6D59FD97-32D6-4B04-9C9C-C733186F8D94} = {C2CDA33C-3D4C-4F77-8E8D-8761B75480D8}
 		{764136A6-7C58-4EEE-A823-92D875FD22A1} = {C2CDA33C-3D4C-4F77-8E8D-8761B75480D8}
+		{016DD20C-D8B5-4F1F-883A-A6561B03877B} = {C2CDA33C-3D4C-4F77-8E8D-8761B75480D8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CECDFFAC-D5EE-4BA7-A742-A18AE6215C86}

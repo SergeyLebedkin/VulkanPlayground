@@ -19,7 +19,7 @@ void vulkanInstanceCreate(
 	applicationInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 1);
 	applicationInfo.pEngineName = "Vulkan toolkit engine";
 	applicationInfo.engineVersion = VK_MAKE_VERSION(0, 0, 1);
-	applicationInfo.apiVersion = VK_VERSION_1_1;
+	applicationInfo.apiVersion = VK_API_VERSION_1_0;
 
 	// VkInstanceCreateInfo
 	VkInstanceCreateInfo instanceCreateInfo{};
@@ -46,32 +46,29 @@ void vulkanInstanceCreate(
 
 // vulkanInstanceDestroy
 void vulkanInstanceDestroy(
-	VulkanInstance* instance)
+	VulkanInstance& instance)
 {
-	// check handles
-	assert(instance);
 	// destroy handles
-	vkDestroyInstance(instance->instance, VK_NULL_HANDLE);
+	vkDestroyInstance(instance.instance, VK_NULL_HANDLE);
 	// clear handles
-	instance->physicalDevices.clear();
-	instance->instance = VK_NULL_HANDLE;
+	instance.physicalDevices.clear();
+	instance.instance = VK_NULL_HANDLE;
 }
 
 // vulkanDeviceCreate
 void vulkanDeviceCreate(
-	VulkanInstance*            instance,
+	VulkanInstance&            instance,
 	VkPhysicalDeviceType       physicalDeviceType,
 	VkPhysicalDeviceFeatures&  physicalDeviceFeatures,
 	std::vector<const char *>& enabledExtensionNames,
 	VulkanDevice*              device)
 {
 	// check handles
-	assert(instance);
 	assert(device);
 
 	// find physical device by type
 	device->physicalDevice = VK_NULL_HANDLE;
-	for (const auto& physicalDevice : instance->physicalDevices)
+	for (const auto& physicalDevice : instance.physicalDevices)
 	{
 		VkPhysicalDeviceFeatures physicalDeviceFeatures;
 		VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -159,7 +156,7 @@ void vulkanDeviceCreate(
 	VkCommandPoolCreateInfo commandPoolCreateInfo{};
 	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	commandPoolCreateInfo.pNext = VK_NULL_HANDLE;
-	commandPoolCreateInfo.flags = 0;
+	commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	commandPoolCreateInfo.queueFamilyIndex = device->queueFamilyIndexGraphics;
 	VKT_CHECK(vkCreateCommandPool(device->device, &commandPoolCreateInfo, VK_NULL_HANDLE, &device->commandPool));
 	assert(device->commandPool);
@@ -167,35 +164,51 @@ void vulkanDeviceCreate(
 
 // vulkanDeviceDestroy
 void vulkanDeviceDestroy(
-	VulkanDevice* device)
+	VulkanDevice& device)
+{
+	// destroy handles
+	vkDestroyCommandPool(device.device, device.commandPool, VK_NULL_HANDLE);
+	vmaDestroyAllocator(device.allocator);
+	vkDestroyDevice(device.device, VK_NULL_HANDLE);
+	// clear handles
+	device.commandPool = VK_NULL_HANDLE;
+	device.allocator = VK_NULL_HANDLE;
+	device.queueTransfer = VK_NULL_HANDLE;
+	device.queueCompute = VK_NULL_HANDLE;
+	device.queueGraphics = VK_NULL_HANDLE;
+	device.device = VK_NULL_HANDLE;
+	device.queueFamilyIndexTransfer = UINT32_MAX;
+	device.queueFamilyIndexCompute = UINT32_MAX;
+	device.queueFamilyIndexGraphics = UINT32_MAX;
+	device.physicalDeviceMemoryProperties = {};
+	device.physicalDeviceProperties = {};
+	device.physicalDeviceFeatures = {};
+	device.physicalDevice = VK_NULL_HANDLE;
+}
+
+// vulkanCommandBufferAllocate(
+void vulkanCommandBufferAllocate(
+	VulkanDevice&        device,
+	VkCommandBufferLevel commandBufferLevel,
+	VulkanCommandBuffer* commandBuffer)
 {
 	// check handles
-	assert(device);
-	// destroy handles
-	vkDestroyCommandPool(device->device, device->commandPool, VK_NULL_HANDLE);
-	vmaDestroyAllocator(device->allocator);
-	vkDestroyDevice(device->device, VK_NULL_HANDLE);
-	// clear handles
-	device->commandPool = VK_NULL_HANDLE;
-	device->allocator = VK_NULL_HANDLE;
-	device->queueTransfer = VK_NULL_HANDLE;
-	device->queueCompute = VK_NULL_HANDLE;
-	device->queueGraphics = VK_NULL_HANDLE;
-	device->device = VK_NULL_HANDLE;
-	device->queueFamilyIndexTransfer = UINT32_MAX;
-	device->queueFamilyIndexCompute = UINT32_MAX;
-	device->queueFamilyIndexGraphics = UINT32_MAX;
-	device->physicalDeviceMemoryProperties = {};
-	device->physicalDeviceProperties = {};
-	device->physicalDeviceFeatures = {};
-	device->physicalDevice = VK_NULL_HANDLE;
+	assert(commandBuffer);
+
+	// VkCommandBufferAllocateInfo
+	VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	commandBufferAllocateInfo.pNext = VK_NULL_HANDLE;
+	commandBufferAllocateInfo.commandPool = device.commandPool;
+	commandBufferAllocateInfo.level = commandBufferLevel;
+	commandBufferAllocateInfo.commandBufferCount = 1;
+	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer->ñommandBuffer));
 }
 
 // vulkanSemaphoreCreate
-void vulkanSemaphoreCreate(VulkanDevice* device, VulkanSemaphore* semaphore)
+void vulkanSemaphoreCreate(VulkanDevice& device, VulkanSemaphore* semaphore)
 {
 	// check handles
-	assert(device);
 	assert(semaphore);
 
 	// VkSemaphoreCreateInfo
@@ -203,43 +216,36 @@ void vulkanSemaphoreCreate(VulkanDevice* device, VulkanSemaphore* semaphore)
 	semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	semaphoreCreateInfo.pNext = VK_NULL_HANDLE;
 	semaphoreCreateInfo.flags = 0;
-
-	// vkCreateSemaphore
-	VKT_CHECK(vkCreateSemaphore(device->device, &semaphoreCreateInfo, VK_NULL_HANDLE, &semaphore->semaphore));
+	VKT_CHECK(vkCreateSemaphore(device.device, &semaphoreCreateInfo, VK_NULL_HANDLE, &semaphore->semaphore));
 	assert(semaphore->semaphore);
 }
 
 // vulkanSemaphoreDestroy
-void vulkanSemaphoreDestroy(VulkanDevice* device, VulkanSemaphore* semaphore)
+void vulkanSemaphoreDestroy(VulkanDevice& device, VulkanSemaphore& semaphore)
 {
-	// check handles
-	assert(device);
-	assert(semaphore);
 	// destroy handles
-	vkDestroySemaphore(device->device, semaphore->semaphore, VK_NULL_HANDLE);
+	vkDestroySemaphore(device.device, semaphore.semaphore, VK_NULL_HANDLE);
 	// clear handles
-	semaphore->semaphore = VK_NULL_HANDLE;
+	semaphore.semaphore = VK_NULL_HANDLE;
 }
 
 // vulkanSwapchainCreate
 void vulkanSwapchainCreate(
-	VulkanDevice* device,
-	VulkanSurface* surface,
+	VulkanDevice& device,
+	VulkanSurface& surface,
 	VulkanSwapchain* swapchain)
 {
 	// check handles
-	assert(device);
-	assert(surface);
 	assert(swapchain);
 
 	// find surface format, present mode and capabilities 
 	swapchain->surfaceFormat = vulkanGetDefaultSurfaceFormat(device, surface);
 	swapchain->presentMode = vulkanGetDefaultSurfacePresentMode(device, surface);
-	VKT_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->physicalDevice, surface->surface, &swapchain->surfaceCapabilities));
+	VKT_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.physicalDevice, surface.surface, &swapchain->surfaceCapabilities));
 
 	// get present supported
 	VkBool32 supported = VK_FALSE;
-	vkGetPhysicalDeviceSurfaceSupportKHR(device->physicalDevice, device->queueFamilyIndexGraphics, surface->surface, &supported);
+	vkGetPhysicalDeviceSurfaceSupportKHR(device.physicalDevice, device.queueFamilyIndexGraphics, surface.surface, &supported);
 	assert(supported);
 
 	// VkSwapchainCreateInfoKHR
@@ -247,7 +253,7 @@ void vulkanSwapchainCreate(
 	swapchainCreateInfoKHR.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	swapchainCreateInfoKHR.pNext = VK_NULL_HANDLE;
 	swapchainCreateInfoKHR.flags = 0;
-	swapchainCreateInfoKHR.surface = surface->surface;
+	swapchainCreateInfoKHR.surface = surface.surface;
 	swapchainCreateInfoKHR.minImageCount = 3;
 	swapchainCreateInfoKHR.imageFormat = swapchain->surfaceFormat.format;
 	swapchainCreateInfoKHR.imageColorSpace = swapchain->surfaceFormat.colorSpace;
@@ -263,7 +269,7 @@ void vulkanSwapchainCreate(
 	swapchainCreateInfoKHR.presentMode = swapchain->presentMode;
 	swapchainCreateInfoKHR.clipped = VK_TRUE;
 	swapchainCreateInfoKHR.oldSwapchain = VK_NULL_HANDLE;
-	VKT_CHECK(vkCreateSwapchainKHR(device->device, &swapchainCreateInfoKHR, nullptr, &swapchain->swapchain));
+	VKT_CHECK(vkCreateSwapchainKHR(device.device, &swapchainCreateInfoKHR, nullptr, &swapchain->swapchain));
 	assert(swapchain->swapchain);
 
 	// VkAttachmentDescription - color
@@ -276,8 +282,8 @@ void vulkanSwapchainCreate(
 	attachmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR;
-	attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR;
+	attachmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	// depth-stencil attachment
 	attachmentDescriptions[1].flags = 0;
 	attachmentDescriptions[1].format = VK_FORMAT_D24_UNORM_S8_UINT;
@@ -286,8 +292,8 @@ void vulkanSwapchainCreate(
 	attachmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR;
-	attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR;
+	attachmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	// VkAttachmentReference - color
 	std::array<VkAttachmentReference, 1> colorAttachmentReferences;
@@ -321,7 +327,7 @@ void vulkanSwapchainCreate(
 	renderPassCreateInfo.pSubpasses = subpassDescriptions.data();
 
 	// vkCreateRenderPass
-	VKT_CHECK(vkCreateRenderPass(device->device, &renderPassCreateInfo, VK_NULL_HANDLE, &swapchain->renderPass));
+	VKT_CHECK(vkCreateRenderPass(device.device, &renderPassCreateInfo, VK_NULL_HANDLE, &swapchain->renderPass));
 
 	// VkImageCreateInfo - depth and stencil
 	VkImageCreateInfo imageCreateInfoDS{};
@@ -349,7 +355,7 @@ void vulkanSwapchainCreate(
 	allocCreateInfo.flags = 0;
 
 	// vmaCreateImage
-	VKT_CHECK(vmaCreateImage(device->allocator, &imageCreateInfoDS, &allocCreateInfo, &swapchain->imageDS, &swapchain->allocationDS, VK_NULL_HANDLE));
+	VKT_CHECK(vmaCreateImage(device.allocator, &imageCreateInfoDS, &allocCreateInfo, &swapchain->imageDS, &swapchain->allocationDS, VK_NULL_HANDLE));
 	assert(swapchain->imageDS);
 	assert(swapchain->allocationDS);
 
@@ -370,14 +376,14 @@ void vulkanSwapchainCreate(
 	imageViewCreateInfoDS.subresourceRange.levelCount = 1;
 	imageViewCreateInfoDS.subresourceRange.baseArrayLayer = 0;
 	imageViewCreateInfoDS.subresourceRange.layerCount = 1;
-	VKT_CHECK(vkCreateImageView(device->device, &imageViewCreateInfoDS, VK_NULL_HANDLE, &swapchain->imageViewDS));
+	VKT_CHECK(vkCreateImageView(device.device, &imageViewCreateInfoDS, VK_NULL_HANDLE, &swapchain->imageViewDS));
 	assert(swapchain->imageViewDS);
 
 	// swapChainImages
 	uint32_t imageCount = 0;
-	vkGetSwapchainImagesKHR(device->device, swapchain->swapchain, &imageCount, nullptr);
+	vkGetSwapchainImagesKHR(device.device, swapchain->swapchain, &imageCount, nullptr);
 	swapchain->images.resize(imageCount);
-	vkGetSwapchainImagesKHR(device->device, swapchain->swapchain, &imageCount, swapchain->images.data());
+	vkGetSwapchainImagesKHR(device.device, swapchain->swapchain, &imageCount, swapchain->images.data());
 
 	// create image views
 	swapchain->imageViews.clear();
@@ -401,7 +407,7 @@ void vulkanSwapchainCreate(
 		imageViewCreateInfoDS.subresourceRange.levelCount = 1;
 		imageViewCreateInfoDS.subresourceRange.baseArrayLayer = 0;
 		imageViewCreateInfoDS.subresourceRange.layerCount = 1;
-		VKT_CHECK(vkCreateImageView(device->device, &imageViewCreateInfoDS, VK_NULL_HANDLE, &imageView));
+		VKT_CHECK(vkCreateImageView(device.device, &imageViewCreateInfoDS, VK_NULL_HANDLE, &imageView));
 		assert(imageView);
 
 		// add image view
@@ -427,7 +433,7 @@ void vulkanSwapchainCreate(
 		framebufferCreateInfo.width = swapchain->surfaceCapabilities.currentExtent.width;
 		framebufferCreateInfo.height = swapchain->surfaceCapabilities.currentExtent.height;
 		framebufferCreateInfo.layers = 1;
-		VKT_CHECK(vkCreateFramebuffer(device->device, &framebufferCreateInfo, VK_NULL_HANDLE, &framebuffer));
+		VKT_CHECK(vkCreateFramebuffer(device.device, &framebufferCreateInfo, VK_NULL_HANDLE, &framebuffer));
 
 		// add image view
 		swapchain->framebuffers.push_back(framebuffer);
@@ -436,82 +442,69 @@ void vulkanSwapchainCreate(
 
 // vulkanSwapchainDestroy
 void vulkanSwapchainDestroy(
-	VulkanDevice* device,
-	VulkanSwapchain* swapchain)
+	VulkanDevice& device,
+	VulkanSwapchain& swapchain)
 {
-	// check handles
-	assert(device);
-	assert(swapchain);
 	// destroy handles
-	for (const auto& framebuffer : swapchain->framebuffers)
-		vkDestroyFramebuffer(device->device, framebuffer, VK_NULL_HANDLE);
-	for (const auto& imageView : swapchain->imageViews)
-		vkDestroyImageView(device->device, imageView, VK_NULL_HANDLE);
-	vkDestroyImageView(device->device, swapchain->imageViewDS, VK_NULL_HANDLE);
-	vmaDestroyImage(device->allocator, swapchain->imageDS, swapchain->allocationDS);
-	vkDestroyRenderPass(device->device, swapchain->renderPass, VK_NULL_HANDLE);
-	vkDestroySwapchainKHR(device->device, swapchain->swapchain, VK_NULL_HANDLE);
+	for (const auto& framebuffer : swapchain.framebuffers)
+		vkDestroyFramebuffer(device.device, framebuffer, VK_NULL_HANDLE);
+	for (const auto& imageView : swapchain.imageViews)
+		vkDestroyImageView(device.device, imageView, VK_NULL_HANDLE);
+	vkDestroyImageView(device.device, swapchain.imageViewDS, VK_NULL_HANDLE);
+	vmaDestroyImage(device.allocator, swapchain.imageDS, swapchain.allocationDS);
+	vkDestroyRenderPass(device.device, swapchain.renderPass, VK_NULL_HANDLE);
+	vkDestroySwapchainKHR(device.device, swapchain.swapchain, VK_NULL_HANDLE);
 	// clear handles
-	swapchain->framebuffers.clear();
-	swapchain->imageViews.clear();
-	swapchain->images.clear();
-	swapchain->imageViewDS = VK_NULL_HANDLE;
-	swapchain->imageDS = VK_NULL_HANDLE;
-	swapchain->allocationDS = VK_NULL_HANDLE;
-	swapchain->renderPass = VK_NULL_HANDLE;
-	swapchain->swapchain = VK_NULL_HANDLE;
-	swapchain->surfaceCapabilities = {};
-	swapchain->presentMode = {};
-	swapchain->surfaceFormat = {};
+	swapchain.framebuffers.clear();
+	swapchain.imageViews.clear();
+	swapchain.images.clear();
+	swapchain.imageViewDS = VK_NULL_HANDLE;
+	swapchain.imageDS = VK_NULL_HANDLE;
+	swapchain.allocationDS = VK_NULL_HANDLE;
+	swapchain.renderPass = VK_NULL_HANDLE;
+	swapchain.swapchain = VK_NULL_HANDLE;
+	swapchain.surfaceCapabilities = {};
+	swapchain.presentMode = {};
+	swapchain.surfaceFormat = {};
 }
 
 // vulkanSwapchainBeginFrame
-VkFramebuffer vulkanSwapchainBeginFrame(
-	VulkanDevice* device,
-	VulkanSwapchain* swapchain,
-	VulkanSemaphore* semaphore,
-	uint32_t& frameIndex)
+uint32_t vulkanSwapchainBeginFrame(
+	VulkanDevice& device,
+	VulkanSwapchain& swapchain,
+	VulkanSemaphore& semaphore)
 {
-	// check handles
-	assert(device);
-	assert(swapchain);
-	assert(semaphore);
-
 	// vkAcquireNextImageKHR
-	VKT_CHECK(vkAcquireNextImageKHR(device->device, swapchain->swapchain, UINT64_MAX, semaphore->semaphore, VK_NULL_HANDLE, &frameIndex));
-	return swapchain->framebuffers[frameIndex];
+	uint32_t frameIndex = 0;
+	VKT_CHECK(vkAcquireNextImageKHR(device.device, swapchain.swapchain, UINT64_MAX, semaphore.semaphore, VK_NULL_HANDLE, &frameIndex));
+	return frameIndex;
 }
 
 // vulkanSwapchainEndFrame
 void vulkanSwapchainEndFrame(
-	VulkanDevice* device,
-	VulkanSwapchain* swapchain,
-	VulkanSemaphore* semaphore,
+	VulkanDevice& device,
+	VulkanSwapchain& swapchain,
+	VulkanSemaphore& semaphore,
 	uint32_t frameIndex)
 {
-	// check handles
-	assert(device);
-	assert(swapchain);
-	assert(semaphore);
-
 	// VkPresentInfoKHR
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &semaphore->semaphore;
+	presentInfo.pWaitSemaphores = &semaphore.semaphore;
 	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &swapchain->swapchain;
+	presentInfo.pSwapchains = &swapchain.swapchain;
 	presentInfo.pImageIndices = &frameIndex;
 	presentInfo.pResults = nullptr; // Optional
-	VKT_CHECK(vkQueuePresentKHR(device->queueGraphics, &presentInfo));
-	VKT_CHECK(vkQueueWaitIdle(device->queueGraphics));
+	VKT_CHECK(vkQueuePresentKHR(device.queueGraphics, &presentInfo));
+	VKT_CHECK(vkQueueWaitIdle(device.queueGraphics));
 }
 
 // vulkanInitDeviceQueueCreateInfo
 VkDeviceQueueCreateInfo vulkanInitDeviceQueueCreateInfo(
 	uint32_t queueFamilyIndex,
 	uint32_t queueCount,
-	const float * pQueuePriorities)
+	const float* pQueuePriorities)
 {
 	// VkDeviceQueueCreateInfo
 	VkDeviceQueueCreateInfo deviceQueueCreateInfo{};
@@ -526,20 +519,16 @@ VkDeviceQueueCreateInfo vulkanInitDeviceQueueCreateInfo(
 
 // vulkanGetDefaultSurfaceFormat
 VkSurfaceFormatKHR vulkanGetDefaultSurfaceFormat(
-	VulkanDevice* device,
-	VulkanSurface* surface)
+	VulkanDevice& device,
+	VulkanSurface& surface)
 {
-	// check handles
-	assert(device);
-	assert(surface);
-
 	// get queue family properties count
 	uint32_t formatsCount = 0;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device->physicalDevice, surface->surface, &formatsCount, nullptr);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device.physicalDevice, surface.surface, &formatsCount, nullptr);
 	assert(formatsCount);
 	// get surface formats list
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(formatsCount);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device->physicalDevice, surface->surface, &formatsCount, surfaceFormats.data());
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device.physicalDevice, surface.surface, &formatsCount, surfaceFormats.data());
 
 	// get default surface format
 	if ((surfaceFormats.size() == 1) && (surfaceFormats[0].format == VK_FORMAT_UNDEFINED)) {
@@ -565,20 +554,16 @@ VkSurfaceFormatKHR vulkanGetDefaultSurfaceFormat(
 
 // vulkanGetDefaultSurfacePresentMode
 VkPresentModeKHR vulkanGetDefaultSurfacePresentMode(
-	VulkanDevice* device, 
-	VulkanSurface* surface)
+	VulkanDevice& device,
+	VulkanSurface& surface)
 {
-	// check handles
-	assert(device);
-	assert(surface);
-
 	// get present modes count
 	uint32_t presentModesCount = 0;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device->physicalDevice, surface->surface, &presentModesCount, nullptr);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device.physicalDevice, surface.surface, &presentModesCount, nullptr);
 	assert(presentModesCount);
 	// get present modes list
 	std::vector<VkPresentModeKHR> presentModes(presentModesCount);
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device->physicalDevice, surface->surface, &presentModesCount, presentModes.data());
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device.physicalDevice, surface.surface, &presentModesCount, presentModes.data());
 
 	// try to find MAILBOX mode
 	for (const auto& presentMode : presentModes)
@@ -604,4 +589,25 @@ uint32_t vulkanFindQueueFamilyPropertiesByFlags(
 			return (uint32_t)i;
 	assert(0);
 	return UINT32_MAX;
+}
+
+// vulkanQueueSubmit
+void vulkanQueueSubmit(
+	VulkanDevice& device,
+	VulkanCommandBuffer& commandBuffer,
+	VulkanSemaphore& waitSemaphore,
+	VulkanSemaphore& signalSemaphore)
+{
+	// VkSubmitInfo
+	VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = &waitSemaphore.semaphore;
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = &signalSemaphore.semaphore;
+	submitInfo.pWaitDstStageMask = &waitDstStageMask;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer.ñommandBuffer;
+	VKT_CHECK(vkQueueSubmit(device.queueGraphics, 1, &submitInfo, VK_NULL_HANDLE));
 }

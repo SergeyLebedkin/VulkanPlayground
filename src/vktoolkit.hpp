@@ -55,6 +55,10 @@ typedef struct VulkanSemaphore {
 	VkSemaphore semaphore;
 } VulkanSemaphore;
 
+typedef struct VulkanCommandBuffer {
+	VkCommandBuffer ñommandBuffer;
+} VulkanCommandBuffer;
+
 typedef struct VulkanSwapchain {
 	VkSurfaceFormatKHR         surfaceFormat;
 	VkPresentModeKHR           presentMode;
@@ -88,11 +92,11 @@ void vulkanInstanceCreate(
 );
 
 void vulkanInstanceDestroy(
-	VulkanInstance* instance
+	VulkanInstance& instance
 );
 
 void vulkanDeviceCreate(
-	VulkanInstance*            instance,
+	VulkanInstance&            instance,
 	VkPhysicalDeviceType       physicalDeviceType,
 	VkPhysicalDeviceFeatures&  physicalDeviceFeatures,
 	std::vector<const char *>& enabledExtensionNames,
@@ -100,45 +104,50 @@ void vulkanDeviceCreate(
 );
 
 void vulkanDeviceDestroy(
-	VulkanDevice* device
+	VulkanDevice& device
+);
+
+void vulkanCommandBufferAllocate(
+	VulkanDevice&        device,
+	VkCommandBufferLevel commandBufferLevel,
+	VulkanCommandBuffer* commandBuffer
 );
 
 void vulkanSemaphoreCreate(
-	VulkanDevice* device,
+	VulkanDevice& device,
 	VulkanSemaphore* semaphore
 );
 
 void vulkanSemaphoreDestroy(
-	VulkanDevice* device,
-	VulkanSemaphore* semaphore
+	VulkanDevice& device,
+	VulkanSemaphore& semaphore
 );
 
 void vulkanSwapchainCreate(
-	VulkanDevice*    device,
-	VulkanSurface*   surface,
+	VulkanDevice&    device,
+	VulkanSurface&   surface,
 	VulkanSwapchain* swapchain
 );
 
 void vulkanSwapchainDestroy(
-	VulkanDevice*    device,
-	VulkanSwapchain* swapchain
+	VulkanDevice&    device,
+	VulkanSwapchain& swapchain
 );
 
-VkFramebuffer vulkanSwapchainBeginFrame(
-	VulkanDevice*    device,
-	VulkanSwapchain* swapchain,
-	VulkanSemaphore* semaphore,
-	uint32_t&        frameIndex
+uint32_t vulkanSwapchainBeginFrame(
+	VulkanDevice&    device,
+	VulkanSwapchain& swapchain,
+	VulkanSemaphore& semaphore
 );
 
 void vulkanSwapchainEndFrame(
-	VulkanDevice*    device,
-	VulkanSwapchain* swapchain,
-	VulkanSemaphore* semaphore,
+	VulkanDevice&    device,
+	VulkanSwapchain& swapchain,
+	VulkanSemaphore& semaphore,
 	uint32_t         frameIndex
 );
 
-// init utils
+// init utilities
 
 VkDeviceQueueCreateInfo vulkanInitDeviceQueueCreateInfo(
 	uint32_t     queueFamilyIndex,
@@ -146,19 +155,28 @@ VkDeviceQueueCreateInfo vulkanInitDeviceQueueCreateInfo(
 	const float* pQueuePriorities
 );
 
-// get/find utils
+// get/find utilities
 
 VkSurfaceFormatKHR vulkanGetDefaultSurfaceFormat(
-	VulkanDevice*  device,
-	VulkanSurface* surface
+	VulkanDevice&  device,
+	VulkanSurface& surface
 );
 
 VkPresentModeKHR vulkanGetDefaultSurfacePresentMode(
-	VulkanDevice*  device,
-	VulkanSurface* surface
+	VulkanDevice&  device,
+	VulkanSurface& surface
 );
 
 uint32_t vulkanFindQueueFamilyPropertiesByFlags(
 	std::vector<VkQueueFamilyProperties>& queueFamilyProperties,
 	VkQueueFlags                          queueFlags
+);
+
+// queue utilities
+
+void vulkanQueueSubmit(
+	VulkanDevice&        device,
+	VulkanCommandBuffer& commandBuffer,
+	VulkanSemaphore&     waitSemaphore,
+	VulkanSemaphore&     signalSemaphore
 );

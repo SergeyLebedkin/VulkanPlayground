@@ -81,6 +81,7 @@ int main(void)
 	}
 
 	// destroy vulkan
+	vulkanCommandBufferFree(device, commandBuffer);
 	vulkanSemaphoreDestroy(device, presentSemaphore);
 	vulkanSemaphoreDestroy(device, renderSemaphore);
 	vulkanSwapchainDestroy(device, swapchain);

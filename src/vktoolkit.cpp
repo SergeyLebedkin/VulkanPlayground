@@ -205,6 +205,15 @@ void vulkanCommandBufferAllocate(
 	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer->ñommandBuffer));
 }
 
+// vulkanCommandBufferFree
+void vulkanCommandBufferFree(VulkanDevice& device, VulkanCommandBuffer& commandBuffer)
+{
+	// free handles
+	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer.ñommandBuffer);
+	// clear handles
+	commandBuffer.ñommandBuffer = VK_NULL_HANDLE;
+}
+
 // vulkanSemaphoreCreate
 void vulkanSemaphoreCreate(VulkanDevice& device, VulkanSemaphore* semaphore)
 {

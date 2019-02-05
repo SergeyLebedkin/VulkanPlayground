@@ -203,7 +203,7 @@ void vulkanBufferCreate(
 	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferCreateInfo.pNext = VK_NULL_HANDLE;
 	bufferCreateInfo.size = size;
-	bufferCreateInfo.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	bufferCreateInfo.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	bufferCreateInfo.queueFamilyIndexCount = 0;
 	bufferCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
@@ -259,13 +259,13 @@ void vulkanBufferWrite(
 	{
 		// create staging buffer and memory
 		VulkanBuffer stagingBuffer{};
-		vulkanBufferCreate(device, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, size, &stagingBuffer);
+		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_CPU_ONLY, size, &stagingBuffer);
 
 		// map staging buffer and memory
 		void* mappedData = nullptr;
 		VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
 		assert(mappedData);
-		memcpy(mappedData, &data, (size_t)size);
+		memcpy(mappedData, data, (size_t)size);
 		vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
 
 		// copy buffers
@@ -304,17 +304,17 @@ void vulkanBufferRead(
 	{
 		// create staging buffer and memory
 		VulkanBuffer stagingBuffer{};
-		vulkanBufferCreate(device, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, size, &stagingBuffer);
-
-		// map staging buffer and memory
-		void* mappedData = nullptr;
-		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
-		assert(mappedData);
-		memcpy(data, mappedData, (size_t)size);
-		vmaUnmapMemory(device.allocator, buffer.allocation);
+		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_CPU_ONLY, size, &stagingBuffer);
 
 		// copy buffers
 		vulkanBufferCopy(device, buffer, stagingBuffer, size);
+
+		// map staging buffer and memory
+		void* mappedData = nullptr;
+		VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
+		assert(mappedData);
+		memcpy(data, mappedData, (size_t)size);
+		vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
 
 		// destroy buffer and free memory
 		vulkanBufferDestroy(device, stagingBuffer);

@@ -189,9 +189,9 @@ void vulkanDeviceDestroy(
 // vulkanBufferCreate
 void vulkanBufferCreate(
 	VulkanDevice& device,
-	VkDeviceSize size,
 	VkBufferUsageFlags usage,
-	VmaMemoryUsage     memoryUsage,
+	VmaMemoryUsage memoryUsage,
+	VkDeviceSize size,
 	VulkanBuffer* buffer)
 {
 	// check size
@@ -252,14 +252,14 @@ void vulkanBufferWrite(
 		void* mappedData = nullptr;
 		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
 		assert(mappedData);
-		memcpy(mappedData, &data, (size_t)size);
+		memcpy(mappedData, data, (size_t)size);
 		vmaUnmapMemory(device.allocator, buffer.allocation);
 	}
 	else // if target device memory is NOT host visible, then we need use staging buffer
 	{
 		// create staging buffer and memory
 		VulkanBuffer stagingBuffer{};
-		vulkanBufferCreate(device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, &stagingBuffer);
+		vulkanBufferCreate(device, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, size, &stagingBuffer);
 
 		// map staging buffer and memory
 		void* mappedData = nullptr;
@@ -270,6 +270,51 @@ void vulkanBufferWrite(
 
 		// copy buffers
 		vulkanBufferCopy(device, stagingBuffer, buffer, size);
+
+		// destroy buffer and free memory
+		vulkanBufferDestroy(device, stagingBuffer);
+	}
+}
+
+// vulkanBufferRead
+void vulkanBufferRead(
+	VulkanDevice& device,
+	VulkanBuffer& buffer,
+	VkDeviceSize size, 
+	void* data)
+{
+	// check data
+	assert(data);
+
+	// get memory buffer properties
+	VmaAllocationInfo allocationInfo{};
+	vmaGetAllocationInfo(device.allocator, buffer.allocation, &allocationInfo);
+	VkMemoryPropertyFlags memFlags;
+	vmaGetMemoryTypeProperties(device.allocator, allocationInfo.memoryType, &memFlags);
+
+	// if target device memory is host visible, then just map/unmap memory to device memory
+	if ((memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+		void* mappedData = nullptr;
+		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
+		assert(mappedData);
+		memcpy(data, mappedData, (size_t)size);
+		vmaUnmapMemory(device.allocator, buffer.allocation);
+	}
+	else // if target device memory is NOT host visible, then we need use staging buffer
+	{
+		// create staging buffer and memory
+		VulkanBuffer stagingBuffer{};
+		vulkanBufferCreate(device, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, size, &stagingBuffer);
+
+		// map staging buffer and memory
+		void* mappedData = nullptr;
+		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
+		assert(mappedData);
+		memcpy(data, mappedData, (size_t)size);
+		vmaUnmapMemory(device.allocator, buffer.allocation);
+
+		// copy buffers
+		vulkanBufferCopy(device, buffer, stagingBuffer, size);
 
 		// destroy buffer and free memory
 		vulkanBufferDestroy(device, stagingBuffer);

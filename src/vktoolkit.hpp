@@ -82,7 +82,7 @@ typedef struct VulkanPipeline {
 	VkDescriptorSet       descriptorSet;
 } VulkanPipeline;
 
-// create and destroy
+// create/destroy/read/write
 
 void vulkanInstanceCreate(
 	std::vector<const char *>& enabledLayerNames,
@@ -108,9 +108,9 @@ void vulkanDeviceDestroy(
 
 void vulkanBufferCreate(
 	VulkanDevice&      device,
-	VkDeviceSize       size,
 	VkBufferUsageFlags usage,
 	VmaMemoryUsage     memoryUsage,
+	VkDeviceSize       size,
 	VulkanBuffer*      buffer
 );
 
@@ -124,6 +124,13 @@ void vulkanBufferWrite(
 	VulkanBuffer& buffer,
 	VkDeviceSize  size,
 	const void*   data
+);
+
+void vulkanBufferRead(
+	VulkanDevice& device,
+	VulkanBuffer& buffer,
+	VkDeviceSize  size,
+	void*         data
 );
 
 void vulkanBufferCopy(

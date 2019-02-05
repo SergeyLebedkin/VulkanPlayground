@@ -41,7 +41,8 @@ int main(void)
 	// main loop
 	while (!glfwWindowShouldClose(window))
 	{
-		uint32_t frameIndex = vulkanSwapchainBeginFrame(device, swapchain, presentSemaphore);
+		uint32_t frameIndex = 0;
+		vulkanSwapchainBeginFrame(device, swapchain, presentSemaphore, &frameIndex);
 		
 		// VkCommandBufferBeginInfo
 		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
@@ -70,6 +71,23 @@ int main(void)
 
 		// GO RENDER
 		vkCmdBeginRenderPass(commandBuffer.ñommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// VkViewport - viewport
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = (float)swapchain.surfaceCapabilities.currentExtent.height;
+		viewport.width = (float)swapchain.surfaceCapabilities.currentExtent.width;
+		viewport.height = -(float)swapchain.surfaceCapabilities.currentExtent.height;
+		viewport.minDepth = 0.5f;
+		viewport.maxDepth = 1.0f;
+
+		// VkRect2D - scissor
+		VkRect2D scissor{};
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		scissor.extent.width = swapchain.surfaceCapabilities.currentExtent.width;
+		scissor.extent.height = swapchain.surfaceCapabilities.currentExtent.height;
+
 		vkCmdEndRenderPass(commandBuffer.ñommandBuffer);
 
 		// vkEndCommandBuffer

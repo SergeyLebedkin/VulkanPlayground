@@ -107,6 +107,18 @@ void vulkanDeviceDestroy(
 	VulkanDevice& device
 );
 
+void vulkanBufferCreate(
+	VulkanDevice&      device,
+	VkDeviceSize       size,
+	VkBufferUsageFlags usage,
+	VulkanBuffer*      buffer
+);
+
+void vulkanBufferDestroy(
+	VulkanDevice&      device,
+	VulkanBuffer*      buffer
+);
+
 void vulkanCommandBufferAllocate(
 	VulkanDevice&        device,
 	VkCommandBufferLevel commandBufferLevel,
@@ -134,10 +146,11 @@ void vulkanSwapchainDestroy(
 	VulkanSwapchain& swapchain
 );
 
-uint32_t vulkanSwapchainBeginFrame(
+void vulkanSwapchainBeginFrame(
 	VulkanDevice&    device,
 	VulkanSwapchain& swapchain,
-	VulkanSemaphore& semaphore
+	VulkanSemaphore& semaphore,
+	uint32_t*        frameIndex
 );
 
 void vulkanSwapchainEndFrame(

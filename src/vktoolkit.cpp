@@ -186,6 +186,65 @@ void vulkanDeviceDestroy(
 	device.physicalDevice = VK_NULL_HANDLE;
 }
 
+// vulkanBufferCreate
+void vulkanBufferCreate(
+	VulkanDevice& device,
+	VkDeviceSize size,
+	VkBufferUsageFlags usage,
+	VulkanBuffer* buffer)
+{
+	// check size
+	assert(buffer);
+
+	// VkBufferCreateInfo
+	VkBufferCreateInfo bufferCreateInfo{};
+	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferCreateInfo.pNext = VK_NULL_HANDLE;
+	bufferCreateInfo.size = 0;
+	bufferCreateInfo.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	bufferCreateInfo.queueFamilyIndexCount = 0;
+	bufferCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
+
+	// VmaAllocationCreateInfo
+	VmaAllocationCreateInfo allocCreateInfo{};
+	allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+	allocCreateInfo.flags = 0;
+
+	// vmaCreateBuffer
+	VKT_CHECK(vmaCreateBuffer(device.allocator, &bufferCreateInfo, &allocCreateInfo, &buffer->buffer, &buffer->allocation, VK_NULL_HANDLE));
+	assert(buffer->buffer);
+	assert(buffer->allocation);
+
+	// VkBufferViewCreateInfo
+	VkBufferViewCreateInfo bufferViewCreateInfo{};
+	bufferViewCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+	bufferViewCreateInfo.pNext = VK_NULL_HANDLE;
+	bufferViewCreateInfo.flags = 0;
+	bufferViewCreateInfo.buffer = buffer->buffer;
+	bufferViewCreateInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	bufferViewCreateInfo.offset = 0;
+	bufferViewCreateInfo.range = VK_WHOLE_SIZE;
+	vkCreateBufferView(device.device, &bufferViewCreateInfo, VK_NULL_HANDLE, &buffer->bufferView);
+	assert(buffer->bufferView);
+}
+
+// vulkanBufferDestroy
+void vulkanBufferDestroy(
+	VulkanDevice& device,
+	VulkanBuffer* buffer)
+{
+	// check handles
+	assert(buffer);
+	// check handles
+	vkDestroyBufferView(device.device, buffer->bufferView, VK_NULL_HANDLE);
+	vmaDestroyBuffer(device.allocator, buffer->buffer, buffer->allocation);
+	// clear handles
+	buffer->bufferView = VK_NULL_HANDLE;
+	buffer->buffer = VK_NULL_HANDLE;
+	buffer->allocation = VK_NULL_HANDLE;
+}
+
 // vulkanCommandBufferAllocate(
 void vulkanCommandBufferAllocate(
 	VulkanDevice&        device,
@@ -194,7 +253,6 @@ void vulkanCommandBufferAllocate(
 {
 	// check handles
 	assert(commandBuffer);
-
 	// VkCommandBufferAllocateInfo
 	VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
 	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -203,6 +261,7 @@ void vulkanCommandBufferAllocate(
 	commandBufferAllocateInfo.level = commandBufferLevel;
 	commandBufferAllocateInfo.commandBufferCount = 1;
 	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer->ñommandBuffer));
+	assert(commandBuffer->ñommandBuffer);
 }
 
 // vulkanSemaphoreCreate
@@ -210,7 +269,6 @@ void vulkanSemaphoreCreate(VulkanDevice& device, VulkanSemaphore* semaphore)
 {
 	// check handles
 	assert(semaphore);
-
 	// VkSemaphoreCreateInfo
 	VkSemaphoreCreateInfo semaphoreCreateInfo{};
 	semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -469,15 +527,16 @@ void vulkanSwapchainDestroy(
 }
 
 // vulkanSwapchainBeginFrame
-uint32_t vulkanSwapchainBeginFrame(
+void vulkanSwapchainBeginFrame(
 	VulkanDevice& device,
 	VulkanSwapchain& swapchain,
-	VulkanSemaphore& semaphore)
+	VulkanSemaphore& semaphore,
+	uint32_t* frameIndex)
 {
+	// check handles
+	assert(frameIndex);
 	// vkAcquireNextImageKHR
-	uint32_t frameIndex = 0;
-	VKT_CHECK(vkAcquireNextImageKHR(device.device, swapchain.swapchain, UINT64_MAX, semaphore.semaphore, VK_NULL_HANDLE, &frameIndex));
-	return frameIndex;
+	VKT_CHECK(vkAcquireNextImageKHR(device.device, swapchain.swapchain, UINT64_MAX, semaphore.semaphore, VK_NULL_HANDLE, frameIndex));
 }
 
 // vulkanSwapchainEndFrame
@@ -506,6 +565,8 @@ VkDeviceQueueCreateInfo vulkanInitDeviceQueueCreateInfo(
 	uint32_t queueCount,
 	const float* pQueuePriorities)
 {
+	// check handles
+	assert(pQueuePriorities);
 	// VkDeviceQueueCreateInfo
 	VkDeviceQueueCreateInfo deviceQueueCreateInfo{};
 	deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;

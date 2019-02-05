@@ -122,6 +122,7 @@ void vulkanBufferDestroy(
 void vulkanBufferWrite(
 	VulkanDevice& device,
 	VulkanBuffer& buffer,
+	VkDeviceSize  offset,
 	VkDeviceSize  size,
 	const void*   data
 );
@@ -129,6 +130,7 @@ void vulkanBufferWrite(
 void vulkanBufferRead(
 	VulkanDevice& device,
 	VulkanBuffer& buffer,
+	VkDeviceSize  offset,
 	VkDeviceSize  size,
 	void*         data
 );
@@ -136,7 +138,9 @@ void vulkanBufferRead(
 void vulkanBufferCopy(
 	VulkanDevice& device,
 	VulkanBuffer& bufferSrc,
+	VkDeviceSize  offsetSrc,
 	VulkanBuffer& bufferDst,
+	VkDeviceSize  offsetDst,
 	VkDeviceSize  size
 );
 

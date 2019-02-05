@@ -203,7 +203,7 @@ void vulkanBufferCreate(
 	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferCreateInfo.pNext = VK_NULL_HANDLE;
 	bufferCreateInfo.size = size;
-	bufferCreateInfo.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage;
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	bufferCreateInfo.queueFamilyIndexCount = 0;
 	bufferCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
@@ -235,6 +235,7 @@ void vulkanBufferDestroy(
 void vulkanBufferWrite(
 	VulkanDevice& device,
 	VulkanBuffer& buffer,
+	VkDeviceSize offset,
 	VkDeviceSize size,
 	const void* data)
 {
@@ -252,14 +253,14 @@ void vulkanBufferWrite(
 		void* mappedData = nullptr;
 		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
 		assert(mappedData);
-		memcpy(mappedData, data, (size_t)size);
+		memcpy((uint8_t *)mappedData + offset, data, (size_t)size);
 		vmaUnmapMemory(device.allocator, buffer.allocation);
 	}
 	else // if target device memory is NOT host visible, then we need use staging buffer
 	{
 		// create staging buffer and memory
 		VulkanBuffer stagingBuffer{};
-		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_CPU_ONLY, size, &stagingBuffer);
+		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_CPU_TO_GPU, size, &stagingBuffer);
 
 		// map staging buffer and memory
 		void* mappedData = nullptr;
@@ -269,7 +270,7 @@ void vulkanBufferWrite(
 		vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
 
 		// copy buffers
-		vulkanBufferCopy(device, stagingBuffer, buffer, size);
+		vulkanBufferCopy(device, stagingBuffer, 0, buffer, offset, size);
 
 		// destroy buffer and free memory
 		vulkanBufferDestroy(device, stagingBuffer);
@@ -280,7 +281,8 @@ void vulkanBufferWrite(
 void vulkanBufferRead(
 	VulkanDevice& device,
 	VulkanBuffer& buffer,
-	VkDeviceSize size, 
+	VkDeviceSize offset,
+	VkDeviceSize size,
 	void* data)
 {
 	// check data
@@ -289,7 +291,7 @@ void vulkanBufferRead(
 	// get memory buffer properties
 	VmaAllocationInfo allocationInfo{};
 	vmaGetAllocationInfo(device.allocator, buffer.allocation, &allocationInfo);
-	VkMemoryPropertyFlags memFlags;
+	VkMemoryPropertyFlags memFlags{};
 	vmaGetMemoryTypeProperties(device.allocator, allocationInfo.memoryType, &memFlags);
 
 	// if target device memory is host visible, then just map/unmap memory to device memory
@@ -297,17 +299,17 @@ void vulkanBufferRead(
 		void* mappedData = nullptr;
 		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
 		assert(mappedData);
-		memcpy(data, mappedData, (size_t)size);
+		memcpy(data, (uint8_t *)mappedData + offset, (size_t)size);
 		vmaUnmapMemory(device.allocator, buffer.allocation);
 	}
 	else // if target device memory is NOT host visible, then we need use staging buffer
 	{
 		// create staging buffer and memory
 		VulkanBuffer stagingBuffer{};
-		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_CPU_ONLY, size, &stagingBuffer);
+		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_GPU_TO_CPU, size, &stagingBuffer);
 
 		// copy buffers
-		vulkanBufferCopy(device, buffer, stagingBuffer, size);
+		vulkanBufferCopy(device, buffer, offset, stagingBuffer, 0, size);
 
 		// map staging buffer and memory
 		void* mappedData = nullptr;
@@ -325,7 +327,9 @@ void vulkanBufferRead(
 void vulkanBufferCopy(
 	VulkanDevice& device,
 	VulkanBuffer& bufferSrc,
+	VkDeviceSize  offsetSrc,
 	VulkanBuffer& bufferDst,
+	VkDeviceSize  offsetDst,
 	VkDeviceSize size)
 {
 	// VkCommandBufferAllocateInfo
@@ -349,8 +353,8 @@ void vulkanBufferCopy(
 
 	// VkBufferCopy
 	VkBufferCopy bufferCopy{};
-	bufferCopy.srcOffset = 0;
-	bufferCopy.dstOffset = 0;
+	bufferCopy.srcOffset = offsetSrc;
+	bufferCopy.dstOffset = offsetDst;
 	bufferCopy.size = size;
 	vkCmdCopyBuffer(commandBuffer, bufferSrc.buffer, bufferDst.buffer, 1, &bufferCopy);
 

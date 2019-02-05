@@ -47,24 +47,24 @@ int main(void)
 	VulkanBuffer buffer1{};
 	VulkanBuffer buffer2{};
 	VulkanBuffer buffer3{};
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY, sizeof(value), &buffer0);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, sizeof(value), &buffer1);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY, sizeof(value), &buffer2);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, sizeof(value), &buffer3);
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_ONLY, 1024, &buffer0);
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 1024, &buffer1);
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 1024, &buffer2);
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 1024, &buffer3);
 
-	vulkanBufferWrite(device, buffer0, sizeof(value), &value);
-	vulkanBufferCopy(device, buffer0, buffer1, sizeof(value));
-	vulkanBufferCopy(device, buffer1, buffer2, sizeof(value));
-	vulkanBufferCopy(device, buffer2, buffer3, sizeof(value));
+	vulkanBufferWrite(device, buffer0, 0, sizeof(value), &value);
+	vulkanBufferCopy(device, buffer0, 00, buffer1, 24, sizeof(value));
+	vulkanBufferCopy(device, buffer1, 24, buffer2, 32, sizeof(value));
+	vulkanBufferCopy(device, buffer2, 32, buffer3, 64, sizeof(value));
 
 	uint32_t value0 = 12;
 	uint32_t value1 = 12;
 	uint32_t value2 = 12;
 	uint32_t value3 = 12;
-	vulkanBufferRead(device, buffer0, sizeof(value), &value0);
-	vulkanBufferRead(device, buffer1, sizeof(value), &value1);
-	vulkanBufferRead(device, buffer2, sizeof(value), &value2);
-	vulkanBufferRead(device, buffer3, sizeof(value), &value3);
+	vulkanBufferRead(device, buffer0, 00, sizeof(value), &value0);
+	vulkanBufferRead(device, buffer1, 24, sizeof(value), &value1);
+	vulkanBufferRead(device, buffer2, 32, sizeof(value), &value2);
+	vulkanBufferRead(device, buffer3, 64, sizeof(value), &value3);
 
 	vulkanBufferDestroy(device, buffer0);
 	vulkanBufferDestroy(device, buffer1);

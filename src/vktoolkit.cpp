@@ -191,16 +191,18 @@ void vulkanBufferCreate(
 	VulkanDevice& device,
 	VkDeviceSize size,
 	VkBufferUsageFlags usage,
+	VmaMemoryUsage     memoryUsage,
 	VulkanBuffer* buffer)
 {
 	// check size
+	assert(size);
 	assert(buffer);
 
 	// VkBufferCreateInfo
 	VkBufferCreateInfo bufferCreateInfo{};
 	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferCreateInfo.pNext = VK_NULL_HANDLE;
-	bufferCreateInfo.size = 0;
+	bufferCreateInfo.size = size;
 	bufferCreateInfo.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	bufferCreateInfo.queueFamilyIndexCount = 0;
@@ -208,41 +210,119 @@ void vulkanBufferCreate(
 
 	// VmaAllocationCreateInfo
 	VmaAllocationCreateInfo allocCreateInfo{};
-	allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+	allocCreateInfo.usage = memoryUsage;
 	allocCreateInfo.flags = 0;
 
 	// vmaCreateBuffer
 	VKT_CHECK(vmaCreateBuffer(device.allocator, &bufferCreateInfo, &allocCreateInfo, &buffer->buffer, &buffer->allocation, VK_NULL_HANDLE));
 	assert(buffer->buffer);
 	assert(buffer->allocation);
-
-	// VkBufferViewCreateInfo
-	VkBufferViewCreateInfo bufferViewCreateInfo{};
-	bufferViewCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
-	bufferViewCreateInfo.pNext = VK_NULL_HANDLE;
-	bufferViewCreateInfo.flags = 0;
-	bufferViewCreateInfo.buffer = buffer->buffer;
-	bufferViewCreateInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	bufferViewCreateInfo.offset = 0;
-	bufferViewCreateInfo.range = VK_WHOLE_SIZE;
-	vkCreateBufferView(device.device, &bufferViewCreateInfo, VK_NULL_HANDLE, &buffer->bufferView);
-	assert(buffer->bufferView);
 }
 
 // vulkanBufferDestroy
 void vulkanBufferDestroy(
 	VulkanDevice& device,
-	VulkanBuffer* buffer)
+	VulkanBuffer& buffer)
 {
 	// check handles
-	assert(buffer);
-	// check handles
-	vkDestroyBufferView(device.device, buffer->bufferView, VK_NULL_HANDLE);
-	vmaDestroyBuffer(device.allocator, buffer->buffer, buffer->allocation);
+	vmaDestroyBuffer(device.allocator, buffer.buffer, buffer.allocation);
 	// clear handles
-	buffer->bufferView = VK_NULL_HANDLE;
-	buffer->buffer = VK_NULL_HANDLE;
-	buffer->allocation = VK_NULL_HANDLE;
+	buffer.buffer = VK_NULL_HANDLE;
+	buffer.allocation = VK_NULL_HANDLE;
+}
+
+// vulkanBufferWrite
+void vulkanBufferWrite(
+	VulkanDevice& device,
+	VulkanBuffer& buffer,
+	VkDeviceSize size,
+	const void* data)
+{
+	// check data
+	assert(data);
+
+	// get memory buffer properties
+	VmaAllocationInfo allocationInfo{};
+	vmaGetAllocationInfo(device.allocator, buffer.allocation, &allocationInfo);
+	VkMemoryPropertyFlags memFlags;
+	vmaGetMemoryTypeProperties(device.allocator, allocationInfo.memoryType, &memFlags);
+
+	// if target device memory is host visible, then just map/unmap memory to device memory
+	if ((memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+		void* mappedData = nullptr;
+		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
+		assert(mappedData);
+		memcpy(mappedData, &data, (size_t)size);
+		vmaUnmapMemory(device.allocator, buffer.allocation);
+	}
+	else // if target device memory is NOT host visible, then we need use staging buffer
+	{
+		// create staging buffer and memory
+		VulkanBuffer stagingBuffer{};
+		vulkanBufferCreate(device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, &stagingBuffer);
+
+		// map staging buffer and memory
+		void* mappedData = nullptr;
+		VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
+		assert(mappedData);
+		memcpy(mappedData, &data, (size_t)size);
+		vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
+
+		// copy buffers
+		vulkanBufferCopy(device, stagingBuffer, buffer, size);
+
+		// destroy buffer and free memory
+		vulkanBufferDestroy(device, stagingBuffer);
+	}
+}
+
+// vulkanBufferCopy
+void vulkanBufferCopy(
+	VulkanDevice& device,
+	VulkanBuffer& bufferSrc,
+	VulkanBuffer& bufferDst,
+	VkDeviceSize size)
+{
+	// VkCommandBufferAllocateInfo
+	VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+	VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	commandBufferAllocateInfo.pNext = VK_NULL_HANDLE;
+	commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	commandBufferAllocateInfo.commandPool = device.commandPool;
+	commandBufferAllocateInfo.commandBufferCount = 1;
+	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer));
+	assert(commandBuffer);
+
+	// VkCommandBufferBeginInfo
+	VkCommandBufferBeginInfo commandBufferBeginInfo{};
+	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
+	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
+	VKT_CHECK(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
+
+	// VkBufferCopy
+	VkBufferCopy bufferCopy{};
+	bufferCopy.srcOffset = 0;
+	bufferCopy.dstOffset = 0;
+	bufferCopy.size = size;
+	vkCmdCopyBuffer(commandBuffer, bufferSrc.buffer, bufferDst.buffer, 1, &bufferCopy);
+
+	// vkEndCommandBuffer
+	VKT_CHECK(vkEndCommandBuffer(commandBuffer));
+
+	// submit and wait
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.pNext = VK_NULL_HANDLE;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+	VKT_CHECK(vkQueueSubmit(device.queueGraphics, 1, &submitInfo, VK_NULL_HANDLE));
+	VKT_CHECK(vkQueueWaitIdle(device.queueGraphics));
+
+	// free command buffer
+	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer);
 }
 
 // vulkanCommandBufferAllocate(
@@ -265,7 +345,9 @@ void vulkanCommandBufferAllocate(
 }
 
 // vulkanCommandBufferFree
-void vulkanCommandBufferFree(VulkanDevice& device, VulkanCommandBuffer& commandBuffer)
+void vulkanCommandBufferFree(
+	VulkanDevice& device, 
+	VulkanCommandBuffer& commandBuffer)
 {
 	// free handles
 	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer.ñommandBuffer);
@@ -274,7 +356,9 @@ void vulkanCommandBufferFree(VulkanDevice& device, VulkanCommandBuffer& commandB
 }
 
 // vulkanSemaphoreCreate
-void vulkanSemaphoreCreate(VulkanDevice& device, VulkanSemaphore* semaphore)
+void vulkanSemaphoreCreate(
+	VulkanDevice& device, 
+	VulkanSemaphore* semaphore)
 {
 	// check handles
 	assert(semaphore);
@@ -288,7 +372,9 @@ void vulkanSemaphoreCreate(VulkanDevice& device, VulkanSemaphore* semaphore)
 }
 
 // vulkanSemaphoreDestroy
-void vulkanSemaphoreDestroy(VulkanDevice& device, VulkanSemaphore& semaphore)
+void vulkanSemaphoreDestroy(
+	VulkanDevice& device, 
+	VulkanSemaphore& semaphore)
 {
 	// destroy handles
 	vkDestroySemaphore(device.device, semaphore.semaphore, VK_NULL_HANDLE);

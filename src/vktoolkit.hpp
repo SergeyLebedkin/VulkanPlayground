@@ -48,7 +48,6 @@ typedef struct VulkanImage {
 typedef struct VulkanBuffer {
 	VmaAllocation allocation;
 	VkBuffer      buffer;
-	VkBufferView  bufferView;
 } VulkanBuffer;
 
 typedef struct VulkanSemaphore {
@@ -111,12 +110,27 @@ void vulkanBufferCreate(
 	VulkanDevice&      device,
 	VkDeviceSize       size,
 	VkBufferUsageFlags usage,
+	VmaMemoryUsage     memoryUsage,
 	VulkanBuffer*      buffer
 );
 
 void vulkanBufferDestroy(
-	VulkanDevice&      device,
-	VulkanBuffer*      buffer
+	VulkanDevice& device,
+	VulkanBuffer& buffer
+);
+
+void vulkanBufferWrite(
+	VulkanDevice& device,
+	VulkanBuffer& buffer,
+	VkDeviceSize  size,
+	const void*   data
+);
+
+void vulkanBufferCopy(
+	VulkanDevice& device,
+	VulkanBuffer& bufferSrc,
+	VulkanBuffer& bufferDst,
+	VkDeviceSize  size
 );
 
 void vulkanCommandBufferAllocate(
@@ -131,12 +145,12 @@ void vulkanCommandBufferFree(
 );
 
 void vulkanSemaphoreCreate(
-	VulkanDevice& device,
+	VulkanDevice&    device,
 	VulkanSemaphore* semaphore
 );
 
 void vulkanSemaphoreDestroy(
-	VulkanDevice& device,
+	VulkanDevice&    device,
 	VulkanSemaphore& semaphore
 );
 

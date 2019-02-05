@@ -30,6 +30,8 @@ int main(void)
 	VulkanSemaphore     renderSemaphore{};
 	VulkanSemaphore     presentSemaphore{};
 	VulkanCommandBuffer commandBuffer{};
+	VulkanBuffer        bufferIndex{};
+	VulkanBuffer        bufferVertex{};
 	vulkanInstanceCreate(enabledInstanceLayerNames, enabledInstanceExtensionNames, &instance);
 	glfwCreateWindowSurface(instance.instance, window, NULL, &surface.surface);
 	vulkanDeviceCreate(instance, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, physicalDeviceFeatures, enabledDeviceExtensionNames, &device);
@@ -37,6 +39,11 @@ int main(void)
 	vulkanSemaphoreCreate(device, &renderSemaphore);
 	vulkanSemaphoreCreate(device, &presentSemaphore);
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
+	vulkanBufferCreate(device, 1024, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, &bufferVertex);
+	vulkanBufferCreate(device, 1024, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, &bufferIndex);
+
+	vulkanBufferWrite(device, bufferVertex, 5000, &physicalDeviceFeatures);
+	vulkanBufferWrite(device, bufferIndex, 5000, &physicalDeviceFeatures);
 
 	// main loop
 	while (!glfwWindowShouldClose(window))
@@ -99,6 +106,8 @@ int main(void)
 	}
 
 	// destroy vulkan
+	vulkanBufferDestroy(device, bufferIndex);
+	vulkanBufferDestroy(device, bufferVertex);
 	vulkanCommandBufferFree(device, commandBuffer);
 	vulkanSemaphoreDestroy(device, presentSemaphore);
 	vulkanSemaphoreDestroy(device, renderSemaphore);

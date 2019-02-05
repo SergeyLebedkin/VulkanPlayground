@@ -125,6 +125,11 @@ void vulkanCommandBufferAllocate(
 	VulkanCommandBuffer* commandBuffer
 );
 
+void vulkanCommandBufferFree(
+	VulkanDevice&        device,
+	VulkanCommandBuffer& commandBuffer
+);
+
 void vulkanSemaphoreCreate(
 	VulkanDevice& device,
 	VulkanSemaphore* semaphore

@@ -26,6 +26,9 @@ typedef struct VulkanDevice {
 	uint32_t                         queueFamilyIndexGraphics;
 	uint32_t                         queueFamilyIndexCompute;
 	uint32_t                         queueFamilyIndexTransfer;
+	VkQueueFamilyProperties          queueFamilyPropertiesGraphics;
+	VkQueueFamilyProperties          queueFamilyPropertiesCompute;
+	VkQueueFamilyProperties          queueFamilyPropertiesTransfer;
 	VkDevice                         device;
 	VkQueue                          queueGraphics;
 	VkQueue                          queueCompute;

@@ -103,6 +103,11 @@ void vulkanDeviceCreate(
 	assert(device->queueFamilyIndexGraphics < UINT32_MAX);
 	assert(device->queueFamilyIndexTransfer < UINT32_MAX);
 
+	// get queue family properties
+	device->queueFamilyPropertiesGraphics = queueFamilyProperties[device->queueFamilyIndexGraphics];
+	device->queueFamilyPropertiesCompute = queueFamilyProperties[device->queueFamilyIndexCompute];
+	device->queueFamilyPropertiesTransfer = queueFamilyProperties[device->queueFamilyIndexTransfer];
+
 	// deviceQueueCreateInfos
 	std::vector<VkDeviceQueueCreateInfo> deviceQueueCreateInfos;
 	float queuePriorities[] = { 1.0f };

@@ -292,8 +292,8 @@ void VulkanImage2DCreate(
 	imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 	imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 	imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-	imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;;
-	imageViewCreateInfo.subresourceRange.aspectMask = 0;
+	imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.subresourceRange.aspectMask = vulkanGetAspectByFormat(format);
 	imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
 	imageViewCreateInfo.subresourceRange.levelCount = 1;
 	imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
@@ -1065,6 +1065,30 @@ VkPresentModeKHR vulkanGetDefaultSurfacePresentMode(
 
 	// return default
 	return presentModes[0];
+}
+
+// vulkanGetAspectByFormat
+VkImageAspectFlags vulkanGetAspectByFormat(
+	VkFormat format)
+{
+	// depth aspect
+	if ((format == VK_FORMAT_D16_UNORM) ||
+		(format == VK_FORMAT_X8_D24_UNORM_PACK32) ||
+		(format == VK_FORMAT_D32_SFLOAT))
+			return VK_IMAGE_ASPECT_DEPTH_BIT;
+	
+	// stencil aspect
+	if (format == VK_FORMAT_S8_UINT)
+		return VK_IMAGE_ASPECT_STENCIL_BIT;
+
+	// depth and stencil aspect
+	if ((format == VK_FORMAT_D16_UNORM_S8_UINT) ||
+		(format == VK_FORMAT_D24_UNORM_S8_UINT) ||
+		(format == VK_FORMAT_D32_SFLOAT_S8_UINT))
+		return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+
+	// color aspect
+	return VK_IMAGE_ASPECT_COLOR_BIT;
 }
 
 // vulkanFindQueueFamilyPropertiesByFlags

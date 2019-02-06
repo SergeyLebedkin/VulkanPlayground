@@ -5,6 +5,9 @@
 #include <chrono>
 #include <string>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 int main(void)
 {
 	// init GLFW
@@ -32,6 +35,7 @@ int main(void)
 	VulkanCommandBuffer commandBuffer{};
 	VulkanBuffer        bufferIndex{};
 	VulkanBuffer        bufferVertex{};
+	VulkanImage         image;
 	vulkanInstanceCreate(enabledInstanceLayerNames, enabledInstanceExtensionNames, &instance);
 	glfwCreateWindowSurface(instance.instance, window, NULL, &surface.surface);
 	vulkanDeviceCreate(instance, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, physicalDeviceFeatures, enabledDeviceExtensionNames, &device);
@@ -41,6 +45,16 @@ int main(void)
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 413, &bufferVertex);
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 619, &bufferIndex);
+
+	// load image from file
+	int width = 0, height = 0, channels = 0;
+	stbi_uc* texData = stbi_load("textures/texture.png", &width, &height, &channels, 4);
+	VulkanImage2DCreate(device, VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_FORMAT_R8G8B8A8_UINT, width, height, &image);
+	VulkanImage2DWrite(device, image, VK_FORMAT_R8G8B8A8_UINT, width, height, texData);
+	memset(texData, 100, width * height * channels);
+	VulkanImage2DRead(device, image, VK_FORMAT_R8G8B8A8_UINT, width, height, texData);
+	VulkanImageDestroy(device, image);
+	stbi_image_free(texData);
 
 	// main loop
 	while (!glfwWindowShouldClose(window))

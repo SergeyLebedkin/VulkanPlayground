@@ -269,6 +269,10 @@ VkPresentModeKHR vulkanGetDefaultSurfacePresentMode(
 	VulkanSurface& surface
 );
 
+VkImageAspectFlags vulkanGetAspectByFormat(
+	VkFormat format
+);
+
 uint32_t vulkanFindQueueFamilyPropertiesByFlags(
 	std::vector<VkQueueFamilyProperties>& queueFamilyProperties,
 	VkQueueFlags                          queueFlags

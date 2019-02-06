@@ -41,10 +41,13 @@ typedef struct VulkanSurface {
 	VkSurfaceKHR surface;
 } VulkanSurface;
 
+typedef struct VulkanSampler {
+	VkSampler sampler;
+} VulkanSampler;
+
 typedef struct VulkanImage {
 	VmaAllocation allocation;
 	VkImage       image;
-	VkSampler     sampler;
 	VkImageView   imageView;
 } VulkanImage;
 
@@ -109,25 +112,65 @@ void vulkanDeviceDestroy(
 	VulkanDevice& device
 );
 
+void vulkanSamplerCreate(
+	VulkanDevice&        device,
+	VkFilter             filter,
+	VkSamplerAddressMode samplerAddressMode,
+	VulkanSampler*       sampler
+);
+
+void vulkanSamplerDestroy(
+	VulkanDevice&  device,
+	VulkanSampler& sampler
+);
+
+void VulkanImage2DCreate(
+	VulkanDevice&        device,
+	VkImageUsageFlags    usage,
+	VmaMemoryUsage       memoryUsage,
+	VkFormat             format,
+	uint32_t             width,
+	uint32_t             height,
+	VulkanImage*         image
+);
+
+void VulkanImage2DRead(
+	VulkanDevice& device,
+	VulkanImage&  image,
+	VkFormat      format,
+	uint32_t      width,
+	uint32_t      height,
+	void*         data
+);
+
+void VulkanImage2DWrite(
+	VulkanDevice& device,
+	VulkanImage&  image,
+	VkFormat      format,
+	uint32_t      width,
+	uint32_t      height,
+	const void*   data
+);
+
+void VulkanImage2DCopy(
+	VulkanDevice& device,
+	VulkanImage&  imageSrc,
+	VulkanImage&  imageDst,
+	uint32_t      width,
+	uint32_t      height
+);
+
+void VulkanImageDestroy(
+	VulkanDevice& device,
+	VulkanImage&  image
+);
+
 void vulkanBufferCreate(
 	VulkanDevice&      device,
 	VkBufferUsageFlags usage,
 	VmaMemoryUsage     memoryUsage,
 	VkDeviceSize       size,
 	VulkanBuffer*      buffer
-);
-
-void vulkanBufferDestroy(
-	VulkanDevice& device,
-	VulkanBuffer& buffer
-);
-
-void vulkanBufferWrite(
-	VulkanDevice& device,
-	VulkanBuffer& buffer,
-	VkDeviceSize  offset,
-	VkDeviceSize  size,
-	const void*   data
 );
 
 void vulkanBufferRead(
@@ -138,6 +181,14 @@ void vulkanBufferRead(
 	void*         data
 );
 
+void vulkanBufferWrite(
+	VulkanDevice& device,
+	VulkanBuffer& buffer,
+	VkDeviceSize  offset,
+	VkDeviceSize  size,
+	const void*   data
+);
+
 void vulkanBufferCopy(
 	VulkanDevice& device,
 	VulkanBuffer& bufferSrc,
@@ -145,6 +196,11 @@ void vulkanBufferCopy(
 	VulkanBuffer& bufferDst,
 	VkDeviceSize  offsetDst,
 	VkDeviceSize  size
+);
+
+void vulkanBufferDestroy(
+	VulkanDevice& device,
+	VulkanBuffer& buffer
 );
 
 void vulkanCommandBufferAllocate(

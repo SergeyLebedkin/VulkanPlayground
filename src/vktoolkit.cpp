@@ -191,6 +191,283 @@ void vulkanDeviceDestroy(
 	device.physicalDevice = VK_NULL_HANDLE;
 }
 
+// vulkanSamplerCreate
+void vulkanSamplerCreate(
+	VulkanDevice& device, 
+	VkFilter filter, 
+	VkSamplerAddressMode samplerAddressMode, 
+	VulkanSampler* sampler)
+{
+	// check handles
+	assert(sampler);
+
+	// VkSamplerCreateInfo
+	VkSamplerCreateInfo samplerCreateInfo{};
+	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerCreateInfo.pNext = VK_NULL_HANDLE;
+	samplerCreateInfo.flags = 0;
+	samplerCreateInfo.magFilter = filter;
+	samplerCreateInfo.minFilter = filter;
+	samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerCreateInfo.addressModeU = samplerAddressMode;
+	samplerCreateInfo.addressModeV = samplerAddressMode;
+	samplerCreateInfo.addressModeW = samplerAddressMode;
+	samplerCreateInfo.mipLodBias = 0.0f;
+	samplerCreateInfo.anisotropyEnable = VK_FALSE;
+	samplerCreateInfo.maxAnisotropy = 16;
+	samplerCreateInfo.compareEnable = VK_FALSE;
+	samplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerCreateInfo.minLod = 0.0f;
+	samplerCreateInfo.maxLod = FLT_MAX;
+	samplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+	VKT_CHECK(vkCreateSampler(device.device, &samplerCreateInfo, VK_NULL_HANDLE, &sampler->sampler));
+	assert(sampler->sampler);
+}
+
+// vulkanSamplerDestroy
+void vulkanSamplerDestroy(
+	VulkanDevice& device,
+	VulkanSampler& sampler)
+{
+	// destroy handles
+	vkDestroySampler(device.device, sampler.sampler, VK_NULL_HANDLE);
+	// clear handles
+	sampler.sampler = VK_NULL_HANDLE;
+}
+
+// VulkanImage2DCreate
+void VulkanImage2DCreate(
+	VulkanDevice& device,
+	VkImageUsageFlags usage,
+	VmaMemoryUsage memoryUsage,
+	VkFormat format,
+	uint32_t width,
+	uint32_t height,
+	VulkanImage* image)
+{
+	// check handles
+	assert(width);
+	assert(height);
+	assert(image);
+
+	// VkImageCreateInfo
+	VkImageCreateInfo imageCreateInfo{};
+	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageCreateInfo.pNext = VK_NULL_HANDLE;
+	imageCreateInfo.flags = 0;
+	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageCreateInfo.format = format;
+	imageCreateInfo.extent.width = width;
+	imageCreateInfo.extent.height = height;
+	imageCreateInfo.extent.depth = 1;
+	imageCreateInfo.mipLevels = 1;
+	imageCreateInfo.arrayLayers = 1;
+	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | usage;
+	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	imageCreateInfo.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
+	imageCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
+	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+	// VmaAllocationCreateInfo
+	VmaAllocationCreateInfo allocCreateInfo{};
+	allocCreateInfo.usage = memoryUsage;
+	allocCreateInfo.flags = 0;
+
+	// vmaCreateImage
+	VKT_CHECK(vmaCreateImage(device.allocator, &imageCreateInfo, &allocCreateInfo, &image->image, &image->allocation, VK_NULL_HANDLE));
+	assert(image->image);
+	assert(image->allocation);
+
+	// VkImageViewCreateInfo
+	VkImageViewCreateInfo imageViewCreateInfo{};
+	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	imageViewCreateInfo.pNext = VK_NULL_HANDLE;
+	imageViewCreateInfo.flags = 0;
+	imageViewCreateInfo.image = image->image;
+	imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	imageViewCreateInfo.format = format;
+	imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;;
+	imageViewCreateInfo.subresourceRange.aspectMask = 0;
+	imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+	imageViewCreateInfo.subresourceRange.levelCount = 1;
+	imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+	imageViewCreateInfo.subresourceRange.layerCount = 1;
+	VKT_CHECK(vkCreateImageView(device.device, &imageViewCreateInfo, VK_NULL_HANDLE, &image->imageView));
+	assert(image->imageView);
+}
+
+// VulkanImage2DRead
+void VulkanImage2DRead(
+	VulkanDevice& device,
+	VulkanImage& image,
+	VkFormat format,
+	uint32_t width,
+	uint32_t height,
+	void* data)
+{
+	// get memory buffer properties
+	VmaAllocationInfo allocationInfo{};
+	vmaGetAllocationInfo(device.allocator, image.allocation, &allocationInfo);
+	VkMemoryPropertyFlags memFlags;
+	vmaGetMemoryTypeProperties(device.allocator, allocationInfo.memoryType, &memFlags);
+
+	// if target device memory is host visible, then just map/unmap memory to device memory
+	if ((memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+		void* mappedData = nullptr;
+		vmaMapMemory(device.allocator, image.allocation, &mappedData);
+		assert(mappedData);
+		memcpy(data, mappedData, allocationInfo.size);
+		vmaUnmapMemory(device.allocator, image.allocation);
+	}
+	else // if target device memory is NOT host visible, then we need use staging image
+	{
+		VulkanImage stagingImage{};
+		VulkanImage2DCreate(device, 0, VMA_MEMORY_USAGE_GPU_TO_CPU, format, width, height, &stagingImage);
+
+		// copy images
+		VulkanImage2DCopy(device, image, stagingImage, width, height);
+
+		// map staging buffer and memory
+		void* mappedData = nullptr;
+		vmaMapMemory(device.allocator, stagingImage.allocation, &mappedData);
+		assert(mappedData);
+		memcpy(data, mappedData, allocationInfo.size);
+		vmaUnmapMemory(device.allocator, stagingImage.allocation);
+
+		// destroy buffer and free memory
+		VulkanImageDestroy(device, stagingImage);
+	}
+}
+
+// VulkanImage2DWrite
+void VulkanImage2DWrite(
+	VulkanDevice& device,
+	VulkanImage& image,
+	VkFormat format,
+	uint32_t width,
+	uint32_t height,
+	const void* data)
+{
+	// get memory buffer properties
+	VmaAllocationInfo allocationInfo{};
+	vmaGetAllocationInfo(device.allocator, image.allocation, &allocationInfo);
+	VkMemoryPropertyFlags memFlags;
+	vmaGetMemoryTypeProperties(device.allocator, allocationInfo.memoryType, &memFlags);
+
+	// if target device memory is host visible, then just map/unmap memory to device memory
+	if ((memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+		void* mappedData = nullptr;
+		vmaMapMemory(device.allocator, image.allocation, &mappedData);
+		assert(mappedData);
+		memcpy(mappedData, data, allocationInfo.size);
+		vmaUnmapMemory(device.allocator, image.allocation);
+	}
+	else // if target device memory is NOT host visible, then we need use staging image
+	{
+		VulkanImage stagingImage{};
+		VulkanImage2DCreate(device, 0, VMA_MEMORY_USAGE_CPU_TO_GPU, format, width, height, &stagingImage);
+
+		// map staging buffer and memory
+		void* mappedData = nullptr;
+		vmaMapMemory(device.allocator, stagingImage.allocation, &mappedData);
+		assert(mappedData);
+		memcpy(mappedData, data, allocationInfo.size);
+		vmaUnmapMemory(device.allocator, stagingImage.allocation);
+
+		// copy images
+		VulkanImage2DCopy(device, stagingImage, image, width, height);
+
+		// destroy buffer and free memory
+		VulkanImageDestroy(device, stagingImage);
+	}
+}
+
+// VulkanImage2DCopy
+void VulkanImage2DCopy(
+	VulkanDevice& device,
+	VulkanImage& imageSrc,
+	VulkanImage& imageDst,
+	uint32_t width,
+	uint32_t height)
+{
+	// VkCommandBufferAllocateInfo
+	VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	commandBufferAllocateInfo.pNext = VK_NULL_HANDLE;
+	commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	commandBufferAllocateInfo.commandPool = device.commandPool;
+	commandBufferAllocateInfo.commandBufferCount = 1;
+
+	// VkCommandBuffer
+	VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer));
+	assert(commandBuffer);
+
+	// VkCommandBufferBeginInfo
+	VkCommandBufferBeginInfo commandBufferBeginInfo{};
+	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
+	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
+	VKT_CHECK(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
+
+	// VkImageCopy
+	VkImageCopy imageCopy{};
+	imageCopy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageCopy.srcSubresource.mipLevel = 0;
+	imageCopy.srcSubresource.baseArrayLayer = 0;
+	imageCopy.srcSubresource.layerCount = 1;
+	imageCopy.srcOffset.x = 0;
+	imageCopy.srcOffset.y = 0;
+	imageCopy.srcOffset.z = 0;
+	imageCopy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageCopy.dstSubresource.mipLevel = 0;
+	imageCopy.dstSubresource.baseArrayLayer = 0;
+	imageCopy.dstSubresource.layerCount = 1;
+	imageCopy.dstOffset.x = 0;
+	imageCopy.dstOffset.y = 0;
+	imageCopy.dstOffset.z = 0;
+	imageCopy.extent.width = width;
+	imageCopy.extent.height = height;
+	imageCopy.extent.depth = 1;
+	vkCmdCopyImage(commandBuffer, imageSrc.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+
+	// vkEndCommandBuffer
+	VKT_CHECK(vkEndCommandBuffer(commandBuffer));
+
+	// submit and wait
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.pNext = VK_NULL_HANDLE;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+	VKT_CHECK(vkQueueSubmit(device.queueGraphics, 1, &submitInfo, VK_NULL_HANDLE));
+	VKT_CHECK(vkQueueWaitIdle(device.queueGraphics));
+
+	// free command buffer
+	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer);
+}
+
+// VulkanImageDestroy
+void VulkanImageDestroy(
+	VulkanDevice& device,
+	VulkanImage& image)
+{
+	// destroy handles
+	vkDestroyImageView(device.device, image.imageView, VK_NULL_HANDLE);
+	vmaDestroyImage(device.allocator, image.image, image.allocation);
+	// clear handles
+	image.imageView = VK_NULL_HANDLE;
+	image.image = VK_NULL_HANDLE;
+	image.allocation = VK_NULL_HANDLE;
+}
+
 // vulkanBufferCreate
 void vulkanBufferCreate(
 	VulkanDevice& device,
@@ -222,64 +499,6 @@ void vulkanBufferCreate(
 	VKT_CHECK(vmaCreateBuffer(device.allocator, &bufferCreateInfo, &allocCreateInfo, &buffer->buffer, &buffer->allocation, VK_NULL_HANDLE));
 	assert(buffer->buffer);
 	assert(buffer->allocation);
-}
-
-// vulkanBufferDestroy
-void vulkanBufferDestroy(
-	VulkanDevice& device,
-	VulkanBuffer& buffer)
-{
-	// check handles
-	vmaDestroyBuffer(device.allocator, buffer.buffer, buffer.allocation);
-	// clear handles
-	buffer.buffer = VK_NULL_HANDLE;
-	buffer.allocation = VK_NULL_HANDLE;
-}
-
-// vulkanBufferWrite
-void vulkanBufferWrite(
-	VulkanDevice& device,
-	VulkanBuffer& buffer,
-	VkDeviceSize offset,
-	VkDeviceSize size,
-	const void* data)
-{
-	// check data
-	assert(data);
-
-	// get memory buffer properties
-	VmaAllocationInfo allocationInfo{};
-	vmaGetAllocationInfo(device.allocator, buffer.allocation, &allocationInfo);
-	VkMemoryPropertyFlags memFlags;
-	vmaGetMemoryTypeProperties(device.allocator, allocationInfo.memoryType, &memFlags);
-
-	// if target device memory is host visible, then just map/unmap memory to device memory
-	if ((memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
-		void* mappedData = nullptr;
-		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
-		assert(mappedData);
-		memcpy((uint8_t *)mappedData + offset, data, (size_t)size);
-		vmaUnmapMemory(device.allocator, buffer.allocation);
-	}
-	else // if target device memory is NOT host visible, then we need use staging buffer
-	{
-		// create staging buffer and memory
-		VulkanBuffer stagingBuffer{};
-		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_CPU_TO_GPU, size, &stagingBuffer);
-
-		// map staging buffer and memory
-		void* mappedData = nullptr;
-		VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
-		assert(mappedData);
-		memcpy(mappedData, data, (size_t)size);
-		vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
-
-		// copy buffers
-		vulkanBufferCopy(device, stagingBuffer, 0, buffer, offset, size);
-
-		// destroy buffer and free memory
-		vulkanBufferDestroy(device, stagingBuffer);
-	}
 }
 
 // vulkanBufferRead
@@ -322,6 +541,52 @@ void vulkanBufferRead(
 		assert(mappedData);
 		memcpy(data, mappedData, (size_t)size);
 		vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
+
+		// destroy buffer and free memory
+		vulkanBufferDestroy(device, stagingBuffer);
+	}
+}
+
+// vulkanBufferWrite
+void vulkanBufferWrite(
+	VulkanDevice& device,
+	VulkanBuffer& buffer,
+	VkDeviceSize offset,
+	VkDeviceSize size,
+	const void* data)
+{
+	// check data
+	assert(data);
+
+	// get memory buffer properties
+	VmaAllocationInfo allocationInfo{};
+	vmaGetAllocationInfo(device.allocator, buffer.allocation, &allocationInfo);
+	VkMemoryPropertyFlags memFlags;
+	vmaGetMemoryTypeProperties(device.allocator, allocationInfo.memoryType, &memFlags);
+
+	// if target device memory is host visible, then just map/unmap memory to device memory
+	if ((memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+		void* mappedData = nullptr;
+		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
+		assert(mappedData);
+		memcpy((uint8_t *)mappedData + offset, data, (size_t)size);
+		vmaUnmapMemory(device.allocator, buffer.allocation);
+	}
+	else // if target device memory is NOT host visible, then we need use staging buffer
+	{
+		// create staging buffer and memory
+		VulkanBuffer stagingBuffer{};
+		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_CPU_TO_GPU, size, &stagingBuffer);
+
+		// map staging buffer and memory
+		void* mappedData = nullptr;
+		VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
+		assert(mappedData);
+		memcpy(mappedData, data, (size_t)size);
+		vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
+
+		// copy buffers
+		vulkanBufferCopy(device, stagingBuffer, 0, buffer, offset, size);
 
 		// destroy buffer and free memory
 		vulkanBufferDestroy(device, stagingBuffer);
@@ -377,6 +642,19 @@ void vulkanBufferCopy(
 
 	// free command buffer
 	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer);
+}
+
+
+// vulkanBufferDestroy
+void vulkanBufferDestroy(
+	VulkanDevice& device,
+	VulkanBuffer& buffer)
+{
+	// destroy handles
+	vmaDestroyBuffer(device.allocator, buffer.buffer, buffer.allocation);
+	// clear handles
+	buffer.buffer = VK_NULL_HANDLE;
+	buffer.allocation = VK_NULL_HANDLE;
 }
 
 // vulkanCommandBufferAllocate(

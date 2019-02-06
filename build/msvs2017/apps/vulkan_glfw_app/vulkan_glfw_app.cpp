@@ -39,8 +39,8 @@ int main(void)
 	vulkanSemaphoreCreate(device, &renderSemaphore);
 	vulkanSemaphoreCreate(device, &presentSemaphore);
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 1024, &bufferVertex);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 1024, &bufferIndex);
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 413, &bufferVertex);
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 619, &bufferIndex);
 
 	// main loop
 	while (!glfwWindowShouldClose(window))

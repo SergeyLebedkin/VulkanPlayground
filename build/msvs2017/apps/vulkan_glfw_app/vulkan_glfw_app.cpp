@@ -49,11 +49,13 @@ int main(void)
 	// load image from file
 	int width = 0, height = 0, channels = 0;
 	stbi_uc* texData = stbi_load("textures/texture.png", &width, &height, &channels, 4);
-	VulkanImage2DCreate(device, VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_FORMAT_R8G8B8A8_UINT, width, height, &image);
-	VulkanImage2DWrite(device, image, VK_FORMAT_R8G8B8A8_UINT, width, height, texData);
-	memset(texData, 100, width * height * channels);
-	VulkanImage2DRead(device, image, VK_FORMAT_R8G8B8A8_UINT, width, height, texData);
+
+	VulkanImageCreate(device, VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image);
+	VulkanImageWrite(device, image, 0, texData);
+	memset(texData, 101, width * height * channels);
+	VulkanImageRead(device, image, 1, texData);
 	VulkanImageDestroy(device, image);
+
 	stbi_image_free(texData);
 
 	// main loop

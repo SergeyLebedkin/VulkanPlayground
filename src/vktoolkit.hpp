@@ -45,15 +45,27 @@ typedef struct VulkanSampler {
 	VkSampler sampler;
 } VulkanSampler;
 
+typedef struct VulkanImageView {
+	VkImageView imageView;
+} VulkanImageView;
+
 typedef struct VulkanImage {
-	VmaAllocation allocation;
-	VkImage       image;
-	VkImageView   imageView;
+	VmaAllocation     allocation;
+	VmaAllocationInfo allocationInfo;
+	VkImage           image;
+	VkImageType       imageType;
+	VkFormat          format;
+	uint32_t          width;
+	uint32_t          height;
+	uint32_t          depth;
+	uint32_t          mipLevels;
 } VulkanImage;
 
 typedef struct VulkanBuffer {
-	VmaAllocation allocation;
-	VkBuffer      buffer;
+	VmaAllocation     allocation;
+	VmaAllocationInfo allocationInfo;
+	VkBuffer          buffer;
+	VkDeviceSize      size;
 } VulkanBuffer;
 
 typedef struct VulkanSemaphore {
@@ -124,40 +136,53 @@ void vulkanSamplerDestroy(
 	VulkanSampler& sampler
 );
 
-void VulkanImage2DCreate(
-	VulkanDevice&        device,
-	VkImageUsageFlags    usage,
-	VmaMemoryUsage       memoryUsage,
-	VkFormat             format,
-	uint32_t             width,
-	uint32_t             height,
-	VulkanImage*         image
+void vulkanImageViewCreate(
+	VulkanDevice&    device,
+	VulkanImage&     image,
+	VkFormat         format,
+	VulkanImageView* imageView
 );
 
-void VulkanImage2DRead(
+void vulkanImageViewDestroy(
+	VulkanDevice&    device,
+	VulkanImageView& imageView
+);
+
+void VulkanImageCreate(
+	VulkanDevice&     device,
+	VkImageUsageFlags usage,
+	VkFormat          format,
+	uint32_t          width,
+	uint32_t          height,
+	uint32_t          depth,
+	VulkanImage*      image
+);
+
+void VulkanImageRead(
 	VulkanDevice& device,
 	VulkanImage&  image,
-	VkFormat      format,
-	uint32_t      width,
-	uint32_t      height,
+	uint32_t      mipLevel,
 	void*         data
 );
 
-void VulkanImage2DWrite(
+void VulkanImageWrite(
 	VulkanDevice& device,
 	VulkanImage&  image,
-	VkFormat      format,
-	uint32_t      width,
-	uint32_t      height,
+	uint32_t      mipLevel,
 	const void*   data
 );
 
-void VulkanImage2DCopy(
+void VulkanImageCopy(
 	VulkanDevice& device,
 	VulkanImage&  imageSrc,
+	uint32_t      mipLevelSrc,
 	VulkanImage&  imageDst,
-	uint32_t      width,
-	uint32_t      height
+	uint32_t      mipLevelDst
+);
+
+void VulkanImageBuildMipmaps(
+	VulkanDevice& device,
+	VulkanImage&  image
 );
 
 void VulkanImageDestroy(
@@ -267,10 +292,6 @@ VkSurfaceFormatKHR vulkanGetDefaultSurfaceFormat(
 VkPresentModeKHR vulkanGetDefaultSurfacePresentMode(
 	VulkanDevice&  device,
 	VulkanSurface& surface
-);
-
-VkImageAspectFlags vulkanGetAspectByFormat(
-	VkFormat format
 );
 
 uint32_t vulkanFindQueueFamilyPropertiesByFlags(

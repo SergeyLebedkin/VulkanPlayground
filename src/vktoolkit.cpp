@@ -185,6 +185,9 @@ void vulkanDeviceDestroy(
 	device.queueFamilyIndexTransfer = UINT32_MAX;
 	device.queueFamilyIndexCompute = UINT32_MAX;
 	device.queueFamilyIndexGraphics = UINT32_MAX;
+	device.queueFamilyPropertiesGraphics = {};
+	device.queueFamilyPropertiesCompute = {};
+	device.queueFamilyPropertiesTransfer = {};
 	device.physicalDeviceMemoryProperties = {};
 	device.physicalDeviceProperties = {};
 	device.physicalDeviceFeatures = {};
@@ -193,9 +196,10 @@ void vulkanDeviceDestroy(
 
 // vulkanSamplerCreate
 void vulkanSamplerCreate(
-	VulkanDevice& device, 
-	VkFilter filter, 
-	VkSamplerAddressMode samplerAddressMode, 
+	VulkanDevice& device,
+	VkFilter filter,
+	VkSamplerAddressMode samplerAddressMode,
+	VkBool32 anisotropyEnable,
 	VulkanSampler* sampler)
 {
 	// check handles
@@ -213,12 +217,12 @@ void vulkanSamplerCreate(
 	samplerCreateInfo.addressModeV = samplerAddressMode;
 	samplerCreateInfo.addressModeW = samplerAddressMode;
 	samplerCreateInfo.mipLodBias = 0.0f;
-	samplerCreateInfo.anisotropyEnable = VK_FALSE;
-	samplerCreateInfo.maxAnisotropy = 16;
+	samplerCreateInfo.anisotropyEnable = anisotropyEnable;
+	samplerCreateInfo.maxAnisotropy = device.physicalDeviceProperties.limits.maxSamplerAnisotropy;
 	samplerCreateInfo.compareEnable = VK_FALSE;
 	samplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 	samplerCreateInfo.minLod = 0.0f;
-	samplerCreateInfo.maxLod = FLT_MAX;
+	samplerCreateInfo.maxLod = 1.0f;
 	samplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
 	VKT_CHECK(vkCreateSampler(device.device, &samplerCreateInfo, VK_NULL_HANDLE, &sampler->sampler));
@@ -284,8 +288,8 @@ void vulkanImageViewDestroy(
 	imageView.imageView = VK_NULL_HANDLE;
 }
 
-// VulkanImage2DCreate
-void VulkanImageCreate(
+// vulkanImageCreate
+void vulkanImageCreate(
 	VulkanDevice& device,
 	VkImageUsageFlags usage,
 	VkFormat format,
@@ -295,7 +299,6 @@ void VulkanImageCreate(
 	VulkanImage* image)
 {
 	// check parameters
-	assert(format);
 	assert(width);
 	assert(height);
 	assert(depth);
@@ -312,6 +315,9 @@ void VulkanImageCreate(
 	image->height = height;
 	image->depth = depth;
 	image->mipLevels = mipLevels;
+	image->currentLayouts.clear();
+	image->currentLayouts.resize(mipLevels, VK_IMAGE_LAYOUT_UNDEFINED);
+	image->finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	// VkImageCreateInfo
 	VkImageCreateInfo imageCreateInfo{};
@@ -323,7 +329,6 @@ void VulkanImageCreate(
 	imageCreateInfo.extent.width = width;
 	imageCreateInfo.extent.height = height;
 	imageCreateInfo.extent.depth = depth;
-	//imageCreateInfo.mipLevels = mipLevels;
 	imageCreateInfo.mipLevels = mipLevels;
 	imageCreateInfo.arrayLayers = 1;
 	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -345,8 +350,8 @@ void VulkanImageCreate(
 	assert(image->image);
 }
 
-// VulkanImageRead
-void VulkanImageRead(
+// vulkanImageRead
+void vulkanImageRead(
 	VulkanDevice& device,
 	VulkanImage&  image,
 	uint32_t      mipLevel,
@@ -376,6 +381,8 @@ void VulkanImageRead(
 	staginImage.height = height;
 	staginImage.depth = depth;
 	staginImage.mipLevels = 1;
+	staginImage.currentLayouts.resize(1, VK_IMAGE_LAYOUT_UNDEFINED);
+	staginImage.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 	// VkImageCreateInfo
 	VkImageCreateInfo imageCreateInfo{};
@@ -391,7 +398,7 @@ void VulkanImageRead(
 	imageCreateInfo.arrayLayers = 1;
 	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageCreateInfo.tiling = VK_IMAGE_TILING_LINEAR;
-	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	imageCreateInfo.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
 	imageCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
@@ -408,7 +415,7 @@ void VulkanImageRead(
 	assert(staginImage.allocation);
 
 	// flush data to image
-	VulkanImageCopy(device, image, mipLevel, staginImage, 0);
+	vulkanImageCopy(device, image, mipLevel, staginImage, 0);
 
 	// fill data to image
 	void* mappedData = nullptr;
@@ -421,8 +428,8 @@ void VulkanImageRead(
 	vmaDestroyImage(device.allocator, staginImage.image, staginImage.allocation);
 }
 
-// VulkanImageWrite
-void VulkanImageWrite(
+// vulkanImageWrite
+void vulkanImageWrite(
 	VulkanDevice& device,
 	VulkanImage&  image,
 	uint32_t      mipLevel,
@@ -443,14 +450,17 @@ void VulkanImageWrite(
 
 	// create staging image
 	VulkanImage staginImage{};
-	staginImage.image = VK_NULL_HANDLE;
 	staginImage.allocation = VK_NULL_HANDLE;
+	staginImage.image = VK_NULL_HANDLE;
+	staginImage.allocationInfo = {};
 	staginImage.imageType = image.imageType;
 	staginImage.format = image.format;
 	staginImage.width = width;
 	staginImage.height = height;
 	staginImage.depth = depth;
 	staginImage.mipLevels = 1;
+	staginImage.currentLayouts.resize(1, VK_IMAGE_LAYOUT_PREINITIALIZED);
+	staginImage.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
 	// VkImageCreateInfo
 	VkImageCreateInfo imageCreateInfo{};
@@ -486,18 +496,18 @@ void VulkanImageWrite(
 	void* mappedData = nullptr;
 	VKT_CHECK(vmaMapMemory(device.allocator, staginImage.allocation, &mappedData));
 	assert(mappedData);
-	memcpy(mappedData, data, (size_t)staginImage.allocationInfo.size);|
+	memcpy(mappedData, data, (size_t)staginImage.allocationInfo.size);
 	vmaUnmapMemory(device.allocator, staginImage.allocation);
 
 	// flush data to image
-	VulkanImageCopy(device, staginImage, 0, image, mipLevel);
+	vulkanImageCopy(device, staginImage, 0, image, mipLevel);
 
 	// destroy handles
 	vmaDestroyImage(device.allocator, staginImage.image, staginImage.allocation);
 }
 
-// VulkanImageCopy
-void VulkanImageCopy(
+// vulkanImageCopy
+void vulkanImageCopy(
 	VulkanDevice& device,
 	VulkanImage&  imageSrc,
 	uint32_t      mipLevelSrc,
@@ -507,6 +517,7 @@ void VulkanImageCopy(
 	// check parameters
 	assert(mipLevelSrc < imageSrc.mipLevels);
 	assert(mipLevelDst < imageDst.mipLevels);
+	assert(imageSrc.currentLayouts[mipLevelSrc] != VK_IMAGE_LAYOUT_UNDEFINED);
 
 	// calculate mipmap sizes 
 	uint32_t scaleFactorSrc = (uint32_t)std::pow(2, mipLevelSrc);
@@ -556,20 +567,22 @@ void VulkanImageCopy(
 	imgMemBarrier.subresourceRange.layerCount = 1;
 
 	imgMemBarrier.subresourceRange.baseMipLevel = mipLevelSrc;
-	imgMemBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+	imgMemBarrier.srcAccessMask = 0;
 	imgMemBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-	imgMemBarrier.oldLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+	imgMemBarrier.oldLayout = imageSrc.currentLayouts[mipLevelSrc];
 	imgMemBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 	imgMemBarrier.image = imageSrc.image;
-	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
+	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
+	imageSrc.currentLayouts[mipLevelSrc] = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
 	imgMemBarrier.subresourceRange.baseMipLevel = mipLevelDst;
 	imgMemBarrier.srcAccessMask = 0;
 	imgMemBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	imgMemBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imgMemBarrier.oldLayout = imageDst.currentLayouts[mipLevelDst];
 	imgMemBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	imgMemBarrier.image = imageDst.image;
-	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
+	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
+	imageDst.currentLayouts[mipLevelDst] = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 	// VkImageCopy
 	VkImageCopy imageCopy{};
@@ -592,13 +605,23 @@ void VulkanImageCopy(
 	imageCopy.extent.depth = depthSrc;
 	vkCmdCopyImage(commandBuffer, imageSrc.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
 
+	imgMemBarrier.subresourceRange.baseMipLevel = mipLevelSrc;
+	imgMemBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	imgMemBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	imgMemBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	imgMemBarrier.newLayout = imageSrc.finalLayout;
+	imgMemBarrier.image = imageSrc.image;
+	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
+	imageSrc.currentLayouts[mipLevelSrc] = imageSrc.finalLayout;
+
 	imgMemBarrier.subresourceRange.baseMipLevel = mipLevelDst;
 	imgMemBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	imgMemBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	imgMemBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	imgMemBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imgMemBarrier.newLayout = imageDst.finalLayout;
 	imgMemBarrier.image = imageDst.image;
-	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
+	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
+	imageDst.currentLayouts[mipLevelDst] = imageDst.finalLayout;
 
 	// vkEndCommandBuffer
 	VKT_CHECK(vkEndCommandBuffer(commandBuffer));
@@ -616,16 +639,16 @@ void VulkanImageCopy(
 	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer);
 }
 
-// VulkanImageBuildMipmaps
-void VulkanImageBuildMipmaps(
+// vulkanImageBuildMipmaps
+void vulkanImageBuildMipmaps(
 	VulkanDevice& device,
 	VulkanImage& image)
 {
 	throw std::runtime_error("Not implemented");
 }
 
-// VulkanImageDestroy
-void VulkanImageDestroy(
+// vulkanImageDestroy
+void vulkanImageDestroy(
 	VulkanDevice& device,
 	VulkanImage& image)
 {
@@ -633,6 +656,7 @@ void VulkanImageDestroy(
 	vmaDestroyImage(device.allocator, image.image, image.allocation);
 	// clear handles
 	image.allocation = VK_NULL_HANDLE;
+	image.allocationInfo = {};
 	image.image = VK_NULL_HANDLE;
 	image.imageType = VK_IMAGE_TYPE_1D;
 	image.format = VK_FORMAT_UNDEFINED;
@@ -640,6 +664,8 @@ void VulkanImageDestroy(
 	image.height = 0;
 	image.depth = 0;
 	image.mipLevels = 0;
+	image.currentLayouts = {};
+	image.finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
 // vulkanBufferCreate

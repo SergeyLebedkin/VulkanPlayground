@@ -35,7 +35,6 @@ int main(void)
 	VulkanCommandBuffer commandBuffer{};
 	VulkanBuffer        bufferIndex{};
 	VulkanBuffer        bufferVertex{};
-	VulkanImage         image;
 	vulkanInstanceCreate(enabledInstanceLayerNames, enabledInstanceExtensionNames, &instance);
 	glfwCreateWindowSurface(instance.instance, window, NULL, &surface.surface);
 	vulkanDeviceCreate(instance, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, physicalDeviceFeatures, enabledDeviceExtensionNames, &device);
@@ -50,11 +49,21 @@ int main(void)
 	int width = 0, height = 0, channels = 0;
 	stbi_uc* texData = stbi_load("textures/texture.png", &width, &height, &channels, 4);
 
-	VulkanImageCreate(device, VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image);
-	VulkanImageWrite(device, image, 0, texData);
-	memset(texData, 101, width * height * channels);
-	VulkanImageRead(device, image, 1, texData);
-	VulkanImageDestroy(device, image);
+	VulkanImage image1{};
+	VulkanImage image2{};
+	vulkanImageCreate(device, VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image1);
+	vulkanImageCreate(device, VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image2);
+
+	vulkanImageWrite(device, image1, 0, texData);
+	vulkanImageWrite(device, image1, 1, texData);
+	memset(texData, 100, width * height * 4);
+	vulkanImageCopy(device, image1, 0, image2, 0);
+	vulkanImageCopy(device, image1, 1, image2, 1);
+	vulkanImageRead(device, image2, 0, texData);
+	vulkanImageRead(device, image2, 1, texData);
+
+	vulkanImageDestroy(device, image2);
+	vulkanImageDestroy(device, image1);
 
 	stbi_image_free(texData);
 

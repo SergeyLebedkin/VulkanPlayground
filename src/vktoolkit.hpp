@@ -43,6 +43,7 @@ typedef struct VulkanSurface {
 
 typedef struct VulkanSampler {
 	VkSampler sampler;
+	VkBool32  anisotropyEnable;
 } VulkanSampler;
 
 typedef struct VulkanImageView {
@@ -50,15 +51,17 @@ typedef struct VulkanImageView {
 } VulkanImageView;
 
 typedef struct VulkanImage {
-	VmaAllocation     allocation;
-	VmaAllocationInfo allocationInfo;
-	VkImage           image;
-	VkImageType       imageType;
-	VkFormat          format;
-	uint32_t          width;
-	uint32_t          height;
-	uint32_t          depth;
-	uint32_t          mipLevels;
+	VmaAllocation              allocation;
+	VmaAllocationInfo          allocationInfo;
+	VkImage                    image;
+	VkImageType                imageType;
+	VkFormat                   format;
+	uint32_t                   width;
+	uint32_t                   height;
+	uint32_t                   depth;
+	uint32_t                   mipLevels;
+	std::vector<VkImageLayout> currentLayouts;
+	VkImageLayout              finalLayout;
 } VulkanImage;
 
 typedef struct VulkanBuffer {
@@ -128,6 +131,7 @@ void vulkanSamplerCreate(
 	VulkanDevice&        device,
 	VkFilter             filter,
 	VkSamplerAddressMode samplerAddressMode,
+	VkBool32             anisotropyEnable,
 	VulkanSampler*       sampler
 );
 
@@ -148,7 +152,7 @@ void vulkanImageViewDestroy(
 	VulkanImageView& imageView
 );
 
-void VulkanImageCreate(
+void vulkanImageCreate(
 	VulkanDevice&     device,
 	VkImageUsageFlags usage,
 	VkFormat          format,
@@ -158,21 +162,21 @@ void VulkanImageCreate(
 	VulkanImage*      image
 );
 
-void VulkanImageRead(
+void vulkanImageRead(
 	VulkanDevice& device,
 	VulkanImage&  image,
 	uint32_t      mipLevel,
 	void*         data
 );
 
-void VulkanImageWrite(
+void vulkanImageWrite(
 	VulkanDevice& device,
 	VulkanImage&  image,
 	uint32_t      mipLevel,
 	const void*   data
 );
 
-void VulkanImageCopy(
+void vulkanImageCopy(
 	VulkanDevice& device,
 	VulkanImage&  imageSrc,
 	uint32_t      mipLevelSrc,
@@ -180,12 +184,12 @@ void VulkanImageCopy(
 	uint32_t      mipLevelDst
 );
 
-void VulkanImageBuildMipmaps(
+void vulkanImageBuildMipmaps(
 	VulkanDevice& device,
 	VulkanImage&  image
 );
 
-void VulkanImageDestroy(
+void vulkanImageDestroy(
 	VulkanDevice& device,
 	VulkanImage&  image
 );

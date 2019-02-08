@@ -44,8 +44,8 @@ int main(void)
 	vulkanSemaphoreCreate(device, &renderSemaphore);
 	vulkanSemaphoreCreate(device, &presentSemaphore);
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 413, &bufferVertex);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, 619, &bufferIndex);
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 413, &bufferVertex);
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 619, &bufferIndex);
 
 	// load image from file
 	int width = 0, height = 0, channels = 0;
@@ -61,10 +61,14 @@ int main(void)
 
 	memset(texData, 100, width * height * 4);
 	vulkanImageCopy(device, image1, 6, image2, 6);
-	vulkanImageRead(device, image2, 6, texData);
+	vulkanImageRead(device, image1, 0, texData);
 
 	vulkanImageDestroy(device, image2);
 	vulkanImageDestroy(device, image1);
+
+	vulkanBufferWrite(device, bufferVertex, 0, 100, texData);
+	memset(texData, 100, width * height * 4);
+	vulkanBufferRead(device, bufferVertex, 0, 100, texData);
 
 	stbi_image_free(texData);
 
@@ -80,7 +84,7 @@ int main(void)
 		commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
 		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
-		VKT_CHECK(vkBeginCommandBuffer(commandBuffer.ñommandBuffer, &commandBufferBeginInfo));
+		VKT_CHECK(vkBeginCommandBuffer(commandBuffer.commandBuffer, &commandBufferBeginInfo));
 
 		// VkClearValue
 		VkClearValue clearColors[2];
@@ -100,7 +104,7 @@ int main(void)
 		renderPassBeginInfo.pClearValues = clearColors;
 
 		// GO RENDER
-		vkCmdBeginRenderPass(commandBuffer.ñommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(commandBuffer.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		// VkViewport - viewport
 		VkViewport viewport{};
@@ -118,10 +122,10 @@ int main(void)
 		scissor.extent.width = swapchain.surfaceCapabilities.currentExtent.width;
 		scissor.extent.height = swapchain.surfaceCapabilities.currentExtent.height;
 
-		vkCmdEndRenderPass(commandBuffer.ñommandBuffer);
+		vkCmdEndRenderPass(commandBuffer.commandBuffer);
 
 		// vkEndCommandBuffer
-		VKT_CHECK(vkEndCommandBuffer(commandBuffer.ñommandBuffer));
+		VKT_CHECK(vkEndCommandBuffer(commandBuffer.commandBuffer));
 		
 		vulkanQueueSubmit(device, commandBuffer, &presentSemaphore, &renderSemaphore);
 		vulkanSwapchainEndFrame(device, swapchain, renderSemaphore, frameIndex);

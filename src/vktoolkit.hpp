@@ -76,7 +76,7 @@ typedef struct VulkanSemaphore {
 } VulkanSemaphore;
 
 typedef struct VulkanCommandBuffer {
-	VkCommandBuffer ñommandBuffer;
+	VkCommandBuffer commandBuffer;
 } VulkanCommandBuffer;
 
 typedef struct VulkanSwapchain {
@@ -205,7 +205,6 @@ void vulkanImageDestroy(
 void vulkanBufferCreate(
 	VulkanDevice&      device,
 	VkBufferUsageFlags usage,
-	VmaMemoryUsage     memoryUsage,
 	VkDeviceSize       size,
 	VulkanBuffer*      buffer
 );

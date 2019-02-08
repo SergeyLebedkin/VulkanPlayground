@@ -372,26 +372,26 @@ void vulkanImageRead(
 	uint32_t depth = std::max(1U, image.depth / scaleFactor);
 
 	// create staging image
-	VulkanImage staginImage{};
-	staginImage.allocation = VK_NULL_HANDLE;
-	staginImage.allocationInfo = {};
-	staginImage.image = VK_NULL_HANDLE;
-	staginImage.imageType = image.imageType;
-	staginImage.format = image.format;
-	staginImage.width = width;
-	staginImage.height = height;
-	staginImage.depth = depth;
-	staginImage.mipLevels = 1;
-	staginImage.accessFlags.resize(1, 0);
-	staginImage.imageLayouts.resize(1, VK_IMAGE_LAYOUT_UNDEFINED);
+	VulkanImage imageStaging{};
+	imageStaging.allocation = VK_NULL_HANDLE;
+	imageStaging.allocationInfo = {};
+	imageStaging.image = VK_NULL_HANDLE;
+	imageStaging.imageType = image.imageType;
+	imageStaging.format = image.format;
+	imageStaging.width = width;
+	imageStaging.height = height;
+	imageStaging.depth = depth;
+	imageStaging.mipLevels = 1;
+	imageStaging.accessFlags.resize(1, 0);
+	imageStaging.imageLayouts.resize(1, VK_IMAGE_LAYOUT_UNDEFINED);
 
 	// VkImageCreateInfo
 	VkImageCreateInfo imageCreateInfo{};
 	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageCreateInfo.pNext = VK_NULL_HANDLE;
 	imageCreateInfo.flags = 0;
-	imageCreateInfo.imageType = staginImage.imageType;
-	imageCreateInfo.format = staginImage.format;
+	imageCreateInfo.imageType = imageStaging.imageType;
+	imageCreateInfo.format = imageStaging.format;
 	imageCreateInfo.extent.width = width;
 	imageCreateInfo.extent.height = height;
 	imageCreateInfo.extent.depth = depth;
@@ -399,7 +399,7 @@ void vulkanImageRead(
 	imageCreateInfo.arrayLayers = 1;
 	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageCreateInfo.tiling = VK_IMAGE_TILING_LINEAR;
-	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	imageCreateInfo.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
 	imageCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
@@ -411,22 +411,55 @@ void vulkanImageRead(
 	allocCreateInfo.flags = 0;
 
 	// vmaCreateImage
-	VKT_CHECK(vmaCreateImage(device.allocator, &imageCreateInfo, &allocCreateInfo, &staginImage.image, &staginImage.allocation, &staginImage.allocationInfo));
-	assert(staginImage.image);
-	assert(staginImage.allocation);
+	VKT_CHECK(vmaCreateImage(device.allocator, &imageCreateInfo, &allocCreateInfo, &imageStaging.image, &imageStaging.allocation, &imageStaging.allocationInfo));
+	assert(imageStaging.image);
+	assert(imageStaging.allocation);
 
-	// flush data to image
-	vulkanImageCopy(device, image, mipLevel, staginImage, 0);
+	// create command buffer
+	VulkanCommandBuffer commandBuffer{};
+	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
+	vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	// change image layouts
+	vulkanImageSetLayout(commandBuffer, image, mipLevel, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	vulkanImageSetLayout(commandBuffer, imageStaging, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+	// VkImageCopy
+	VkImageCopy imageCopy{};
+	imageCopy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageCopy.srcSubresource.mipLevel = mipLevel;
+	imageCopy.srcSubresource.layerCount = 1;
+	imageCopy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageCopy.dstSubresource.mipLevel = 0;
+	imageCopy.dstSubresource.layerCount = 1;
+	imageCopy.extent.width = width;
+	imageCopy.extent.height = height;
+	imageCopy.extent.depth = depth;
+	vkCmdCopyImage(commandBuffer.commandBuffer, image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageStaging.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+
+	// change image layouts
+	vulkanImageSetLayout(commandBuffer, image, mipLevel, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	vulkanImageSetLayout(commandBuffer, imageStaging, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+	// vkEndCommandBuffer
+	vulkanCommandBufferEnd(commandBuffer);
+
+	// submit and wait
+	vulkanQueueSubmit(device, commandBuffer, nullptr, nullptr);
+	VKT_CHECK(vkQueueWaitIdle(device.queueGraphics));
+
+	// command buffer free
+	vulkanCommandBufferFree(device, commandBuffer);
 
 	// fill data to image
 	void* mappedData = nullptr;
-	VKT_CHECK(vmaMapMemory(device.allocator, staginImage.allocation, &mappedData));
+	VKT_CHECK(vmaMapMemory(device.allocator, imageStaging.allocation, &mappedData));
 	assert(mappedData);
-	memcpy(data, mappedData, (size_t)staginImage.allocationInfo.size);
-	vmaUnmapMemory(device.allocator, staginImage.allocation);
+	memcpy(data, mappedData, (size_t)imageStaging.allocationInfo.size);
+	vmaUnmapMemory(device.allocator, imageStaging.allocation);
 
 	// destroy handles
-	vmaDestroyImage(device.allocator, staginImage.image, staginImage.allocation);
+	vmaDestroyImage(device.allocator, imageStaging.image, imageStaging.allocation);
 }
 
 // vulkanImageWrite
@@ -520,7 +553,7 @@ void vulkanImageWrite(
 	imageCopy.extent.width = width;
 	imageCopy.extent.height = height;
 	imageCopy.extent.depth = depth;
-	vkCmdCopyImage(commandBuffer.ñommandBuffer, imageStaging.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+	vkCmdCopyImage(commandBuffer.commandBuffer, imageStaging.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
 
 	// change image layouts
 	vulkanImageSetLayout(commandBuffer, imageStaging, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
@@ -588,7 +621,7 @@ void vulkanImageCopy(
 	imageCopy.extent.width = widthSrc;
 	imageCopy.extent.height = heightSrc;
 	imageCopy.extent.depth = depthSrc;
-	vkCmdCopyImage(commandBuffer.ñommandBuffer, imageSrc.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+	vkCmdCopyImage(commandBuffer.commandBuffer, imageSrc.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
 
 	// change image layouts
 	vulkanImageSetLayout(commandBuffer, imageSrc, mipLevelSrc, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -640,7 +673,7 @@ void vulkanImageBuildMipmaps(
 		imageBlit.dstSubresource.mipLevel = mipLevel;
 		imageBlit.dstSubresource.baseArrayLayer = 0;
 		imageBlit.dstSubresource.layerCount = 1;
-		vkCmdBlitImage(commandBuffer.ñommandBuffer, image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_NEAREST);
+		vkCmdBlitImage(commandBuffer.commandBuffer, image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_NEAREST);
 
 		// change image layouts
 		vulkanImageSetLayout(commandBuffer, image, mipLevel - 1, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -689,7 +722,7 @@ void vulkanImageSetLayout(
 	imageMemoryBarrier.subresourceRange.levelCount = 1;
 	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
 	imageMemoryBarrier.subresourceRange.layerCount = 1;
-	vkCmdPipelineBarrier(commandBuffer.ñommandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+	vkCmdPipelineBarrier(commandBuffer.commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 	image.accessFlags[mipLevel] = accessFlags;
 	image.imageLayouts[mipLevel] = imageLayout;
 }
@@ -719,7 +752,6 @@ void vulkanImageDestroy(
 void vulkanBufferCreate(
 	VulkanDevice&      device,
 	VkBufferUsageFlags usage,
-	VmaMemoryUsage     memoryUsage,
 	VkDeviceSize       size,
 	VulkanBuffer*      buffer)
 {
@@ -742,7 +774,7 @@ void vulkanBufferCreate(
 
 	// VmaAllocationCreateInfo
 	VmaAllocationCreateInfo allocCreateInfo{};
-	allocCreateInfo.usage = memoryUsage;
+	allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 	allocCreateInfo.flags = 0;
 
 	// vmaCreateBuffer
@@ -762,39 +794,42 @@ void vulkanBufferRead(
 	// check data
 	assert(data);
 
-	// get memory buffer properties
-	VmaAllocationInfo allocationInfo{};
-	vmaGetAllocationInfo(device.allocator, buffer.allocation, &allocationInfo);
-	VkMemoryPropertyFlags memFlags{};
-	vmaGetMemoryTypeProperties(device.allocator, allocationInfo.memoryType, &memFlags);
+	// create staging buffer and memory
+	VulkanBuffer stagingBuffer{};
+	stagingBuffer.size = size;
 
-	// if target device memory is host visible, then just map/unmap memory to device memory
-	if ((memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
-		void* mappedData = nullptr;
-		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
-		assert(mappedData);
-		memcpy(data, (uint8_t *)mappedData + offset, (size_t)size);
-		vmaUnmapMemory(device.allocator, buffer.allocation);
-	}
-	else // if target device memory is NOT host visible, then we need use staging buffer
-	{
-		// create staging buffer and memory
-		VulkanBuffer stagingBuffer{};
-		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_GPU_TO_CPU, size, &stagingBuffer);
+	// VkBufferCreateInfo
+	VkBufferCreateInfo bufferCreateInfo{};
+	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferCreateInfo.pNext = VK_NULL_HANDLE;
+	bufferCreateInfo.size = size;
+	bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	bufferCreateInfo.queueFamilyIndexCount = 0;
+	bufferCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
 
-		// copy buffers
-		vulkanBufferCopy(device, buffer, offset, stagingBuffer, 0, size);
+	// VmaAllocationCreateInfo
+	VmaAllocationCreateInfo allocCreateInfo{};
+	allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_TO_CPU;
+	allocCreateInfo.flags = 0;
 
-		// map staging buffer and memory
-		void* mappedData = nullptr;
-		VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
-		assert(mappedData);
-		memcpy(data, mappedData, (size_t)size);
-		vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
+	// vmaCreateBuffer
+	VKT_CHECK(vmaCreateBuffer(device.allocator, &bufferCreateInfo, &allocCreateInfo, &stagingBuffer.buffer, &stagingBuffer.allocation, &stagingBuffer.allocationInfo));
+	assert(stagingBuffer.allocation);
+	assert(stagingBuffer.buffer);
 
-		// destroy buffer and free memory
-		vulkanBufferDestroy(device, stagingBuffer);
-	}
+	// copy buffers
+	vulkanBufferCopy(device, buffer, offset, stagingBuffer, 0, size);
+
+	// map staging buffer and memory
+	void* mappedData = nullptr;
+	VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
+	assert(mappedData);
+	memcpy(data, mappedData, (size_t)size);
+	vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
+
+	// destroy buffer and free memory
+	vmaDestroyBuffer(device.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 }
 
 // vulkanBufferWrite
@@ -808,39 +843,42 @@ void vulkanBufferWrite(
 	// check data
 	assert(data);
 
-	// get memory buffer properties
-	VmaAllocationInfo allocationInfo{};
-	vmaGetAllocationInfo(device.allocator, buffer.allocation, &allocationInfo);
-	VkMemoryPropertyFlags memFlags;
-	vmaGetMemoryTypeProperties(device.allocator, allocationInfo.memoryType, &memFlags);
+	// create staging buffer and memory
+	VulkanBuffer stagingBuffer{};
+	stagingBuffer.size = size;
 
-	// if target device memory is host visible, then just map/unmap memory to device memory
-	if ((memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
-		void* mappedData = nullptr;
-		VKT_CHECK(vmaMapMemory(device.allocator, buffer.allocation, &mappedData));
-		assert(mappedData);
-		memcpy((uint8_t *)mappedData + offset, data, (size_t)size);
-		vmaUnmapMemory(device.allocator, buffer.allocation);
-	}
-	else // if target device memory is NOT host visible, then we need use staging buffer
-	{
-		// create staging buffer and memory
-		VulkanBuffer stagingBuffer{};
-		vulkanBufferCreate(device, 0, VMA_MEMORY_USAGE_CPU_TO_GPU, size, &stagingBuffer);
+	// VkBufferCreateInfo
+	VkBufferCreateInfo bufferCreateInfo{};
+	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferCreateInfo.pNext = VK_NULL_HANDLE;
+	bufferCreateInfo.size = size;
+	bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	bufferCreateInfo.queueFamilyIndexCount = 0;
+	bufferCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
 
-		// map staging buffer and memory
-		void* mappedData = nullptr;
-		VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
-		assert(mappedData);
-		memcpy(mappedData, data, (size_t)size);
-		vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
+	// VmaAllocationCreateInfo
+	VmaAllocationCreateInfo allocCreateInfo{};
+	allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+	allocCreateInfo.flags = 0;
 
-		// copy buffers
-		vulkanBufferCopy(device, stagingBuffer, 0, buffer, offset, size);
+	// vmaCreateBuffer
+	VKT_CHECK(vmaCreateBuffer(device.allocator, &bufferCreateInfo, &allocCreateInfo, &stagingBuffer.buffer, &stagingBuffer.allocation, &stagingBuffer.allocationInfo));
+	assert(stagingBuffer.allocation);
+	assert(stagingBuffer.buffer);
 
-		// destroy buffer and free memory
-		vulkanBufferDestroy(device, stagingBuffer);
-	}
+	// map staging buffer and memory
+	void* mappedData = nullptr;
+	VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
+	assert(mappedData);
+	memcpy(mappedData, data, (size_t)size);
+	vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
+
+	// copy buffers
+	vulkanBufferCopy(device, stagingBuffer, 0, buffer, offset, size);
+
+	// destroy buffer and free memory
+	vmaDestroyBuffer(device.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 }
 
 // vulkanBufferCopy
@@ -852,46 +890,27 @@ void vulkanBufferCopy(
 	VkDeviceSize  offsetDst,
 	VkDeviceSize  size)
 {
-	// VkCommandBufferAllocateInfo
-	VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
-	VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
-	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	commandBufferAllocateInfo.pNext = VK_NULL_HANDLE;
-	commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	commandBufferAllocateInfo.commandPool = device.commandPool;
-	commandBufferAllocateInfo.commandBufferCount = 1;
-	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer));
-	assert(commandBuffer);
-
-	// VkCommandBufferBeginInfo
-	VkCommandBufferBeginInfo commandBufferBeginInfo{};
-	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
-	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
-	VKT_CHECK(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
+	// create command buffer
+	VulkanCommandBuffer commandBuffer{};
+	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
+	vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	// VkBufferCopy
 	VkBufferCopy bufferCopy{};
 	bufferCopy.srcOffset = offsetSrc;
 	bufferCopy.dstOffset = offsetDst;
 	bufferCopy.size = size;
-	vkCmdCopyBuffer(commandBuffer, bufferSrc.buffer, bufferDst.buffer, 1, &bufferCopy);
+	vkCmdCopyBuffer(commandBuffer.commandBuffer, bufferSrc.buffer, bufferDst.buffer, 1, &bufferCopy);
 
 	// vkEndCommandBuffer
-	VKT_CHECK(vkEndCommandBuffer(commandBuffer));
+	vulkanCommandBufferEnd(commandBuffer);
 
 	// submit and wait
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.pNext = VK_NULL_HANDLE;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-	VKT_CHECK(vkQueueSubmit(device.queueGraphics, 1, &submitInfo, VK_NULL_HANDLE));
+	vulkanQueueSubmit(device, commandBuffer, nullptr, nullptr);
 	VKT_CHECK(vkQueueWaitIdle(device.queueGraphics));
 
 	// free command buffer
-	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer);
+	vulkanCommandBufferFree(device, commandBuffer);
 }
 
 
@@ -922,8 +941,8 @@ void vulkanCommandBufferAllocate(
 	commandBufferAllocateInfo.commandPool = device.commandPool;
 	commandBufferAllocateInfo.level = commandBufferLevel;
 	commandBufferAllocateInfo.commandBufferCount = 1;
-	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer->ñommandBuffer));
-	assert(commandBuffer->ñommandBuffer);
+	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer->commandBuffer));
+	assert(commandBuffer->commandBuffer);
 }
 
 // vulkanCommandBufferBegin
@@ -938,14 +957,14 @@ void vulkanCommandBufferBegin(
 	commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
 	commandBufferBeginInfo.flags = flags;
 	commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
-	VKT_CHECK(vkBeginCommandBuffer(commandBuffer.ñommandBuffer, &commandBufferBeginInfo));
+	VKT_CHECK(vkBeginCommandBuffer(commandBuffer.commandBuffer, &commandBufferBeginInfo));
 }
 
 // vulkanCommandBufferEnd
 void vulkanCommandBufferEnd(
 	VulkanCommandBuffer& commandBuffer)
 {
-	VKT_CHECK(vkEndCommandBuffer(commandBuffer.ñommandBuffer));
+	VKT_CHECK(vkEndCommandBuffer(commandBuffer.commandBuffer));
 }
 
 // vulkanCommandBufferFree
@@ -954,9 +973,9 @@ void vulkanCommandBufferFree(
 	VulkanCommandBuffer& commandBuffer)
 {
 	// free handles
-	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer.ñommandBuffer);
+	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer.commandBuffer);
 	// clear handles
-	commandBuffer.ñommandBuffer = VK_NULL_HANDLE;
+	commandBuffer.commandBuffer = VK_NULL_HANDLE;
 }
 
 // vulkanSemaphoreCreate
@@ -1364,7 +1383,7 @@ void vulkanQueueSubmit(
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.pWaitDstStageMask = &waitDstStageMask;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer.ñommandBuffer;
+	submitInfo.pCommandBuffers = &commandBuffer.commandBuffer;
 	// setup wait semaphore
 	if (waitSemaphore != nullptr) {
 		submitInfo.waitSemaphoreCount = 1;

@@ -315,9 +315,10 @@ void vulkanImageCreate(
 	image->height = height;
 	image->depth = depth;
 	image->mipLevels = mipLevels;
-	image->currentLayouts.clear();
-	image->currentLayouts.resize(mipLevels, VK_IMAGE_LAYOUT_UNDEFINED);
-	image->finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	image->accessFlags.clear();
+	image->accessFlags.resize(mipLevels, 0);
+	image->imageLayouts.clear();
+	image->imageLayouts.resize(mipLevels, VK_IMAGE_LAYOUT_UNDEFINED);
 
 	// VkImageCreateInfo
 	VkImageCreateInfo imageCreateInfo{};
@@ -381,8 +382,8 @@ void vulkanImageRead(
 	staginImage.height = height;
 	staginImage.depth = depth;
 	staginImage.mipLevels = 1;
-	staginImage.currentLayouts.resize(1, VK_IMAGE_LAYOUT_UNDEFINED);
-	staginImage.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	staginImage.accessFlags.resize(1, 0);
+	staginImage.imageLayouts.resize(1, VK_IMAGE_LAYOUT_UNDEFINED);
 
 	// VkImageCreateInfo
 	VkImageCreateInfo imageCreateInfo{};
@@ -449,26 +450,26 @@ void vulkanImageWrite(
 	uint32_t depth = std::max(1U, image.depth / scaleFactor);
 
 	// create staging image
-	VulkanImage staginImage{};
-	staginImage.allocation = VK_NULL_HANDLE;
-	staginImage.image = VK_NULL_HANDLE;
-	staginImage.allocationInfo = {};
-	staginImage.imageType = image.imageType;
-	staginImage.format = image.format;
-	staginImage.width = width;
-	staginImage.height = height;
-	staginImage.depth = depth;
-	staginImage.mipLevels = 1;
-	staginImage.currentLayouts.resize(1, VK_IMAGE_LAYOUT_PREINITIALIZED);
-	staginImage.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	VulkanImage imageStaging{};
+	imageStaging.allocation = VK_NULL_HANDLE;
+	imageStaging.image = VK_NULL_HANDLE;
+	imageStaging.allocationInfo = {};
+	imageStaging.imageType = image.imageType;
+	imageStaging.format = image.format;
+	imageStaging.width = width;
+	imageStaging.height = height;
+	imageStaging.depth = depth;
+	imageStaging.mipLevels = 1;
+	imageStaging.accessFlags.resize(1, 0);
+	imageStaging.imageLayouts.resize(1, VK_IMAGE_LAYOUT_PREINITIALIZED);
 
 	// VkImageCreateInfo
 	VkImageCreateInfo imageCreateInfo{};
 	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageCreateInfo.pNext = VK_NULL_HANDLE;
 	imageCreateInfo.flags = 0;
-	imageCreateInfo.imageType = staginImage.imageType;
-	imageCreateInfo.format = staginImage.format;
+	imageCreateInfo.imageType = imageStaging.imageType;
+	imageCreateInfo.format = imageStaging.format;
 	imageCreateInfo.extent.width = width;
 	imageCreateInfo.extent.height = height;
 	imageCreateInfo.extent.depth = depth;
@@ -488,22 +489,55 @@ void vulkanImageWrite(
 	allocCreateInfo.flags = 0;
 
 	// vmaCreateImage
-	VKT_CHECK(vmaCreateImage(device.allocator, &imageCreateInfo, &allocCreateInfo, &staginImage.image, &staginImage.allocation, &staginImage.allocationInfo));
-	assert(staginImage.image);
-	assert(staginImage.allocation);
+	VKT_CHECK(vmaCreateImage(device.allocator, &imageCreateInfo, &allocCreateInfo, &imageStaging.image, &imageStaging.allocation, &imageStaging.allocationInfo));
+	assert(imageStaging.image);
+	assert(imageStaging.allocation);
 
 	// fill data to image
 	void* mappedData = nullptr;
-	VKT_CHECK(vmaMapMemory(device.allocator, staginImage.allocation, &mappedData));
+	VKT_CHECK(vmaMapMemory(device.allocator, imageStaging.allocation, &mappedData));
 	assert(mappedData);
-	memcpy(mappedData, data, (size_t)staginImage.allocationInfo.size);
-	vmaUnmapMemory(device.allocator, staginImage.allocation);
+	memcpy(mappedData, data, (size_t)imageStaging.allocationInfo.size);
+	vmaUnmapMemory(device.allocator, imageStaging.allocation);
 
-	// flush data to image
-	vulkanImageCopy(device, staginImage, 0, image, mipLevel);
+	// create command buffer
+	VulkanCommandBuffer commandBuffer{};
+	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
+	vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	// change image layouts
+	vulkanImageSetLayout(commandBuffer, imageStaging, 0, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	vulkanImageSetLayout(commandBuffer, image, mipLevel, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+	// VkImageCopy
+	VkImageCopy imageCopy{};
+	imageCopy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageCopy.srcSubresource.mipLevel = 0;
+	imageCopy.srcSubresource.layerCount = 1;
+	imageCopy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageCopy.dstSubresource.mipLevel = mipLevel;
+	imageCopy.dstSubresource.layerCount = 1;
+	imageCopy.extent.width = width;
+	imageCopy.extent.height = height;
+	imageCopy.extent.depth = depth;
+	vkCmdCopyImage(commandBuffer.ñommandBuffer, imageStaging.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+
+	// change image layouts
+	vulkanImageSetLayout(commandBuffer, imageStaging, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	vulkanImageSetLayout(commandBuffer, image, mipLevel, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	// vkEndCommandBuffer
+	vulkanCommandBufferEnd(commandBuffer);
+
+	// submit and wait
+	vulkanQueueSubmit(device, commandBuffer, nullptr, nullptr);
+	VKT_CHECK(vkQueueWaitIdle(device.queueGraphics));
+
+	// command buffer free
+	vulkanCommandBufferFree(device, commandBuffer);
 
 	// destroy handles
-	vmaDestroyImage(device.allocator, staginImage.image, staginImage.allocation);
+	vmaDestroyImage(device.allocator, imageStaging.image, imageStaging.allocation);
 }
 
 // vulkanImageCopy
@@ -517,7 +551,7 @@ void vulkanImageCopy(
 	// check parameters
 	assert(mipLevelSrc < imageSrc.mipLevels);
 	assert(mipLevelDst < imageDst.mipLevels);
-	assert(imageSrc.currentLayouts[mipLevelSrc] != VK_IMAGE_LAYOUT_UNDEFINED);
+	assert(imageSrc.imageLayouts[mipLevelSrc] != VK_IMAGE_LAYOUT_UNDEFINED);
 
 	// calculate mipmap sizes 
 	uint32_t scaleFactorSrc = (uint32_t)std::pow(2, mipLevelSrc);
@@ -534,123 +568,136 @@ void vulkanImageCopy(
 	assert(heightSrc == heightDst);
 	assert(depthSrc == depthDst);
 
-	// VkCommandBufferAllocateInfo
-	VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
-	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	commandBufferAllocateInfo.pNext = VK_NULL_HANDLE;
-	commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	commandBufferAllocateInfo.commandPool = device.commandPool;
-	commandBufferAllocateInfo.commandBufferCount = 1;
+	// create command buffer
+	VulkanCommandBuffer commandBuffer{};
+	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
+	vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	// VkCommandBuffer
-	VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
-	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer));
-	assert(commandBuffer);
-
-	// VkCommandBufferBeginInfo
-	VkCommandBufferBeginInfo commandBufferBeginInfo{};
-	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
-	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
-	VKT_CHECK(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
-
-	// VkImageMemoryBarrier
-	VkImageMemoryBarrier imgMemBarrier{};
-	imgMemBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imgMemBarrier.pNext = VK_NULL_HANDLE;
-	imgMemBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	imgMemBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	imgMemBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imgMemBarrier.subresourceRange.levelCount = 1;
-	imgMemBarrier.subresourceRange.baseArrayLayer = 0;
-	imgMemBarrier.subresourceRange.layerCount = 1;
-
-	imgMemBarrier.subresourceRange.baseMipLevel = mipLevelSrc;
-	imgMemBarrier.srcAccessMask = 0;
-	imgMemBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-	imgMemBarrier.oldLayout = imageSrc.currentLayouts[mipLevelSrc];
-	imgMemBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-	imgMemBarrier.image = imageSrc.image;
-	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
-	imageSrc.currentLayouts[mipLevelSrc] = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-
-	imgMemBarrier.subresourceRange.baseMipLevel = mipLevelDst;
-	imgMemBarrier.srcAccessMask = 0;
-	imgMemBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	imgMemBarrier.oldLayout = imageDst.currentLayouts[mipLevelDst];
-	imgMemBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	imgMemBarrier.image = imageDst.image;
-	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
-	imageDst.currentLayouts[mipLevelDst] = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	// change image layouts
+	vulkanImageSetLayout(commandBuffer, imageSrc, mipLevelSrc, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	vulkanImageSetLayout(commandBuffer, imageDst, mipLevelDst, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	// VkImageCopy
 	VkImageCopy imageCopy{};
 	imageCopy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	imageCopy.srcSubresource.mipLevel = mipLevelSrc;
-	imageCopy.srcSubresource.baseArrayLayer = 0;
 	imageCopy.srcSubresource.layerCount = 1;
-	imageCopy.srcOffset.x = 0;
-	imageCopy.srcOffset.y = 0;
-	imageCopy.srcOffset.z = 0;
 	imageCopy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	imageCopy.dstSubresource.mipLevel = mipLevelDst;
-	imageCopy.dstSubresource.baseArrayLayer = 0;
 	imageCopy.dstSubresource.layerCount = 1;
-	imageCopy.dstOffset.x = 0;
-	imageCopy.dstOffset.y = 0;
-	imageCopy.dstOffset.z = 0;
 	imageCopy.extent.width = widthSrc;
 	imageCopy.extent.height = heightSrc;
 	imageCopy.extent.depth = depthSrc;
-	vkCmdCopyImage(commandBuffer, imageSrc.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+	vkCmdCopyImage(commandBuffer.ñommandBuffer, imageSrc.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDst.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
 
-	imgMemBarrier.subresourceRange.baseMipLevel = mipLevelSrc;
-	imgMemBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	imgMemBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	imgMemBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-	imgMemBarrier.newLayout = imageSrc.finalLayout;
-	imgMemBarrier.image = imageSrc.image;
-	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
-	imageSrc.currentLayouts[mipLevelSrc] = imageSrc.finalLayout;
-
-	imgMemBarrier.subresourceRange.baseMipLevel = mipLevelDst;
-	imgMemBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	imgMemBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	imgMemBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	imgMemBarrier.newLayout = imageDst.finalLayout;
-	imgMemBarrier.image = imageDst.image;
-	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
-	imageDst.currentLayouts[mipLevelDst] = imageDst.finalLayout;
+	// change image layouts
+	vulkanImageSetLayout(commandBuffer, imageSrc, mipLevelSrc, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	vulkanImageSetLayout(commandBuffer, imageDst, mipLevelDst, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	// vkEndCommandBuffer
-	VKT_CHECK(vkEndCommandBuffer(commandBuffer));
+	vulkanCommandBufferEnd(commandBuffer);
 
 	// submit and wait
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.pNext = VK_NULL_HANDLE;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-	VKT_CHECK(vkQueueSubmit(device.queueGraphics, 1, &submitInfo, VK_NULL_HANDLE));
+	vulkanQueueSubmit(device, commandBuffer, nullptr, nullptr);
 	VKT_CHECK(vkQueueWaitIdle(device.queueGraphics));
 
 	// free command buffer
-	vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer);
+	vulkanCommandBufferFree(device, commandBuffer);
 }
 
 // vulkanImageBuildMipmaps
 void vulkanImageBuildMipmaps(
 	VulkanDevice& device,
-	VulkanImage& image)
+	VulkanImage&  image)
 {
-	throw std::runtime_error("Not implemented");
+	// check parameters
+	assert(image.imageLayouts[0] != VK_IMAGE_LAYOUT_UNDEFINED);
+
+	// create command buffer
+	VulkanCommandBuffer commandBuffer{};
+	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
+	vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	int32_t width = image.width;
+	int32_t height = image.height;
+	int32_t depth = image.depth;
+	for (uint32_t mipLevel = 1; mipLevel < image.mipLevels; mipLevel++) {
+		// change image layouts
+		vulkanImageSetLayout(commandBuffer, image, mipLevel - 1, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		vulkanImageSetLayout(commandBuffer, image, mipLevel - 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		// VkImageBlit
+		VkImageBlit imageBlit = {};
+		imageBlit.srcOffsets[0] = { 0, 0, 0 };
+		imageBlit.srcOffsets[1] = { width, height, depth };
+		imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageBlit.srcSubresource.mipLevel = mipLevel - 1;
+		imageBlit.srcSubresource.baseArrayLayer = 0;
+		imageBlit.srcSubresource.layerCount = 1;
+		imageBlit.dstOffsets[0] = { 0, 0, 0 };
+		imageBlit.dstOffsets[1] = { std::max(1, width / 2), std::max(1, height / 2), std::max(1, depth / 2) };
+		imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageBlit.dstSubresource.mipLevel = mipLevel;
+		imageBlit.dstSubresource.baseArrayLayer = 0;
+		imageBlit.dstSubresource.layerCount = 1;
+		vkCmdBlitImage(commandBuffer.ñommandBuffer, image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_NEAREST);
+
+		// change image layouts
+		vulkanImageSetLayout(commandBuffer, image, mipLevel - 1, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		vulkanImageSetLayout(commandBuffer, image, mipLevel - 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		// get next mipmap level extent
+		width = std::max(1, width / 2);
+		height = std::max(1, height / 2);
+		depth = std::max(1, depth / 2);
+	}
+
+	// vkEndCommandBuffer
+	vulkanCommandBufferEnd(commandBuffer);
+
+	// submit and wait
+	vulkanQueueSubmit(device, commandBuffer, nullptr, nullptr);
+	VKT_CHECK(vkQueueWaitIdle(device.queueGraphics));
+
+	// free command buffer
+	vulkanCommandBufferFree(device, commandBuffer);
+}
+
+// vulkanImageSetLayout
+void vulkanImageSetLayout(
+	VulkanCommandBuffer& commandBuffer,
+	VulkanImage&         image,
+	uint32_t             mipLevel,
+	VkAccessFlags        accessFlags,
+	VkImageLayout        imageLayout)
+{
+	// check parameters
+	assert(mipLevel < image.mipLevels);
+	// VkImageMemoryBarrier
+	VkImageMemoryBarrier imageMemoryBarrier{};
+	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imageMemoryBarrier.pNext = VK_NULL_HANDLE;
+	imageMemoryBarrier.srcAccessMask = image.accessFlags[mipLevel];
+	imageMemoryBarrier.dstAccessMask = accessFlags;
+	imageMemoryBarrier.oldLayout = image.imageLayouts[mipLevel];
+	imageMemoryBarrier.newLayout = imageLayout;
+	imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	imageMemoryBarrier.image = image.image;
+	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageMemoryBarrier.subresourceRange.baseMipLevel = mipLevel;
+	imageMemoryBarrier.subresourceRange.levelCount = 1;
+	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
+	imageMemoryBarrier.subresourceRange.layerCount = 1;
+	vkCmdPipelineBarrier(commandBuffer.ñommandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+	image.accessFlags[mipLevel] = accessFlags;
+	image.imageLayouts[mipLevel] = imageLayout;
 }
 
 // vulkanImageDestroy
 void vulkanImageDestroy(
 	VulkanDevice& device,
-	VulkanImage& image)
+	VulkanImage&  image)
 {
 	// destroy handles
 	vmaDestroyImage(device.allocator, image.image, image.allocation);
@@ -664,17 +711,17 @@ void vulkanImageDestroy(
 	image.height = 0;
 	image.depth = 0;
 	image.mipLevels = 0;
-	image.currentLayouts = {};
-	image.finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	image.accessFlags = {};
+	image.imageLayouts = {};
 }
 
 // vulkanBufferCreate
 void vulkanBufferCreate(
-	VulkanDevice& device,
+	VulkanDevice&      device,
 	VkBufferUsageFlags usage,
-	VmaMemoryUsage memoryUsage,
-	VkDeviceSize size,
-	VulkanBuffer* buffer)
+	VmaMemoryUsage     memoryUsage,
+	VkDeviceSize       size,
+	VulkanBuffer*      buffer)
 {
 	// check size
 	assert(size);
@@ -708,8 +755,8 @@ void vulkanBufferCreate(
 void vulkanBufferRead(
 	VulkanDevice& device,
 	VulkanBuffer& buffer,
-	VkDeviceSize offset,
-	VkDeviceSize size,
+	VkDeviceSize  offset,
+	VkDeviceSize  size,
 	void* data)
 {
 	// check data
@@ -754,9 +801,9 @@ void vulkanBufferRead(
 void vulkanBufferWrite(
 	VulkanDevice& device,
 	VulkanBuffer& buffer,
-	VkDeviceSize offset,
-	VkDeviceSize size,
-	const void* data)
+	VkDeviceSize  offset,
+	VkDeviceSize  size,
+	const void*   data)
 {
 	// check data
 	assert(data);
@@ -803,7 +850,7 @@ void vulkanBufferCopy(
 	VkDeviceSize  offsetSrc,
 	VulkanBuffer& bufferDst,
 	VkDeviceSize  offsetDst,
-	VkDeviceSize size)
+	VkDeviceSize  size)
 {
 	// VkCommandBufferAllocateInfo
 	VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
@@ -877,6 +924,28 @@ void vulkanCommandBufferAllocate(
 	commandBufferAllocateInfo.commandBufferCount = 1;
 	VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer->ñommandBuffer));
 	assert(commandBuffer->ñommandBuffer);
+}
+
+// vulkanCommandBufferBegin
+void vulkanCommandBufferBegin(
+	VulkanDevice& device,
+	VulkanCommandBuffer& commandBuffer,
+	VkCommandBufferUsageFlags flags)
+{
+	// VkCommandBufferBeginInfo
+	VkCommandBufferBeginInfo commandBufferBeginInfo{};
+	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
+	commandBufferBeginInfo.flags = flags;
+	commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
+	VKT_CHECK(vkBeginCommandBuffer(commandBuffer.ñommandBuffer, &commandBufferBeginInfo));
+}
+
+// vulkanCommandBufferEnd
+void vulkanCommandBufferEnd(
+	VulkanCommandBuffer& commandBuffer)
+{
+	VKT_CHECK(vkEndCommandBuffer(commandBuffer.ñommandBuffer));
 }
 
 // vulkanCommandBufferFree
@@ -1284,21 +1353,27 @@ uint32_t vulkanFindQueueFamilyPropertiesByFlags(
 
 // vulkanQueueSubmit
 void vulkanQueueSubmit(
-	VulkanDevice& device,
+	VulkanDevice&        device,
 	VulkanCommandBuffer& commandBuffer,
-	VulkanSemaphore& waitSemaphore,
-	VulkanSemaphore& signalSemaphore)
+	VulkanSemaphore*     waitSemaphore,
+	VulkanSemaphore*     signalSemaphore)
 {
 	// VkSubmitInfo
 	VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &waitSemaphore.semaphore;
-	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &signalSemaphore.semaphore;
 	submitInfo.pWaitDstStageMask = &waitDstStageMask;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer.ñommandBuffer;
+	// setup wait semaphore
+	if (waitSemaphore != nullptr) {
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &waitSemaphore->semaphore;
+	}
+	// setup signal semaphore
+	if (signalSemaphore != nullptr) {
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &signalSemaphore->semaphore;
+	}
 	VKT_CHECK(vkQueueSubmit(device.queueGraphics, 1, &submitInfo, VK_NULL_HANDLE));
 }

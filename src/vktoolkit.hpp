@@ -60,8 +60,8 @@ typedef struct VulkanImage {
 	uint32_t                   height;
 	uint32_t                   depth;
 	uint32_t                   mipLevels;
-	std::vector<VkImageLayout> currentLayouts;
-	VkImageLayout              finalLayout;
+	std::vector<VkAccessFlags> accessFlags;
+	std::vector<VkImageLayout> imageLayouts;
 } VulkanImage;
 
 typedef struct VulkanBuffer {
@@ -189,6 +189,14 @@ void vulkanImageBuildMipmaps(
 	VulkanImage&  image
 );
 
+void vulkanImageSetLayout(
+	VulkanCommandBuffer& commandBuffer,
+	VulkanImage&         image,
+	uint32_t             mipLevel,
+	VkAccessFlags        accessFlags,
+	VkImageLayout        imageLayout
+);
+
 void vulkanImageDestroy(
 	VulkanDevice& device,
 	VulkanImage&  image
@@ -236,6 +244,16 @@ void vulkanCommandBufferAllocate(
 	VulkanDevice&        device,
 	VkCommandBufferLevel commandBufferLevel,
 	VulkanCommandBuffer* commandBuffer
+);
+
+void vulkanCommandBufferBegin(
+	VulkanDevice&             device,
+	VulkanCommandBuffer&      commandBuffer,
+	VkCommandBufferUsageFlags flags
+);
+
+void vulkanCommandBufferEnd(
+	VulkanCommandBuffer& commandBuffer
 );
 
 void vulkanCommandBufferFree(
@@ -308,6 +326,6 @@ uint32_t vulkanFindQueueFamilyPropertiesByFlags(
 void vulkanQueueSubmit(
 	VulkanDevice&        device,
 	VulkanCommandBuffer& commandBuffer,
-	VulkanSemaphore&     waitSemaphore,
-	VulkanSemaphore&     signalSemaphore
+	VulkanSemaphore*     waitSemaphore,
+	VulkanSemaphore*     signalSemaphore
 );

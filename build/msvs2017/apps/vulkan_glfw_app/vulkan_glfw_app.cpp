@@ -6,7 +6,9 @@
 #include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 int main(void)
 {
@@ -55,12 +57,11 @@ int main(void)
 	vulkanImageCreate(device, VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image2);
 
 	vulkanImageWrite(device, image1, 0, texData);
-	vulkanImageWrite(device, image1, 1, texData);
+	vulkanImageBuildMipmaps(device, image1);
+
 	memset(texData, 100, width * height * 4);
-	vulkanImageCopy(device, image1, 0, image2, 0);
-	vulkanImageCopy(device, image1, 1, image2, 1);
-	vulkanImageRead(device, image2, 0, texData);
-	vulkanImageRead(device, image2, 1, texData);
+	vulkanImageCopy(device, image1, 6, image2, 6);
+	vulkanImageRead(device, image2, 6, texData);
 
 	vulkanImageDestroy(device, image2);
 	vulkanImageDestroy(device, image1);
@@ -107,7 +108,7 @@ int main(void)
 		viewport.y = (float)swapchain.surfaceCapabilities.currentExtent.height;
 		viewport.width = (float)swapchain.surfaceCapabilities.currentExtent.width;
 		viewport.height = -(float)swapchain.surfaceCapabilities.currentExtent.height;
-		viewport.minDepth = 0.5f;
+		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 
 		// VkRect2D - scissor
@@ -122,7 +123,7 @@ int main(void)
 		// vkEndCommandBuffer
 		VKT_CHECK(vkEndCommandBuffer(commandBuffer.ñommandBuffer));
 		
-		vulkanQueueSubmit(device, commandBuffer, presentSemaphore, renderSemaphore);
+		vulkanQueueSubmit(device, commandBuffer, &presentSemaphore, &renderSemaphore);
 		vulkanSwapchainEndFrame(device, swapchain, renderSemaphore, frameIndex);
 		glfwPollEvents();
 	}

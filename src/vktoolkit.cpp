@@ -243,7 +243,6 @@ void vulkanSamplerDestroy(
 // vulkanImageCreate
 void vulkanImageCreate(
 	VulkanDevice& device,
-	VkImageUsageFlags usage,
 	VkFormat format,
 	uint32_t width,
 	uint32_t height,
@@ -287,7 +286,7 @@ void vulkanImageCreate(
 	imageCreateInfo.arrayLayers = 1;
 	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | usage;
+	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	imageCreateInfo.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
 	imageCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
@@ -339,7 +338,7 @@ void vulkanImageRead(
 	assert(data);
 
 	// calculate mipmap sizes 
-	uint32_t scaleFactor = (uint32_t)std::pow(2, mipLevel);
+	uint32_t scaleFactor = 1U << mipLevel;
 	uint32_t width = std::max(1U, image.width / scaleFactor);
 	uint32_t height = std::max(1U, image.height / scaleFactor);
 	uint32_t depth = std::max(1U, image.depth / scaleFactor);
@@ -451,7 +450,7 @@ void vulkanImageWrite(
 	assert(data);
 
 	// calculate mipmap sizes 
-	uint32_t scaleFactor = (uint32_t)std::pow(2, mipLevel);
+	uint32_t scaleFactor = 1U << mipLevel;
 	uint32_t width = std::max(1U, image.width / scaleFactor);
 	uint32_t height = std::max(1U, image.height / scaleFactor);
 	uint32_t depth = std::max(1U, image.depth / scaleFactor);
@@ -562,8 +561,8 @@ void vulkanImageCopy(
 	assert(imageSrc.imageLayouts[mipLevelSrc] != VK_IMAGE_LAYOUT_UNDEFINED);
 
 	// calculate mipmap sizes 
-	uint32_t scaleFactorSrc = (uint32_t)std::pow(2, mipLevelSrc);
-	uint32_t scaleFactorDst = (uint32_t)std::pow(2, mipLevelDst);
+	uint32_t scaleFactorSrc = 1U << mipLevelSrc;
+	uint32_t scaleFactorDst = 1U << mipLevelDst;
 	uint32_t widthSrc = std::max(1U, imageSrc.width / scaleFactorSrc);
 	uint32_t widthDst = std::max(1U, imageDst.width / scaleFactorDst);
 	uint32_t heightSrc = std::max(1U, imageSrc.height / scaleFactorSrc);
@@ -626,24 +625,30 @@ void vulkanImageBuildMipmaps(
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 	vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	int32_t width = image.width;
-	int32_t height = image.height;
-	int32_t depth = image.depth;
+	// set mipmap level 0 to transfer source optimap
+	vulkanImageSetLayout(commandBuffer, image, 0, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+	// copy levels
 	for (uint32_t mipLevel = 1; mipLevel < image.mipLevels; mipLevel++) {
+		// get next mipmap level extent
+		int32_t scaleFactor = 1U << mipLevel;
+		int32_t width = std::max(1U, image.width / scaleFactor);
+		int32_t height = std::max(1U, image.height / scaleFactor);
+		int32_t depth = std::max(1U, image.depth / scaleFactor);
+
 		// change image layouts
-		vulkanImageSetLayout(commandBuffer, image, mipLevel - 1, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-		vulkanImageSetLayout(commandBuffer, image, mipLevel - 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		vulkanImageSetLayout(commandBuffer, image, mipLevel, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		// VkImageBlit
 		VkImageBlit imageBlit = {};
 		imageBlit.srcOffsets[0] = { 0, 0, 0 };
-		imageBlit.srcOffsets[1] = { width, height, depth };
+		imageBlit.srcOffsets[1] = { (int32_t)image.width, (int32_t)image.height, (int32_t)image.depth };
 		imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageBlit.srcSubresource.mipLevel = mipLevel - 1;
+		imageBlit.srcSubresource.mipLevel = 0;
 		imageBlit.srcSubresource.baseArrayLayer = 0;
 		imageBlit.srcSubresource.layerCount = 1;
 		imageBlit.dstOffsets[0] = { 0, 0, 0 };
-		imageBlit.dstOffsets[1] = { std::max(1, width / 2), std::max(1, height / 2), std::max(1, depth / 2) };
+		imageBlit.dstOffsets[1] = { width, height, depth };
 		imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageBlit.dstSubresource.mipLevel = mipLevel;
 		imageBlit.dstSubresource.baseArrayLayer = 0;
@@ -651,14 +656,11 @@ void vulkanImageBuildMipmaps(
 		vkCmdBlitImage(commandBuffer.commandBuffer, image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_NEAREST);
 
 		// change image layouts
-		vulkanImageSetLayout(commandBuffer, image, mipLevel - 1, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		vulkanImageSetLayout(commandBuffer, image, mipLevel - 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-		// get next mipmap level extent
-		width = std::max(1, width / 2);
-		height = std::max(1, height / 2);
-		depth = std::max(1, depth / 2);
+		vulkanImageSetLayout(commandBuffer, image, mipLevel, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
+
+	// set mipmap level 0 to shader read optimal
+	vulkanImageSetLayout(commandBuffer, image, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	// vkEndCommandBuffer
 	vulkanCommandBufferEnd(commandBuffer);

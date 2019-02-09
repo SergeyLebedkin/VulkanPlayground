@@ -49,20 +49,32 @@ int main(void)
 
 	VulkanImage image1{};
 	VulkanImage image2{};
-	vulkanImageCreate(device, VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image1);
-	vulkanImageCreate(device, VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image2);
+	VulkanSampler sampler{};
+	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image1);
+	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image2);
+	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, &sampler);
 
 	vulkanImageWrite(device, image1, 0, texData);
 	vulkanImageBuildMipmaps(device, image1);
 
 	memset(texData, 100, width * height * 4);
-	vulkanImageCopy(device, image1, 6, image2, 6);
-	vulkanImageRead(device, image1, 0, texData);
+	vulkanImageCopy(device, image1, 0, image2, 0);
+	vulkanImageCopy(device, image1, 1, image2, 1);
+	vulkanImageCopy(device, image1, 2, image2, 2);
+	vulkanImageCopy(device, image1, 3, image2, 3);
 
+	vulkanImageRead(device, image2, 0, texData);
+	stbi_write_png("textures/texture_0.png", width / 1, height / 1, 4, texData, 0);
+	vulkanImageRead(device, image2, 1, texData);
+	stbi_write_png("textures/texture_1.png", width / 2, height / 2, 4, texData, 0);
+	vulkanImageRead(device, image2, 2, texData);
+	stbi_write_png("textures/texture_2.png", width / 4, height / 4, 4, texData, 0);
+	vulkanImageRead(device, image2, 3, texData);
+	stbi_write_png("textures/texture_3.png", width / 8, height / 8, 4, texData, 0);
+
+	vulkanSamplerDestroy(device, sampler);
 	vulkanImageDestroy(device, image2);
 	vulkanImageDestroy(device, image1);
-
-	stbi_image_free(texData);
 
 	VulkanBuffer        bufferIndex{};
 	VulkanBuffer        bufferVertex{};
@@ -75,6 +87,8 @@ int main(void)
 
 	vulkanBufferDestroy(device, bufferIndex);
 	vulkanBufferDestroy(device, bufferVertex);
+
+	stbi_image_free(texData);
 
 	// main loop
 	while (!glfwWindowShouldClose(window))

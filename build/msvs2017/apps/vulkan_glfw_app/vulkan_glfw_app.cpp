@@ -63,6 +63,12 @@ int main(void)
 	for (uint32_t i = 0; i < image1.mipLevels; i++)
 		vulkanImageCopy(device, image1, i, image2, i);
 
+	for (uint32_t i = 0; i < image1.mipLevels; i++) {
+		const std::string fileName = "textures/texture_" + std::to_string(i) + ".png";
+		vulkanImageRead(device, image2, i, texData);
+		stbi_write_png(fileName.data(), width >> i, height >> i, 4, texData, 0);
+	}
+
 	vulkanSamplerDestroy(device, sampler);
 	vulkanImageDestroy(device, image2);
 	vulkanImageDestroy(device, image1);

@@ -338,10 +338,9 @@ void vulkanImageRead(
 	assert(data);
 
 	// calculate mipmap sizes 
-	uint32_t scaleFactor = 1U << mipLevel;
-	uint32_t width = std::max(1U, image.width / scaleFactor);
-	uint32_t height = std::max(1U, image.height / scaleFactor);
-	uint32_t depth = std::max(1U, image.depth / scaleFactor);
+	uint32_t width = std::max(1U, image.width >> mipLevel);
+	uint32_t height = std::max(1U, image.height >> mipLevel);
+	uint32_t depth = std::max(1U, image.depth >> mipLevel);
 
 	// create staging image
 	VulkanImage imageStaging{};
@@ -450,10 +449,9 @@ void vulkanImageWrite(
 	assert(data);
 
 	// calculate mipmap sizes 
-	uint32_t scaleFactor = 1U << mipLevel;
-	uint32_t width = std::max(1U, image.width / scaleFactor);
-	uint32_t height = std::max(1U, image.height / scaleFactor);
-	uint32_t depth = std::max(1U, image.depth / scaleFactor);
+	uint32_t width = std::max(1U, image.width >> mipLevel);
+	uint32_t height = std::max(1U, image.height >> mipLevel);
+	uint32_t depth = std::max(1U, image.depth >> mipLevel);
 
 	// create staging image
 	VulkanImage imageStaging{};
@@ -561,14 +559,12 @@ void vulkanImageCopy(
 	assert(imageSrc.imageLayouts[mipLevelSrc] != VK_IMAGE_LAYOUT_UNDEFINED);
 
 	// calculate mipmap sizes 
-	uint32_t scaleFactorSrc = 1U << mipLevelSrc;
-	uint32_t scaleFactorDst = 1U << mipLevelDst;
-	uint32_t widthSrc = std::max(1U, imageSrc.width / scaleFactorSrc);
-	uint32_t widthDst = std::max(1U, imageDst.width / scaleFactorDst);
-	uint32_t heightSrc = std::max(1U, imageSrc.height / scaleFactorSrc);
-	uint32_t heightDst = std::max(1U, imageDst.height / scaleFactorDst);
-	uint32_t depthSrc = std::max(1U, imageSrc.depth / scaleFactorSrc);
-	uint32_t depthDst = std::max(1U, imageDst.depth / scaleFactorDst);
+	uint32_t widthSrc = std::max(1U, imageSrc.width >> mipLevelSrc);
+	uint32_t widthDst = std::max(1U, imageDst.width >> mipLevelDst);
+	uint32_t heightSrc = std::max(1U, imageSrc.height >> mipLevelSrc);
+	uint32_t heightDst = std::max(1U, imageDst.height >> mipLevelDst);
+	uint32_t depthSrc = std::max(1U, imageSrc.depth >> mipLevelSrc);
+	uint32_t depthDst = std::max(1U, imageDst.depth >> mipLevelDst);
 
 	// check parameters
 	assert(widthSrc == widthDst);
@@ -631,10 +627,9 @@ void vulkanImageBuildMipmaps(
 	// copy levels
 	for (uint32_t mipLevel = 1; mipLevel < image.mipLevels; mipLevel++) {
 		// get next mipmap level extent
-		int32_t scaleFactor = 1U << mipLevel;
-		int32_t width = std::max(1U, image.width / scaleFactor);
-		int32_t height = std::max(1U, image.height / scaleFactor);
-		int32_t depth = std::max(1U, image.depth / scaleFactor);
+		int32_t width = std::max(1U, image.width >> mipLevel);
+		int32_t height = std::max(1U, image.height >> mipLevel);
+		int32_t depth = std::max(1U, image.depth >> mipLevel);
 
 		// change image layouts
 		vulkanImageSetLayout(commandBuffer, image, mipLevel, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);

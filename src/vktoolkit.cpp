@@ -710,6 +710,7 @@ void vulkanImageDestroy(
 	VulkanImage&  image)
 {
 	// destroy handles
+	vkDestroyImageView(device.device, image.imageView, VK_NULL_HANDLE);
 	vmaDestroyImage(device.allocator, image.image, image.allocation);
 	// clear handles
 	image.allocation = VK_NULL_HANDLE;

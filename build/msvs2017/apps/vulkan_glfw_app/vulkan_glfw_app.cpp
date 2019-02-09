@@ -7,8 +7,11 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#pragma warning(push)
+#pragma warning(disable: 4996)
 #include <stb_image.h>
 #include <stb_image_write.h>
+#pragma warning(pop)
 
 int main(void)
 {
@@ -57,11 +60,8 @@ int main(void)
 	vulkanImageWrite(device, image1, 0, texData);
 	vulkanImageBuildMipmaps(device, image1);
 
-	memset(texData, 100, width * height * 4);
-	vulkanImageCopy(device, image1, 0, image2, 0);
-	vulkanImageCopy(device, image1, 1, image2, 1);
-	vulkanImageCopy(device, image1, 2, image2, 2);
-	vulkanImageCopy(device, image1, 3, image2, 3);
+	for (uint32_t i = 0; i < image1.mipLevels; i++)
+		vulkanImageCopy(device, image1, i, image2, i);
 
 	vulkanImageRead(device, image2, 0, texData);
 	stbi_write_png("textures/texture_0.png", width / 1, height / 1, 4, texData, 0);

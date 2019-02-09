@@ -349,6 +349,7 @@ void vulkanImageRead(
 	imageStaging.allocation = VK_NULL_HANDLE;
 	imageStaging.allocationInfo = {};
 	imageStaging.image = VK_NULL_HANDLE;
+	imageStaging.imageView = VK_NULL_HANDLE;
 	imageStaging.imageType = image.imageType;
 	imageStaging.format = image.format;
 	imageStaging.width = width;
@@ -458,8 +459,9 @@ void vulkanImageWrite(
 	// create staging image
 	VulkanImage imageStaging{};
 	imageStaging.allocation = VK_NULL_HANDLE;
-	imageStaging.image = VK_NULL_HANDLE;
 	imageStaging.allocationInfo = {};
+	imageStaging.image = VK_NULL_HANDLE;
+	imageStaging.imageView = VK_NULL_HANDLE;
 	imageStaging.imageType = image.imageType;
 	imageStaging.format = image.format;
 	imageStaging.width = width;
@@ -711,6 +713,7 @@ void vulkanImageDestroy(
 	image.allocation = VK_NULL_HANDLE;
 	image.allocationInfo = {};
 	image.image = VK_NULL_HANDLE;
+	image.imageView = VK_NULL_HANDLE;
 	image.imageType = VK_IMAGE_TYPE_1D;
 	image.format = VK_FORMAT_UNDEFINED;
 	image.width = 0;

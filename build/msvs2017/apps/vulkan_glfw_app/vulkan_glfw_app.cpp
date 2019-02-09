@@ -4,6 +4,7 @@
 #include <iostream>
 #include <chrono>
 #include <string>
+#include <algorithm>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -63,11 +64,11 @@ int main(void)
 	for (uint32_t i = 0; i < image1.mipLevels; i++)
 		vulkanImageCopy(device, image1, i, image2, i);
 
-	for (uint32_t i = 0; i < image1.mipLevels; i++) {
-		const std::string fileName = "textures/texture_" + std::to_string(i) + ".png";
-		vulkanImageRead(device, image2, i, texData);
-		stbi_write_png(fileName.data(), width >> i, height >> i, 4, texData, 0);
-	}
+// 	for (uint32_t i = 0; i < image1.mipLevels; i++) {
+// 		const std::string fileName = "textures/texture_" + std::to_string(i) + ".png";
+// 		vulkanImageRead(device, image2, i, texData);
+// 		stbi_write_png(fileName.data(), std::max(1, width >> i), std::max(1, height >> i), 4, texData, 0);
+// 	}
 
 	vulkanSamplerDestroy(device, sampler);
 	vulkanImageDestroy(device, image2);

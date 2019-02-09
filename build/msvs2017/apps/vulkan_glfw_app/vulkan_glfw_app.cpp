@@ -63,15 +63,6 @@ int main(void)
 	for (uint32_t i = 0; i < image1.mipLevels; i++)
 		vulkanImageCopy(device, image1, i, image2, i);
 
-	vulkanImageRead(device, image2, 0, texData);
-	stbi_write_png("textures/texture_0.png", width / 1, height / 1, 4, texData, 0);
-	vulkanImageRead(device, image2, 1, texData);
-	stbi_write_png("textures/texture_1.png", width / 2, height / 2, 4, texData, 0);
-	vulkanImageRead(device, image2, 2, texData);
-	stbi_write_png("textures/texture_2.png", width / 4, height / 4, 4, texData, 0);
-	vulkanImageRead(device, image2, 3, texData);
-	stbi_write_png("textures/texture_3.png", width / 8, height / 8, 4, texData, 0);
-
 	vulkanSamplerDestroy(device, sampler);
 	vulkanImageDestroy(device, image2);
 	vulkanImageDestroy(device, image1);

@@ -35,8 +35,6 @@ int main(void)
 	VulkanSemaphore     renderSemaphore{};
 	VulkanSemaphore     presentSemaphore{};
 	VulkanCommandBuffer commandBuffer{};
-	VulkanBuffer        bufferIndex{};
-	VulkanBuffer        bufferVertex{};
 	vulkanInstanceCreate(enabledInstanceLayerNames, enabledInstanceExtensionNames, &instance);
 	glfwCreateWindowSurface(instance.instance, window, NULL, &surface.surface);
 	vulkanDeviceCreate(instance, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, physicalDeviceFeatures, enabledDeviceExtensionNames, &device);
@@ -44,8 +42,6 @@ int main(void)
 	vulkanSemaphoreCreate(device, &renderSemaphore);
 	vulkanSemaphoreCreate(device, &presentSemaphore);
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 413, &bufferVertex);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 619, &bufferIndex);
 
 	// load image from file
 	int width = 0, height = 0, channels = 0;
@@ -66,11 +62,19 @@ int main(void)
 	vulkanImageDestroy(device, image2);
 	vulkanImageDestroy(device, image1);
 
+	stbi_image_free(texData);
+
+	VulkanBuffer        bufferIndex{};
+	VulkanBuffer        bufferVertex{};
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 413, &bufferVertex);
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 619, &bufferIndex);
+
 	vulkanBufferWrite(device, bufferVertex, 0, 100, texData);
 	memset(texData, 100, width * height * 4);
 	vulkanBufferRead(device, bufferVertex, 0, 100, texData);
 
-	stbi_image_free(texData);
+	vulkanBufferDestroy(device, bufferIndex);
+	vulkanBufferDestroy(device, bufferVertex);
 
 	// main loop
 	while (!glfwWindowShouldClose(window))
@@ -133,8 +137,6 @@ int main(void)
 	}
 
 	// destroy vulkan
-	vulkanBufferDestroy(device, bufferIndex);
-	vulkanBufferDestroy(device, bufferVertex);
 	vulkanCommandBufferFree(device, commandBuffer);
 	vulkanSemaphoreDestroy(device, presentSemaphore);
 	vulkanSemaphoreDestroy(device, renderSemaphore);

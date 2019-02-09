@@ -46,14 +46,11 @@ typedef struct VulkanSampler {
 	VkBool32  anisotropyEnable;
 } VulkanSampler;
 
-typedef struct VulkanImageView {
-	VkImageView imageView;
-} VulkanImageView;
-
 typedef struct VulkanImage {
 	VmaAllocation              allocation;
 	VmaAllocationInfo          allocationInfo;
 	VkImage                    image;
+	VkImageView                imageView;
 	VkImageType                imageType;
 	VkFormat                   format;
 	uint32_t                   width;
@@ -138,18 +135,6 @@ void vulkanSamplerCreate(
 void vulkanSamplerDestroy(
 	VulkanDevice&  device,
 	VulkanSampler& sampler
-);
-
-void vulkanImageViewCreate(
-	VulkanDevice&    device,
-	VulkanImage&     image,
-	VkFormat         format,
-	VulkanImageView* imageView
-);
-
-void vulkanImageViewDestroy(
-	VulkanDevice&    device,
-	VulkanImageView& imageView
 );
 
 void vulkanImageCreate(

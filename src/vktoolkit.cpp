@@ -240,54 +240,6 @@ void vulkanSamplerDestroy(
 	sampler.sampler = VK_NULL_HANDLE;
 }
 
-// vulkanImageViewCreate
-void vulkanImageViewCreate(
-	VulkanDevice& device,
-	VulkanImage& image,
-	VkFormat format,
-	VulkanImageView* imageView)
-{
-	// check handles
-	assert(imageView);
-
-	// get image view type
-	VkImageViewType imageViewType =
-		image.depth > 1 ? VK_IMAGE_VIEW_TYPE_3D : 
-		image.height > 1 ? VK_IMAGE_VIEW_TYPE_2D : 
-		VK_IMAGE_VIEW_TYPE_1D;
-
-	// VkImageViewCreateInfo
-	VkImageViewCreateInfo imageViewCreateInfo{};
-	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	imageViewCreateInfo.pNext = VK_NULL_HANDLE;
-	imageViewCreateInfo.flags = 0;
-	imageViewCreateInfo.image = image.image;
-	imageViewCreateInfo.viewType = imageViewType;
-	imageViewCreateInfo.format = format;
-	imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-	imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-	imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-	imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-	imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-	imageViewCreateInfo.subresourceRange.levelCount = image.mipLevels;
-	imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-	imageViewCreateInfo.subresourceRange.layerCount = 1;
-	VKT_CHECK(vkCreateImageView(device.device, &imageViewCreateInfo, VK_NULL_HANDLE, &imageView->imageView));
-	assert(imageView->imageView);
-}
-
-// vulkanImageViewDestroy
-void vulkanImageViewDestroy(
-	VulkanDevice& device, 
-	VulkanImageView& imageView)
-{
-	// destroy handles
-	vkDestroyImageView(device.device, imageView.imageView, VK_NULL_HANDLE);
-	// clear handles
-	imageView.imageView = VK_NULL_HANDLE;
-}
-
 // vulkanImageCreate
 void vulkanImageCreate(
 	VulkanDevice& device,
@@ -307,6 +259,7 @@ void vulkanImageCreate(
 	// get mipmap levels count and image type
 	uint32_t mipLevels = (uint32_t)std::floor(std::log2(std::max(width, std::max(height, depth)))) + 1;
 	VkImageType imageType = depth > 1 ? VK_IMAGE_TYPE_3D : height > 1 ? VK_IMAGE_TYPE_2D : VK_IMAGE_TYPE_1D;
+	VkImageViewType imageViewType = depth > 1 ? VK_IMAGE_VIEW_TYPE_3D : height > 1 ? VK_IMAGE_VIEW_TYPE_2D : VK_IMAGE_VIEW_TYPE_1D;
 
 	// store properties
 	image->imageType = imageType;
@@ -349,6 +302,26 @@ void vulkanImageCreate(
 	VKT_CHECK(vmaCreateImage(device.allocator, &imageCreateInfo, &allocCreateInfo, &image->image, &image->allocation, &image->allocationInfo));
 	assert(image->allocation);
 	assert(image->image);
+
+	// VkImageViewCreateInfo
+	VkImageViewCreateInfo imageViewCreateInfo{};
+	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	imageViewCreateInfo.pNext = VK_NULL_HANDLE;
+	imageViewCreateInfo.flags = 0;
+	imageViewCreateInfo.image = image->image;
+	imageViewCreateInfo.viewType = imageViewType;
+	imageViewCreateInfo.format = image->format;
+	imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+	imageViewCreateInfo.subresourceRange.levelCount = image->mipLevels;
+	imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+	imageViewCreateInfo.subresourceRange.layerCount = 1;
+	VKT_CHECK(vkCreateImageView(device.device, &imageViewCreateInfo, VK_NULL_HANDLE, &image->imageView));
+	assert(image->imageView);
 }
 
 // vulkanImageRead
@@ -503,9 +476,9 @@ void vulkanImageWrite(
 	imageCreateInfo.flags = 0;
 	imageCreateInfo.imageType = imageStaging.imageType;
 	imageCreateInfo.format = imageStaging.format;
-	imageCreateInfo.extent.width = width;
-	imageCreateInfo.extent.height = height;
-	imageCreateInfo.extent.depth = depth;
+	imageCreateInfo.extent.width = imageStaging.width;
+	imageCreateInfo.extent.height = imageStaging.height;
+	imageCreateInfo.extent.depth = imageStaging.depth;
 	imageCreateInfo.mipLevels = 1;
 	imageCreateInfo.arrayLayers = 1;
 	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -1038,14 +1011,14 @@ void vulkanSwapchainCreate(
 	swapchainCreateInfoKHR.imageArrayLayers = 1;
 	swapchainCreateInfoKHR.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	swapchainCreateInfoKHR.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	swapchainCreateInfoKHR.queueFamilyIndexCount = 0;
+	swapchainCreateInfoKHR.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
 	swapchainCreateInfoKHR.pQueueFamilyIndices = VK_NULL_HANDLE;
 	swapchainCreateInfoKHR.preTransform = swapchain->surfaceCapabilities.currentTransform;
 	swapchainCreateInfoKHR.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	swapchainCreateInfoKHR.presentMode = swapchain->presentMode;
 	swapchainCreateInfoKHR.clipped = VK_TRUE;
 	swapchainCreateInfoKHR.oldSwapchain = VK_NULL_HANDLE;
-	VKT_CHECK(vkCreateSwapchainKHR(device.device, &swapchainCreateInfoKHR, nullptr, &swapchain->swapchain));
+	VKT_CHECK(vkCreateSwapchainKHR(device.device, &swapchainCreateInfoKHR, VK_NULL_HANDLE, &swapchain->swapchain));
 	assert(swapchain->swapchain);
 
 	// VkAttachmentDescription - color
@@ -1056,7 +1029,7 @@ void vulkanSwapchainCreate(
 	attachmentDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
 	attachmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -1065,8 +1038,8 @@ void vulkanSwapchainCreate(
 	attachmentDescriptions[1].format = VK_FORMAT_D24_UNORM_S8_UINT;
 	attachmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
 	attachmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;

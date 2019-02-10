@@ -29,7 +29,7 @@ int main(void)
 
 	// VkPhysicalDeviceFeatures
 	VkPhysicalDeviceFeatures physicalDeviceFeatures{};
-	physicalDeviceFeatures.wideLines = VK_TRUE;
+	physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
 
 	// init vulkan
 	VulkanInstance      instance{};
@@ -56,7 +56,7 @@ int main(void)
 	VulkanSampler sampler{};
 	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image1);
 	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image2);
-	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, &sampler);
+	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE, &sampler);
 
 	vulkanImageWrite(device, image1, 0, texData);
 	vulkanImageBuildMipmaps(device, image1);

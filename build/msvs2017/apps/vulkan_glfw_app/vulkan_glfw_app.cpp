@@ -29,6 +29,7 @@ int main(void)
 
 	// VkPhysicalDeviceFeatures
 	VkPhysicalDeviceFeatures physicalDeviceFeatures{};
+	physicalDeviceFeatures.depthBounds = VK_TRUE;
 	physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
 
 	// init vulkan
@@ -39,6 +40,7 @@ int main(void)
 	VulkanSemaphore     renderSemaphore{};
 	VulkanSemaphore     presentSemaphore{};
 	VulkanCommandBuffer commandBuffer{};
+	VulkanPipeline      pipeline{};
 	vulkanInstanceCreate(enabledInstanceLayerNames, enabledInstanceExtensionNames, &instance);
 	glfwCreateWindowSurface(instance.instance, window, NULL, &surface.surface);
 	vulkanDeviceCreate(instance, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, physicalDeviceFeatures, enabledDeviceExtensionNames, &device);
@@ -46,6 +48,44 @@ int main(void)
 	vulkanSemaphoreCreate(device, &renderSemaphore);
 	vulkanSemaphoreCreate(device, &presentSemaphore);
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
+
+	// VkVertexInputBindingDescription
+	VkVertexInputBindingDescription vertexBindingDescriptions[] {
+		{ 0, 10 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX },
+	};
+
+	// VkVertexInputAttributeDescription
+	VkVertexInputAttributeDescription vertexInputAttributeDescriptions[] {
+		{ 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT,  0 }, // position
+		{ 1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 16 }, // color
+		{ 2, 0, VK_FORMAT_R32G32_SFLOAT      , 32 }, // texCoord
+	};
+
+	// VkDescriptorSetLayoutBinding
+	VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[] {
+		{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // texture
+		{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1, VK_SHADER_STAGE_VERTEX_BIT  , VK_NULL_HANDLE }, // buffer
+	};
+
+	// VkPipelineColorBlendAttachmentState
+	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[] {
+		{ // first attachement
+			VK_FALSE,
+			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
+			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
+			VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+		}
+	};
+
+	// create pipeline
+	vulkanPipelineCreate(device, swapchain.renderPass, 0,
+		"shaders/base.vert.spv", "shaders/base.frag.spv",
+		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions), vertexBindingDescriptions,
+		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions), vertexInputAttributeDescriptions,
+		VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings), descriptorSetLayoutBindings,
+		VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates), pipelineColorBlendAttachmentStates,
+		&pipeline
+	);
 
 	// load image from file
 	int width = 0, height = 0, channels = 0;
@@ -93,15 +133,8 @@ int main(void)
 	{
 		uint32_t frameIndex = 0;
 		vulkanSwapchainBeginFrame(device, swapchain, presentSemaphore, &frameIndex);
+		vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		
-		// VkCommandBufferBeginInfo
-		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
-		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
-		VKT_CHECK(vkBeginCommandBuffer(commandBuffer.commandBuffer, &commandBufferBeginInfo));
-
 		// VkClearValue
 		VkClearValue clearColors[2];
 		clearColors[0].color = { 0.0f, 0.125f, 0.3f, 1.0f };
@@ -119,9 +152,6 @@ int main(void)
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearColors;
 
-		// GO RENDER
-		vkCmdBeginRenderPass(commandBuffer.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
 		// VkViewport - viewport
 		VkViewport viewport{};
 		viewport.x = 0.0f;
@@ -138,6 +168,15 @@ int main(void)
 		scissor.extent.width = swapchain.surfaceCapabilities.currentExtent.width;
 		scissor.extent.height = swapchain.surfaceCapabilities.currentExtent.height;
 
+		// GO RENDER
+		vkCmdBeginRenderPass(commandBuffer.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		vkCmdSetViewport(commandBuffer.commandBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(commandBuffer.commandBuffer, 0, 1, &scissor);
+		vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+		vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &pipeline.descriptorSet, 0, VK_NULL_HANDLE);
+
+		// END RENDER
 		vkCmdEndRenderPass(commandBuffer.commandBuffer);
 
 		// vkEndCommandBuffer
@@ -149,6 +188,7 @@ int main(void)
 	}
 
 	// destroy vulkan
+	vulkanPipelineDestroy(device, pipeline);
 	vulkanCommandBufferFree(device, commandBuffer);
 	vulkanSemaphoreDestroy(device, presentSemaphore);
 	vulkanSemaphoreDestroy(device, renderSemaphore);

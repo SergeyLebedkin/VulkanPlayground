@@ -14,6 +14,59 @@
 #include <stb_image_write.h>
 #pragma warning(pop)
 
+// loadImageFromFile
+void loadImageFromFile(VulkanDevice& device, VulkanImage& image, const char* fileName)
+{
+	int width = 0, height = 0, channels = 0;
+	stbi_uc* texData = stbi_load(fileName, &width, &height, &channels, 4);
+	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image);
+	vulkanImageWrite(device, image, 0, texData);
+	vulkanImageBuildMipmaps(device, image);
+	stbi_image_free(texData);
+}
+
+// createPipeline_OBJ
+void createPipeline_OBJ(VulkanDevice& device, VkRenderPass renderPass, VulkanPipeline& pipeline)
+{
+	// VkVertexInputBindingDescription
+	VkVertexInputBindingDescription vertexBindingDescriptions[]{
+		{ 0, 10 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX },
+	};
+
+	// VkVertexInputAttributeDescription
+	VkVertexInputAttributeDescription vertexInputAttributeDescriptions[]{
+		{ 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT,  0 }, // position
+	{ 1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 16 }, // color
+	{ 2, 0, VK_FORMAT_R32G32_SFLOAT      , 32 }, // texCoord
+	};
+
+	// VkDescriptorSetLayoutBinding
+	VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[]{
+		{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // texture
+	{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1, VK_SHADER_STAGE_VERTEX_BIT  , VK_NULL_HANDLE }, // buffer
+	};
+
+	// VkPipelineColorBlendAttachmentState
+	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[]{
+		{ // first attachement
+			VK_FALSE,
+			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
+			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
+			VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+		}
+	};
+
+	// create pipeline
+	vulkanPipelineCreate(device, renderPass, 0,
+		"shaders/base.vert.spv", "shaders/base.frag.spv",
+		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions), vertexBindingDescriptions,
+		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions), vertexInputAttributeDescriptions,
+		VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings), descriptorSetLayoutBindings,
+		VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates), pipelineColorBlendAttachmentStates,
+		&pipeline);
+}
+
+// main
 int main(void)
 {
 	// init GLFW
@@ -40,7 +93,6 @@ int main(void)
 	VulkanSemaphore     renderSemaphore{};
 	VulkanSemaphore     presentSemaphore{};
 	VulkanCommandBuffer commandBuffer{};
-	VulkanPipeline      pipeline{};
 	vulkanInstanceCreate(enabledInstanceLayerNames, enabledInstanceExtensionNames, &instance);
 	glfwCreateWindowSurface(instance.instance, window, NULL, &surface.surface);
 	vulkanDeviceCreate(instance, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, physicalDeviceFeatures, enabledDeviceExtensionNames, &device);
@@ -49,84 +101,31 @@ int main(void)
 	vulkanSemaphoreCreate(device, &presentSemaphore);
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 
-	// VkVertexInputBindingDescription
-	VkVertexInputBindingDescription vertexBindingDescriptions[] {
-		{ 0, 10 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX },
-	};
-
-	// VkVertexInputAttributeDescription
-	VkVertexInputAttributeDescription vertexInputAttributeDescriptions[] {
-		{ 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT,  0 }, // position
-		{ 1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 16 }, // color
-		{ 2, 0, VK_FORMAT_R32G32_SFLOAT      , 32 }, // texCoord
-	};
-
-	// VkDescriptorSetLayoutBinding
-	VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[] {
-		{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // texture
-		{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1, VK_SHADER_STAGE_VERTEX_BIT  , VK_NULL_HANDLE }, // buffer
-	};
-
-	// VkPipelineColorBlendAttachmentState
-	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[] {
-		{ // first attachement
-			VK_FALSE,
-			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
-			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
-			VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
-		}
-	};
-
 	// create pipeline
-	vulkanPipelineCreate(device, swapchain.renderPass, 0,
-		"shaders/base.vert.spv", "shaders/base.frag.spv",
-		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions), vertexBindingDescriptions,
-		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions), vertexInputAttributeDescriptions,
-		VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings), descriptorSetLayoutBindings,
-		VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates), pipelineColorBlendAttachmentStates,
-		&pipeline
-	);
+	VulkanPipeline  pipeline{};
+	createPipeline_OBJ(device, swapchain.renderPass, pipeline);
 
-	// load image from file
-	int width = 0, height = 0, channels = 0;
-	stbi_uc* texData = stbi_load("textures/texture.png", &width, &height, &channels, 4);
+	// create texture
+	VulkanImage image{};
+	loadImageFromFile(device, image, "textures/texture.png");
+	vulkanImageDestroy(device, image);
 
-	VulkanImage image1{};
-	VulkanImage image2{};
+	// create sampler
 	VulkanSampler sampler{};
-	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image1);
-	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UINT, width, height, 1, &image2);
 	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE, &sampler);
-
-	vulkanImageWrite(device, image1, 0, texData);
-	vulkanImageBuildMipmaps(device, image1);
-
-	for (uint32_t i = 0; i < image1.mipLevels; i++)
-		vulkanImageCopy(device, image1, i, image2, i);
-
-// 	for (uint32_t i = 0; i < image1.mipLevels; i++) {
-// 		const std::string fileName = "textures/texture_" + std::to_string(i) + ".png";
-// 		vulkanImageRead(device, image2, i, texData);
-// 		stbi_write_png(fileName.data(), std::max(1, width >> i), std::max(1, height >> i), 4, texData, 0);
-// 	}
-
 	vulkanSamplerDestroy(device, sampler);
-	vulkanImageDestroy(device, image2);
-	vulkanImageDestroy(device, image1);
 
-	VulkanBuffer        bufferIndex{};
-	VulkanBuffer        bufferVertex{};
+	// create buffers
+	VulkanBuffer bufferIndex{};
+	VulkanBuffer bufferVertex{};
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 413, &bufferVertex);
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 619, &bufferIndex);
-
-	vulkanBufferWrite(device, bufferVertex, 0, 100, texData);
-	memset(texData, 100, width * height * 4);
-	vulkanBufferRead(device, bufferVertex, 0, 100, texData);
-
+	uint32_t dataVertex[1024];
+	uint32_t dataIndex[1024];
+	vulkanBufferWrite(device, bufferVertex, 0, 100, dataVertex);
+	vulkanBufferWrite(device, bufferIndex, 0, 100, dataIndex);
 	vulkanBufferDestroy(device, bufferIndex);
 	vulkanBufferDestroy(device, bufferVertex);
-
-	stbi_image_free(texData);
 
 	// main loop
 	while (!glfwWindowShouldClose(window))

@@ -1,6 +1,8 @@
 #include <vktoolkit.hpp>
 #include <GLFW/glfw3.h>
 #include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 #include <tiny_obj_loader.h>
 #include <iostream>
 #include <chrono>
@@ -233,7 +235,7 @@ int main(void)
 	VulkanPipeline  pipeline_default{};
 	createPipeline_obj(device, swapchain.renderPass, pipeline_obj);
 	createPipeline_default(device, swapchain.renderPass, pipeline_default);
-
+	
 	// create texture
 	VulkanImage image{};
 	loadImageFromFile(device, image, "textures/texture.png");
@@ -256,6 +258,22 @@ int main(void)
 	VulkanBuffer bufferTex{};
 	VulkanBuffer bufferNrm{};
 	loadMesh_obj(device, bufferPos, bufferTex, bufferNrm, vertexCount, "models/tea.obj", "models");
+
+	// matrices
+	float aspect = (float)swapchain.surfaceCapabilities.currentExtent.width / swapchain.surfaceCapabilities.currentExtent.height;
+	glm::mat4 matModl = glm::scale(glm::mat4(1.0f), glm::vec3(0.125f, 0.125f, 0.125f));
+	glm::mat4 matView = glm::lookAt(
+		glm::vec3(0.0f, 4.0f, 7.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.f);
+
+	// buffer matrices
+	VulkanBuffer bufferMatrices{};
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4) * 3, &bufferMatrices);
+ 	vulkanBufferWrite(device, bufferMatrices, sizeof(glm::mat4) * 0, sizeof(glm::mat4), &matModl);
+ 	vulkanBufferWrite(device, bufferMatrices, sizeof(glm::mat4) * 1, sizeof(glm::mat4), &matView);
+ 	vulkanBufferWrite(device, bufferMatrices, sizeof(glm::mat4) * 2, sizeof(glm::mat4), &matProj);
 
 	// main loop
 	while (!glfwWindowShouldClose(window))
@@ -309,18 +327,19 @@ int main(void)
 		// draw obj
 		VkBuffer buffers[]{ bufferPos.buffer, bufferTex.buffer, bufferNrm.buffer };
 		vulkanPipelineBindImage(device, pipeline_obj, image, sampler, 0);
+		vulkanPipelineBindBufferUniform(device, pipeline_obj, bufferMatrices, 1);
 		vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_obj.pipeline);
 		vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_obj.pipelineLayout, 0, 1, &pipeline_obj.descriptorSet, 0, VK_NULL_HANDLE);
 		vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 3, buffers, offsets);
 		vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
 
-		// draw simple quad
-		vulkanPipelineBindImage(device, pipeline_default, image, sampler, 0);
-		vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_default.pipeline);
-		vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_default.pipelineLayout, 0, 1, &pipeline_default.descriptorSet, 0, VK_NULL_HANDLE);
-		vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 1, &bufferVertex.buffer, offsets);
-		vkCmdBindIndexBuffer(commandBuffer.commandBuffer, bufferIndex.buffer, 0, VK_INDEX_TYPE_UINT16);
-		vkCmdDrawIndexed(commandBuffer.commandBuffer, VKT_ARRAY_ELEMENTS_COUNT(indexes), 1, 0, 0, 0);
+// 		// draw simple quad
+// 		vulkanPipelineBindImage(device, pipeline_default, image, sampler, 0);
+// 		vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_default.pipeline);
+// 		vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_default.pipelineLayout, 0, 1, &pipeline_default.descriptorSet, 0, VK_NULL_HANDLE);
+// 		vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 1, &bufferVertex.buffer, offsets);
+// 		vkCmdBindIndexBuffer(commandBuffer.commandBuffer, bufferIndex.buffer, 0, VK_INDEX_TYPE_UINT16);
+// 		vkCmdDrawIndexed(commandBuffer.commandBuffer, VKT_ARRAY_ELEMENTS_COUNT(indexes), 1, 0, 0, 0);
 		
 		// END RENDER
 		vkCmdEndRenderPass(commandBuffer.commandBuffer);
@@ -334,6 +353,7 @@ int main(void)
 	}
 
 	// destroy vulkan
+	vulkanBufferDestroy(device, bufferMatrices);
 	vulkanBufferDestroy(device, bufferNrm);
 	vulkanBufferDestroy(device, bufferTex);
 	vulkanBufferDestroy(device, bufferPos);

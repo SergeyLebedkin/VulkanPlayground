@@ -3,4 +3,25 @@
   <ItemGroup>
     <ClCompile Include="vulkan_glfw_app.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Filter Include="textures">
+      <UniqueIdentifier>{a1dff10e-c289-4c96-a83d-eba666bd48cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{2f90c827-4b0b-43ea-8506-ae975ad932db}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\base.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\base.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="textures\texture.png">
+      <Filter>textures</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

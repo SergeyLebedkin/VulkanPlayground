@@ -17,15 +17,13 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\base.frag.glsl" />
-    <CustomBuild Include="shaders\base.vert.glsl" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\obj.frag.glsl">
+    <CustomBuild Include="shaders\obj.frag.glsl" />
+    <CustomBuild Include="shaders\obj.vert.glsl" />
+    <CustomBuild Include="shaders\base.frag.glsl">
       <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\obj.vert.glsl">
+    </CustomBuild>
+    <CustomBuild Include="shaders\base.vert.glsl">
       <Filter>shaders</Filter>
-    </None>
+    </CustomBuild>
   </ItemGroup>
 </Project>

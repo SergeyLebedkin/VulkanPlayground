@@ -104,6 +104,17 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\vulkan\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>rmdir $(OutDir)\models /S /Q
+mkdir $(OutDir)\models
+xcopy $(ProjectDir)models\*.* $(OutDir)\models /S /Y
+rmdir $(OutDir)\shaders /S /Q
+mkdir $(OutDir)\shaders
+xcopy $(ProjectDir)shaders\*.spv $(OutDir)\shaders /S /Y
+rmdir $(OutDir)\textures /S /Q
+mkdir $(OutDir)\textures
+xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -119,6 +130,17 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\vulkan\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>rmdir $(OutDir)\models /S /Q
+mkdir $(OutDir)\models
+xcopy $(ProjectDir)models\*.* $(OutDir)\models /S /Y
+rmdir $(OutDir)\shaders /S /Q
+mkdir $(OutDir)\shaders
+xcopy $(ProjectDir)shaders\*.spv $(OutDir)\shaders /S /Y
+rmdir $(OutDir)\textures /S /Q
+mkdir $(OutDir)\textures
+xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -138,6 +160,17 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\vulkan\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>rmdir $(OutDir)\models /S /Q
+mkdir $(OutDir)\models
+xcopy $(ProjectDir)models\*.* $(OutDir)\models /S /Y
+rmdir $(OutDir)\shaders /S /Q
+mkdir $(OutDir)\shaders
+xcopy $(ProjectDir)shaders\*.spv $(OutDir)\shaders /S /Y
+rmdir $(OutDir)\textures /S /Q
+mkdir $(OutDir)\textures
+xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -157,6 +190,17 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\vulkan\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>rmdir $(OutDir)\models /S /Q
+mkdir $(OutDir)\models
+xcopy $(ProjectDir)models\*.* $(OutDir)\models /S /Y
+rmdir $(OutDir)\shaders /S /Q
+mkdir $(OutDir)\shaders
+xcopy $(ProjectDir)shaders\*.spv $(OutDir)\shaders /S /Y
+rmdir $(OutDir)\textures /S /Q
+mkdir $(OutDir)\textures
+xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="vulkan_glfw_app.cpp" />

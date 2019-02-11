@@ -224,7 +224,7 @@ void vulkanSamplerCreate(
 	samplerCreateInfo.compareEnable = VK_FALSE;
 	samplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 	samplerCreateInfo.minLod = 0.0f;
-	samplerCreateInfo.maxLod = 1.0f;
+	samplerCreateInfo.maxLod = FLT_MAX;
 	samplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
 	VKT_CHECK(vkCreateSampler(device.device, &samplerCreateInfo, VK_NULL_HANDLE, &sampler->sampler));
@@ -623,7 +623,7 @@ void vulkanImageBuildMipmaps(
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 	vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	// set mipmap level 0 to transfer source optimap
+	// set mipmap level 0 to transfer source optimal
 	vulkanImageSetLayout(commandBuffer, image, 0, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
 	// copy levels
@@ -1549,6 +1549,64 @@ void vulkanPipelineCreate(
 	descriptorSetAllocateInfo.pSetLayouts = &pipeline->descriptorSetLayout;
 	VKT_CHECK(vkAllocateDescriptorSets(device.device, &descriptorSetAllocateInfo, &pipeline->descriptorSet));
 	assert(pipeline->descriptorSet);
+}
+
+// vulkanPipelineBindImage
+void vulkanPipelineBindImage(
+	VulkanDevice&   device,
+	VulkanPipeline& pipeline,
+	VulkanImage&    image,
+	VulkanSampler&  sampler,
+	uint32_t        binding)
+{
+	// VkDescriptorImageInfo
+	VkDescriptorImageInfo descriptorImageInfo{};
+	descriptorImageInfo.sampler = sampler.sampler;
+	descriptorImageInfo.imageView = image.imageView;
+	descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	// VkWriteDescriptorSet
+	VkWriteDescriptorSet writeDescriptorSet{};
+	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writeDescriptorSet.pNext = VK_NULL_HANDLE;
+	writeDescriptorSet.dstSet = pipeline.descriptorSet;
+	writeDescriptorSet.dstBinding = binding;
+	writeDescriptorSet.dstArrayElement = 0;
+	writeDescriptorSet.descriptorCount = 1;
+	writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	writeDescriptorSet.pImageInfo = &descriptorImageInfo;
+	writeDescriptorSet.pBufferInfo = VK_NULL_HANDLE;
+	writeDescriptorSet.pTexelBufferView = VK_NULL_HANDLE;
+	vkUpdateDescriptorSets(device.device, 1, &writeDescriptorSet, 0, VK_NULL_HANDLE);
+}
+
+// vulkanPipelineBindBufferUniform
+void vulkanPipelineBindBufferUniform(
+	VulkanDevice&   device,
+	VulkanPipeline& pipeline,
+	VulkanBuffer&   buffer,
+	uint32_t        binding)
+{
+	// VkDescriptorImageInfo
+	VkDescriptorBufferInfo descriptorBufferInfo{};
+	descriptorBufferInfo.buffer = buffer.buffer;
+	descriptorBufferInfo.offset = 0;
+	descriptorBufferInfo.range = VK_WHOLE_SIZE;
+
+	// VkWriteDescriptorSet
+	VkWriteDescriptorSet writeDescriptorSet{};
+	// VkWriteDescriptorSet - uniform buffer
+	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writeDescriptorSet.pNext = VK_NULL_HANDLE;
+	writeDescriptorSet.dstSet = pipeline.descriptorSet;
+	writeDescriptorSet.dstBinding = binding;
+	writeDescriptorSet.dstArrayElement = 0;
+	writeDescriptorSet.descriptorCount = 1;
+	writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	writeDescriptorSet.pImageInfo = VK_NULL_HANDLE;
+	writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
+	writeDescriptorSet.pTexelBufferView = VK_NULL_HANDLE;
+	vkUpdateDescriptorSets(device.device, 1, &writeDescriptorSet, 0, VK_NULL_HANDLE);
 }
 
 // vulkanPipelineDestroy

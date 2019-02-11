@@ -296,6 +296,21 @@ void vulkanPipelineCreate(
 	VulkanPipeline*                     pipeline
 );
 
+void vulkanPipelineBindImage(
+	VulkanDevice&   device,
+	VulkanPipeline& pipeline,
+	VulkanImage&    image,
+	VulkanSampler&  sampler,
+	uint32_t        binding
+);
+
+void vulkanPipelineBindBufferUniform(
+	VulkanDevice&   device,
+	VulkanPipeline& pipeline,
+	VulkanBuffer&   buffer,
+	uint32_t        binding
+);
+
 void vulkanPipelineDestroy(
 	VulkanDevice&   device,
 	VulkanPipeline& pipeline

@@ -12,16 +12,20 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\base.frag.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\base.vert.glsl">
-      <Filter>shaders</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="textures\texture.png">
       <Filter>textures</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="shaders\base.frag.glsl" />
+    <CustomBuild Include="shaders\base.vert.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\obj.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\obj.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

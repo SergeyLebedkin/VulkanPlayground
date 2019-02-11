@@ -2,16 +2,17 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // attributes
-layout(location = 0) in vec4 aPosition;
-layout(location = 1) in vec4 aColor;
-layout(location = 2) in vec2 aTexCoords;
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec2 aTexCoords;
+layout(location = 2) in vec3 aNormal;
 
 // outputs
-layout(location = 0) out vec4 vColor;
+layout(location = 0) out vec3 vPosition;
 layout(location = 1) out vec2 vTexCoords;
+layout(location = 2) out vec3 vNormal;
 
 // uniforms
-layout(binding = 0) uniform buffer0 {
+layout(binding = 1) uniform buffer0 {
 	mat4 uWVP;
 } matrices;
 
@@ -19,11 +20,12 @@ layout(binding = 0) uniform buffer0 {
 void main()
 {
 	// copy in to out
-	vColor = aColor;
+	vPosition = aPosition;
 	vTexCoords = aTexCoords;
+	vNormal = aNormal;
 
 	// find position
 	//gl_Position = aPosition;
 	//gl_Position = matrices.uWVP * aPosition;
-	gl_Position = vec4(aPosition.xyz/2.0f, 1.0f);
+	gl_Position = vec4(aPosition.xyz/16.0f, 1.0f);
 }

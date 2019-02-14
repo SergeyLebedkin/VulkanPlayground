@@ -1,25 +1,14 @@
-#include <vktoolkit.hpp>
+#include "vulkan_loaders.hpp"
+#include "vulkan_pipelines.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
-#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
-#include <tiny_obj_loader.h>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <chrono>
 #include <string>
 #include <vector>
 #include <algorithm>
-
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#pragma warning(push)
-#pragma warning(disable: 4996)
-#include <stb_image.h>
-#include <stb_image_write.h>
-#pragma warning(pop)
-
-// vertex structure
-struct VertexStruct_P4_C4_T2 { float X, Y, Z, W; float R, G, B, A; float U, V; };
 
 // vertex array
 VertexStruct_P4_C4_T2 vertices[] = {
@@ -31,169 +20,6 @@ VertexStruct_P4_C4_T2 vertices[] = {
 
 // index array
 uint16_t indexes[] = { 0, 1, 2, 2, 1, 3 };
-
-// loadImageFromFile
-void loadImageFromFile(VulkanDevice& device, VulkanImage& image, const char* fileName)
-{
-	int width = 0, height = 0, channels = 0;
-	stbi_uc* texData = stbi_load(fileName, &width, &height, &channels, 4);
-	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UNORM, width, height, 1, &image);
-	vulkanImageWrite(device, image, 0, texData);
-	vulkanImageBuildMipmaps(device, image);
-	stbi_image_free(texData);
-}
-
-// loadMesh_obj
-void loadMesh_obj(VulkanDevice& device, VulkanBuffer& bufferPos, VulkanBuffer& bufferTex, VulkanBuffer& bufferNrm, uint32_t& vertexCount, const char* fileName, const char* baseDir)
-{
-	tinyobj::attrib_t attribs;
-	std::vector<tinyobj::shape_t> shapes;
-	std::vector<tinyobj::material_t> materials;
-	std::string warm, err;
-	tinyobj::LoadObj(&attribs, &shapes, &materials, &warm, &err, fileName, baseDir, true);
-	std::cout << err << std::endl;
-
-	// allocate buffers
-	std::vector<float> vectorPos{};
-	std::vector<float> vectorNrm{};
-	std::vector<float> vectorTex{};
-	//for (const auto& shape : shapes)
-	for (size_t i = 0; i < 1; i++)
-	{
-		auto& shape = shapes[i];
-
-		vectorPos.clear();
-		vectorNrm.clear();
-		vectorTex.clear();
-		vectorPos.reserve(shape.mesh.indices.size() * 3);
-		vectorNrm.reserve(shape.mesh.indices.size() * 3);
-		vectorTex.reserve(shape.mesh.indices.size() * 2);
-
-		// create buffers
-		for (tinyobj::index_t index : shape.mesh.indices)
-		{
-			// if vertex exists
-			if (index.vertex_index >= 0)
-			{
-				vectorPos.push_back(attribs.vertices[3 * index.vertex_index + 0]);
-				vectorPos.push_back(attribs.vertices[3 * index.vertex_index + 1]);
-				vectorPos.push_back(attribs.vertices[3 * index.vertex_index + 2]);
-			}
-
-			// if normal exists
-			if (index.normal_index >= 0)
-			{
-				vectorNrm.push_back(attribs.normals[3 * index.normal_index + 0]);
-				vectorNrm.push_back(attribs.normals[3 * index.normal_index + 1]);
-				vectorNrm.push_back(attribs.normals[3 * index.normal_index + 2]);
-			}
-
-			// if texCoords exists
-			if (index.texcoord_index >= 0)
-			{
-				vectorTex.push_back(attribs.texcoords[2 * index.texcoord_index + 0]);
-				vectorTex.push_back(attribs.texcoords[2 * index.texcoord_index + 1]);
-			}
-		}
-		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorPos.size() * sizeof(float), &bufferPos);
-		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorTex.size() * sizeof(float), &bufferTex);
-		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorNrm.size() * sizeof(float), &bufferNrm);
-		vulkanBufferWrite(device, bufferPos, 0, vectorPos.size() * sizeof(float), vectorPos.data());
-		vulkanBufferWrite(device, bufferTex, 0, vectorTex.size() * sizeof(float), vectorTex.data());
-		vulkanBufferWrite(device, bufferNrm, 0, vectorNrm.size() * sizeof(float), vectorNrm.data());
-		vertexCount = (uint32_t)vectorPos.size() / 3;
-	}
-}
-
-// createPipeline_default
-void createPipeline_default(VulkanDevice& device, VkRenderPass renderPass, VulkanPipeline& pipeline)
-{
-	// VkVertexInputBindingDescription
-	VkVertexInputBindingDescription vertexBindingDescriptions[]
-	{
-	{ 0, sizeof(VertexStruct_P4_C4_T2), VK_VERTEX_INPUT_RATE_VERTEX },
-	};
-
-	// VkVertexInputAttributeDescription
-	VkVertexInputAttributeDescription vertexInputAttributeDescriptions[]
-	{
-	{ 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT,  0 }, // position
-	{ 1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 16 }, // color
-	{ 2, 0, VK_FORMAT_R32G32_SFLOAT      , 32 }, // texCoord
-	};
-
-	// VkDescriptorSetLayoutBinding
-	VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[]
-	{
-	{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // texture
-	{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1, VK_SHADER_STAGE_VERTEX_BIT  , VK_NULL_HANDLE }, // buffer
-	};
-
-	// VkPipelineColorBlendAttachmentState
-	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[]{
-		{ // first attachments
-			VK_FALSE,
-			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
-			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
-			VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
-		}
-	};
-
-	// create pipeline
-	vulkanPipelineCreate(device, renderPass, 0,
-		"shaders/base.vert.spv", "shaders/base.frag.spv",
-		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions), vertexBindingDescriptions,
-		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions), vertexInputAttributeDescriptions,
-		VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings), descriptorSetLayoutBindings,
-		VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates), pipelineColorBlendAttachmentStates,
-		&pipeline);
-}
-
-// createPipeline_obj
-void createPipeline_obj(VulkanDevice& device, VkRenderPass renderPass, VulkanPipeline& pipeline)
-{
-	// VkVertexInputBindingDescription
-	VkVertexInputBindingDescription vertexBindingDescriptions[]
-	{
-	{ 0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
-	{ 1, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX },
-	{ 2, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
-	};
-
-	// VkVertexInputAttributeDescription
-	VkVertexInputAttributeDescription vertexInputAttributeDescriptions[]
-	{
-	{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 }, // position
-	{ 1, 1, VK_FORMAT_R32G32_SFLOAT,    0 }, // texCoord
-	{ 2, 2, VK_FORMAT_R32G32B32_SFLOAT, 0 }, // normal
-	};
-
-	// VkDescriptorSetLayoutBinding
-	VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[]
-	{
-	{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // texture
-	{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1, VK_SHADER_STAGE_VERTEX_BIT  , VK_NULL_HANDLE }, // buffer
-	};
-
-	// VkPipelineColorBlendAttachmentState
-	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[]{
-		{ // first attachments
-			VK_FALSE,
-			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
-			VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD,
-			VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
-		}
-	};
-
-	// create pipeline
-	vulkanPipelineCreate(device, renderPass, 0,
-		"shaders/obj.vert.spv", "shaders/obj.frag.spv",
-		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions), vertexBindingDescriptions,
-		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions), vertexInputAttributeDescriptions,
-		VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings), descriptorSetLayoutBindings,
-		VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates), pipelineColorBlendAttachmentStates,
-		&pipeline);
-}
 
 // main
 int main(void)
@@ -233,8 +59,8 @@ int main(void)
 	// create pipeline
 	VulkanPipeline  pipeline_obj{};
 	VulkanPipeline  pipeline_default{};
-	createPipeline_obj(device, swapchain.renderPass, pipeline_obj);
-	createPipeline_default(device, swapchain.renderPass, pipeline_default);
+	createPipeline_obj(device, swapchain.renderPass, 0, pipeline_obj);
+	createPipeline_default(device, swapchain.renderPass, 0, pipeline_default);
 	
 	// create texture
 	VulkanImage image{};

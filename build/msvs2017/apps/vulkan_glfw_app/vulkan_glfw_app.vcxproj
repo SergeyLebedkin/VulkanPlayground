@@ -204,6 +204,8 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="vulkan_glfw_app.cpp" />
+    <ClCompile Include="vulkan_loaders.cpp" />
+    <ClCompile Include="vulkan_pipelines.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\deps\glfw\glfw.vcxproj">
@@ -269,6 +271,10 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="vulkan_loaders.hpp" />
+    <ClInclude Include="vulkan_pipelines.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

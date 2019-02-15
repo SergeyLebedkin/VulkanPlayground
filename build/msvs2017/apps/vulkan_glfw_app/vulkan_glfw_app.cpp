@@ -1,14 +1,8 @@
 #include "vulkan_loaders.hpp"
-#include "vulkan_pipelines.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
-#include <chrono>
-#include <string>
-#include <vector>
-#include <algorithm>
 
 // vertex array
 VertexStruct_P4_C4_T2 vertices[] = {
@@ -70,24 +64,12 @@ int main(void)
 	VulkanSampler sampler{};
 	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, &sampler);
 
-	// create buffers
-	VulkanBuffer bufferVertex{};
-	VulkanBuffer bufferIndex{};
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, sizeof(vertices), &bufferVertex);
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, sizeof(indexes), &bufferIndex);
-	vulkanBufferWrite(device, bufferVertex, 0, sizeof(vertices), vertices);
-	vulkanBufferWrite(device, bufferIndex, 0, sizeof(indexes), indexes);
-
-	// create obj buffers
-	uint32_t vertexCount = 0;
-	VulkanBuffer bufferPos{};
-	VulkanBuffer bufferTex{};
-	VulkanBuffer bufferNrm{};
-	loadMesh_obj(device, bufferPos, bufferTex, bufferNrm, vertexCount, "models/tea.obj", "models");
+	std::vector<VulkanMesh*> meshes;
+	loadMesh_obj(device, pipeline_obj, sampler, "models/daisy3.obj", "models", &meshes);
 
 	// matrices
 	float aspect = (float)swapchain.surfaceCapabilities.currentExtent.width / swapchain.surfaceCapabilities.currentExtent.height;
-	glm::mat4 matModl = glm::scale(glm::mat4(1.0f), glm::vec3(0.125f, 0.125f, 0.125f));
+	glm::mat4 matModl = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
 	glm::mat4 matView = glm::lookAt(
 		glm::vec3(0.0f, 4.0f, 7.0f),
 		glm::vec3(0.0f, 0.0f, 0.0f),
@@ -149,24 +131,12 @@ int main(void)
 
 		vkCmdSetViewport(commandBuffer.commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffer.commandBuffer, 0, 1, &scissor);
-
-		// draw obj
-		VkBuffer buffers[]{ bufferPos.buffer, bufferTex.buffer, bufferNrm.buffer };
-		vulkanPipelineBindImage(device, pipeline_obj, image, sampler, 0);
-		vulkanPipelineBindBufferUniform(device, pipeline_obj, bufferMatrices, 1);
-		vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_obj.pipeline);
-		vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_obj.pipelineLayout, 0, 1, &pipeline_obj.descriptorSet, 0, VK_NULL_HANDLE);
-		vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 3, buffers, offsets);
-		vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
-
-// 		// draw simple quad
-// 		vulkanPipelineBindImage(device, pipeline_default, image, sampler, 0);
-// 		vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_default.pipeline);
-// 		vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_default.pipelineLayout, 0, 1, &pipeline_default.descriptorSet, 0, VK_NULL_HANDLE);
-// 		vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 1, &bufferVertex.buffer, offsets);
-// 		vkCmdBindIndexBuffer(commandBuffer.commandBuffer, bufferIndex.buffer, 0, VK_INDEX_TYPE_UINT16);
-// 		vkCmdDrawIndexed(commandBuffer.commandBuffer, VKT_ARRAY_ELEMENTS_COUNT(indexes), 1, 0, 0, 0);
 		
+		// draw obj
+		vulkanPipelineBindBufferUniform(device, pipeline_obj, bufferMatrices, 1);
+		for (auto mesh : meshes)
+			mesh->draw(device, commandBuffer);
+
 		// END RENDER
 		vkCmdEndRenderPass(commandBuffer.commandBuffer);
 
@@ -178,13 +148,11 @@ int main(void)
 		glfwPollEvents();
 	}
 
+	for (auto mesh : meshes) delete mesh;
+	meshes.clear();
+
 	// destroy vulkan
 	vulkanBufferDestroy(device, bufferMatrices);
-	vulkanBufferDestroy(device, bufferNrm);
-	vulkanBufferDestroy(device, bufferTex);
-	vulkanBufferDestroy(device, bufferPos);
-	vulkanBufferDestroy(device, bufferIndex);
-	vulkanBufferDestroy(device, bufferVertex);
 	vulkanSamplerDestroy(device, sampler);
 	vulkanImageDestroy(device, image);
 	vulkanPipelineDestroy(device, pipeline_default);

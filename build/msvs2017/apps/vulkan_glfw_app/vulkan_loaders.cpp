@@ -24,13 +24,12 @@ void loadImageFromFile(
 
 // loadMesh_obj
 void loadMesh_obj(
-	VulkanDevice& device,
-	VulkanBuffer& bufferPos,
-	VulkanBuffer& bufferTex,
-	VulkanBuffer& bufferNrm,
-	uint32_t&     vertexCount,
-	const char*   fileName,
-	const char*   baseDir)
+	VulkanDevice&             device,
+	VulkanPipeline&           pipeline,
+	VulkanSampler&            sampler,
+	const char*               fileName,
+	const char*               baseDir,
+	std::vector<VulkanMesh*>* meshes)
 {
 	tinyobj::attrib_t attribs;
 	std::vector<tinyobj::shape_t> shapes;
@@ -42,11 +41,8 @@ void loadMesh_obj(
 	std::vector<float> vectorPos{};
 	std::vector<float> vectorNrm{};
 	std::vector<float> vectorTex{};
-	//for (const auto& shape : shapes)
-	for (size_t i = 0; i < 1; i++)
+	for (const auto& shape : shapes)
 	{
-		auto& shape = shapes[i];
-
 		vectorPos.clear();
 		vectorNrm.clear();
 		vectorTex.clear();
@@ -80,12 +76,16 @@ void loadMesh_obj(
 				vectorTex.push_back(attribs.texcoords[2 * index.texcoord_index + 1]);
 			}
 		}
-		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorPos.size() * sizeof(float), &bufferPos);
-		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorTex.size() * sizeof(float), &bufferTex);
-		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorNrm.size() * sizeof(float), &bufferNrm);
-		vulkanBufferWrite(device, bufferPos, 0, vectorPos.size() * sizeof(float), vectorPos.data());
-		vulkanBufferWrite(device, bufferTex, 0, vectorTex.size() * sizeof(float), vectorTex.data());
-		vulkanBufferWrite(device, bufferNrm, 0, vectorNrm.size() * sizeof(float), vectorNrm.data());
-		vertexCount = (uint32_t)vectorPos.size() / 3;
+
+		// create mesh
+		VulkanMesh_obj* mesh = new VulkanMesh_obj(device, pipeline, sampler);
+		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorPos.size() * sizeof(float), &mesh->bufferPos);
+		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorTex.size() * sizeof(float), &mesh->bufferTex);
+		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorNrm.size() * sizeof(float), &mesh->bufferNrm);
+		vulkanBufferWrite(device, mesh->bufferPos, 0, vectorPos.size() * sizeof(float), vectorPos.data());
+		vulkanBufferWrite(device, mesh->bufferTex, 0, vectorTex.size() * sizeof(float), vectorTex.data());
+		vulkanBufferWrite(device, mesh->bufferNrm, 0, vectorNrm.size() * sizeof(float), vectorNrm.data());
+		mesh->vertexCount = (uint32_t)vectorPos.size() / 3;
+		meshes->push_back(mesh);
 	}
 }

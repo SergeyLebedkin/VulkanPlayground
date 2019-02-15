@@ -205,6 +205,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
   <ItemGroup>
     <ClCompile Include="vulkan_glfw_app.cpp" />
     <ClCompile Include="vulkan_loaders.cpp" />
+    <ClCompile Include="vulkan_meshes.cpp" />
     <ClCompile Include="vulkan_pipelines.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -274,6 +275,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vulkan_loaders.hpp" />
+    <ClInclude Include="vulkan_meshes.hpp" />
     <ClInclude Include="vulkan_pipelines.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

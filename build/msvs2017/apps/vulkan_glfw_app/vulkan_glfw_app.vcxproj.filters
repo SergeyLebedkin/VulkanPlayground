@@ -4,6 +4,7 @@
     <ClCompile Include="vulkan_glfw_app.cpp" />
     <ClCompile Include="vulkan_pipelines.cpp" />
     <ClCompile Include="vulkan_loaders.cpp" />
+    <ClCompile Include="vulkan_meshes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="textures">
@@ -35,5 +36,6 @@
   <ItemGroup>
     <ClInclude Include="vulkan_pipelines.hpp" />
     <ClInclude Include="vulkan_loaders.hpp" />
+    <ClInclude Include="vulkan_meshes.hpp" />
   </ItemGroup>
 </Project>

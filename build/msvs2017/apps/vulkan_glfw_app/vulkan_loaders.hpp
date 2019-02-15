@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vktoolkit.hpp>
 #include <tiny_obj_loader.h>
+#include "vulkan_meshes.hpp"
 
 void loadImageFromFile(
 	VulkanDevice& device,
@@ -9,10 +9,9 @@ void loadImageFromFile(
 	const char*   fileName);
 
 void loadMesh_obj(
-	VulkanDevice& device,
-	VulkanBuffer& bufferPos,
-	VulkanBuffer& bufferTex,
-	VulkanBuffer& bufferNrm,
-	uint32_t&     vertexCount,
-	const char*   fileName,
-	const char*   baseDir);
+	VulkanDevice&             device,
+	VulkanPipeline&           pipeline,
+	VulkanSampler&            sampler,
+	const char*               fileName,
+	const char*               baseDir,
+	std::vector<VulkanMesh*>* meshes);

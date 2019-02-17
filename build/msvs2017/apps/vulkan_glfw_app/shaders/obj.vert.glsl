@@ -28,7 +28,6 @@ void main()
 
 	// find position
 	//gl_Position = aPosition;
-	vec4 pos = vec4(aPosition, 1.0f);
 	gl_Position = uMatrices.proj * uMatrices.view * uMatrices.model * vec4(aPosition, 1.0f);
 	//gl_Position = vec4(aPosition.xyz/16.0f, 1.0f);
 }

@@ -36,6 +36,7 @@ void loadMesh_obj(
 	std::vector<tinyobj::material_t> materials;
 	std::string warm, err;
 	tinyobj::LoadObj(&attribs, &shapes, &materials, &warm, &err, fileName, baseDir, true);
+	assert(shapes.size() > 0);
 
 	// allocate buffers
 	std::vector<float> vectorPos{};

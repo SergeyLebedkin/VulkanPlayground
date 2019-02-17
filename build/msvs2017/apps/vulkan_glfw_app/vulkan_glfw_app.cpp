@@ -65,11 +65,12 @@ int main(void)
 	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, &sampler);
 
 	std::vector<VulkanMesh*> meshes;
-	loadMesh_obj(device, pipeline_obj, sampler, "models/daisy3.obj", "models", &meshes);
+	//loadMesh_obj(device, pipeline_obj, sampler, "models/daisy3.obj", "models", &meshes);
+	loadMesh_obj(device, pipeline_obj, sampler, "models/tea.obj", "models", &meshes);
 
 	// matrices
 	float aspect = (float)swapchain.surfaceCapabilities.currentExtent.width / swapchain.surfaceCapabilities.currentExtent.height;
-	glm::mat4 matModl = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
+	glm::mat4 matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/4.0f)), 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 matView = glm::lookAt(
 		glm::vec3(0.0f, 4.0f, 7.0f),
 		glm::vec3(0.0f, 0.0f, 0.0f),
@@ -134,8 +135,7 @@ int main(void)
 		
 		// draw obj
 		vulkanPipelineBindBufferUniform(device, pipeline_obj, bufferMatrices, 1);
-		for (auto mesh : meshes)
-			mesh->draw(device, commandBuffer);
+		for (auto mesh : meshes) mesh->draw(device, commandBuffer);
 
 		// END RENDER
 		vkCmdEndRenderPass(commandBuffer.commandBuffer);

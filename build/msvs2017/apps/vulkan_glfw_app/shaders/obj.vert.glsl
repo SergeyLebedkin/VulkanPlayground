@@ -23,7 +23,7 @@ void main()
 {
 	// copy in to out
 	vPosition = aPosition;
-	vTexCoords = aTexCoords;
+	vTexCoords = vec2(aTexCoords.x, 1.0f - aTexCoords.y);
 	vNormal = aNormal;
 
 	// find position

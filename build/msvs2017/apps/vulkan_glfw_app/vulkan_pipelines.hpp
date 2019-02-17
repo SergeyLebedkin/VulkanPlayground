@@ -3,7 +3,7 @@
 #include <vktoolkit.hpp>
 
 // vertex structure
-typedef struct VertexStruct_P4_C4_T2 { 
+typedef struct VertexStruct_P4_C4_T2 {
 	float X, Y, Z, W; 
 	float R, G, B, A; 
 	float U, V; 

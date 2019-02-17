@@ -57,8 +57,8 @@ typedef struct VulkanImage {
 	uint32_t                   height;
 	uint32_t                   depth;
 	uint32_t                   mipLevels;
-	std::vector<VkAccessFlags> accessFlags;
-	std::vector<VkImageLayout> imageLayouts;
+	std::vector<VkAccessFlags> accessFlags{};
+	std::vector<VkImageLayout> imageLayouts{};
 } VulkanImage;
 
 typedef struct VulkanBuffer {

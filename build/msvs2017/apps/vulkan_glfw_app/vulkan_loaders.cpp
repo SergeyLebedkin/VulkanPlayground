@@ -12,10 +12,10 @@
 void loadImageFromFile(
 	VulkanDevice& device,
 	VulkanImage&  image,
-	const char*   fileName)
+	std::string   fileName)
 {
 	int width = 0, height = 0, channels = 0;
-	stbi_uc* texData = stbi_load(fileName, &width, &height, &channels, 4);
+	stbi_uc* texData = stbi_load(fileName.data(), &width, &height, &channels, 4);
 	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UNORM, width, height, 1, &image);
 	vulkanImageWrite(device, image, 0, texData);
 	vulkanImageBuildMipmaps(device, image);
@@ -24,19 +24,31 @@ void loadImageFromFile(
 
 // loadMesh_obj
 void loadMesh_obj(
-	VulkanDevice&             device,
-	VulkanPipeline&           pipeline,
-	VulkanSampler&            sampler,
-	const char*               fileName,
-	const char*               baseDir,
-	std::vector<VulkanMesh*>* meshes)
+	VulkanDevice&              device,
+	VulkanPipeline&            pipeline,
+	VulkanSampler&             sampler,
+	std::string                fileName,
+	std::string                baseDir,
+	std::vector<VulkanMesh*>*  meshes,
+	std::vector<VulkanImage*>* images)
 {
 	tinyobj::attrib_t attribs;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
 	std::string warm, err;
-	tinyobj::LoadObj(&attribs, &shapes, &materials, &warm, &err, fileName, baseDir, true);
+	tinyobj::LoadObj(&attribs, &shapes, &materials, &warm, &err, fileName.data(), baseDir.data(), true);
 	assert(shapes.size() > 0);
+
+	// load materials
+	for (const auto& material : materials)
+	{
+		if (material.diffuse_texname.size() > 0)
+		{
+			auto image = new VulkanImage();
+			loadImageFromFile(device, *image, baseDir + material.diffuse_texname);
+			images->push_back(image);
+		}
+	}
 
 	// allocate buffers
 	std::vector<float> vectorPos{};
@@ -79,7 +91,7 @@ void loadMesh_obj(
 		}
 
 		// create mesh
-		VulkanMesh_obj* mesh = new VulkanMesh_obj(device, pipeline, sampler);
+		VulkanMesh_obj* mesh = new VulkanMesh_obj(device);
 		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorPos.size() * sizeof(float), &mesh->bufferPos);
 		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorTex.size() * sizeof(float), &mesh->bufferTex);
 		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorNrm.size() * sizeof(float), &mesh->bufferNrm);
@@ -87,6 +99,10 @@ void loadMesh_obj(
 		vulkanBufferWrite(device, mesh->bufferTex, 0, vectorTex.size() * sizeof(float), vectorTex.data());
 		vulkanBufferWrite(device, mesh->bufferNrm, 0, vectorNrm.size() * sizeof(float), vectorNrm.data());
 		mesh->vertexCount = (uint32_t)vectorPos.size() / 3;
+		mesh->sampler = &sampler;
+		// set image and sampler
+		if (shape.mesh.material_ids[0] >= 0)
+			mesh->image = (*images)[shape.mesh.material_ids[0]];
 		meshes->push_back(mesh);
 	}
 }

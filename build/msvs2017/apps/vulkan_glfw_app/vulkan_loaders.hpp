@@ -6,12 +6,13 @@
 void loadImageFromFile(
 	VulkanDevice& device,
 	VulkanImage&  image,
-	const char*   fileName);
+	std::string   fileName);
 
 void loadMesh_obj(
-	VulkanDevice&             device,
-	VulkanPipeline&           pipeline,
-	VulkanSampler&            sampler,
-	const char*               fileName,
-	const char*               baseDir,
-	std::vector<VulkanMesh*>* meshes);
+	VulkanDevice&              device,
+	VulkanPipeline&            pipeline,
+	VulkanSampler&             sampler,
+	std::string                fileName,
+	std::string                baseDir,
+	std::vector<VulkanMesh*>*  meshes,
+	std::vector<VulkanImage*>* images);

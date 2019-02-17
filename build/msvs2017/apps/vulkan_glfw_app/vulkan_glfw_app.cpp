@@ -15,9 +15,15 @@ VertexStruct_P4_C4_T2 vertices[] = {
 // index array
 uint16_t indexes[] = { 0, 1, 2, 2, 1, 3 };
 
+void foo(VulkanImage& img) {}
+
 // main
 int main(void)
 {
+	VulkanImage* img = new VulkanImage;
+	foo((VulkanImage &)img);
+	delete img;
+
 	// init GLFW
 	glfwInit();
 	if (!glfwVulkanSupported()) assert(0 && "Vulkan not supported");
@@ -65,12 +71,14 @@ int main(void)
 	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, &sampler);
 
 	std::vector<VulkanMesh*> meshes;
+	std::vector<VulkanImage*> images;
 	//loadMesh_obj(device, pipeline_obj, sampler, "models/daisy3.obj", "models", &meshes);
-	loadMesh_obj(device, pipeline_obj, sampler, "models/tea.obj", "models", &meshes);
+	loadMesh_obj(device, pipeline_obj, sampler, "models/rock.obj", "models", &meshes, &images);
+	//loadMesh_obj(device, pipeline_obj, sampler, "models/tea.obj", "models", &meshes, &images);
 
 	// matrices
 	float aspect = (float)swapchain.surfaceCapabilities.currentExtent.width / swapchain.surfaceCapabilities.currentExtent.height;
-	glm::mat4 matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/4.0f)), 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/2048.0f)), 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 matView = glm::lookAt(
 		glm::vec3(0.0f, 4.0f, 7.0f),
 		glm::vec3(0.0f, 0.0f, 0.0f),
@@ -135,7 +143,8 @@ int main(void)
 		
 		// draw obj
 		vulkanPipelineBindBufferUniform(device, pipeline_obj, bufferMatrices, 1);
-		for (auto mesh : meshes) mesh->draw(device, commandBuffer);
+		for (auto mesh : meshes)
+			mesh->draw(pipeline_obj, commandBuffer);
 
 		// END RENDER
 		vkCmdEndRenderPass(commandBuffer.commandBuffer);
@@ -148,7 +157,16 @@ int main(void)
 		glfwPollEvents();
 	}
 
-	for (auto mesh : meshes) delete mesh;
+	// delete images
+	for (auto image : images) {
+		vulkanImageDestroy(device, *image);
+		delete image;
+	}
+
+	// delete meshes
+	images.clear();
+	for (auto mesh : meshes) 
+		delete mesh;
 	meshes.clear();
 
 	// destroy vulkan

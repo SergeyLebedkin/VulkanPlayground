@@ -1,4 +1,6 @@
 #include "vulkan_loaders.hpp"
+#include <iostream>
+#include <chrono>
 #include <GLFW/glfw3.h>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
@@ -28,7 +30,7 @@ int main(void)
 	glfwInit();
 	if (!glfwVulkanSupported()) assert(0 && "Vulkan not supported");
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	GLFWwindow* window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "Simple example", NULL, NULL);
 
 	// vulkan extensions
 	std::vector<const char *> enabledInstanceLayerNames{ "VK_LAYER_LUNARG_standard_validation" };
@@ -73,14 +75,15 @@ int main(void)
 	std::vector<VulkanMesh*> meshes;
 	std::vector<VulkanImage*> images;
 	//loadMesh_obj(device, pipeline_obj, sampler, "models/daisy3.obj", "models", &meshes);
-	loadMesh_obj(device, pipeline_obj, sampler, "models/rock.obj", "models", &meshes, &images);
-	//loadMesh_obj(device, pipeline_obj, sampler, "models/tea.obj", "models", &meshes, &images);
+	loadMesh_obj(device, pipeline_obj, sampler, "models/rock/rock.obj", "models/rock", &meshes, &images);
+	//loadMesh_obj(device, pipeline_obj, sampler, "models/tea/tea.obj", "models/tea", &meshes, &images);
+	//loadMesh_obj(device, pipeline_obj, sampler, "models/train/train.obj", "models", &meshes, &images);
 
 	// matrices
 	float aspect = (float)swapchain.surfaceCapabilities.currentExtent.width / swapchain.surfaceCapabilities.currentExtent.height;
-	glm::mat4 matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/2048.0f)), 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/1.0f)), 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 matView = glm::lookAt(
-		glm::vec3(0.0f, 4.0f, 7.0f),
+		glm::vec3(0.0f, 1.0f, 2.0f),
 		glm::vec3(0.0f, 0.0f, 0.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.f);
@@ -95,6 +98,29 @@ int main(void)
 	// main loop
 	while (!glfwWindowShouldClose(window))
 	{
+		// get time stamps
+		static uint32_t frames = 0;
+		static float newTime = 0.0f;
+		static float currentTime = 0.0f;
+		static auto prevTimePoint = std::chrono::high_resolution_clock::now();
+		static auto nextTimePoint = std::chrono::high_resolution_clock::now();
+		prevTimePoint = nextTimePoint;
+		nextTimePoint = std::chrono::high_resolution_clock::now();
+
+		float delta = std::chrono::duration_cast<std::chrono::duration<float>>(nextTimePoint - prevTimePoint).count();
+		newTime += delta;
+
+		currentTime += delta;
+		frames++;
+		if (currentTime >= 1.0f) {
+			std::cout << frames << "frames in " << currentTime << " seconds" << std::endl;
+			frames = 0;
+			currentTime = 0.0f;
+		}
+
+		matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), newTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		vulkanBufferWrite(device, bufferMatrices, sizeof(glm::mat4) * 0, sizeof(glm::mat4), &matModl);
+
 		uint32_t frameIndex = 0;
 		vulkanSwapchainBeginFrame(device, swapchain, presentSemaphore, &frameIndex);
 		vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);

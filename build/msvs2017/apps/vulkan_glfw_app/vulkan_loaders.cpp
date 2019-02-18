@@ -1,4 +1,5 @@
 #include "vulkan_loaders.hpp"
+#include <algorithm>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -50,6 +51,24 @@ void loadMesh_obj(
 		}
 	}
 
+	// find min and max
+	float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
+	float maxX = FLT_MIN, maxY = FLT_MIN, maxZ = FLT_MIN;
+	for (const auto& shape : shapes)
+	{
+		for (tinyobj::index_t index : shape.mesh.indices) 
+		{
+			maxX = std::max(maxX, attribs.vertices[3 * index.vertex_index + 0]);
+			maxY = std::max(maxY, attribs.vertices[3 * index.vertex_index + 1]);
+			maxZ = std::max(maxZ, attribs.vertices[3 * index.vertex_index + 2]);
+			minX = std::min(minX, attribs.vertices[3 * index.vertex_index + 0]);
+			minY = std::min(minY, attribs.vertices[3 * index.vertex_index + 1]);
+			minZ = std::min(minZ, attribs.vertices[3 * index.vertex_index + 2]);
+		}
+	}
+	float centerX = (maxX + minX)*0.5f, centerY = (maxY + minY)*0.5f, centerZ = (maxZ + minZ)*0.5f;
+	float scale = 1.0f / (std::max(std::max(maxX - minX, maxY - minY), maxZ - minZ)*0.5f);
+
 	// allocate buffers
 	std::vector<float> vectorPos{};
 	std::vector<float> vectorNrm{};
@@ -69,9 +88,9 @@ void loadMesh_obj(
 			// if vertex exists
 			if (index.vertex_index >= 0)
 			{
-				vectorPos.push_back(attribs.vertices[3 * index.vertex_index + 0]);
-				vectorPos.push_back(attribs.vertices[3 * index.vertex_index + 1]);
-				vectorPos.push_back(attribs.vertices[3 * index.vertex_index + 2]);
+				vectorPos.push_back((attribs.vertices[3 * index.vertex_index + 0] - centerX) * scale);
+				vectorPos.push_back((attribs.vertices[3 * index.vertex_index + 1] - centerY) * scale);
+				vectorPos.push_back((attribs.vertices[3 * index.vertex_index + 2] - centerZ) * scale);
 			}
 
 			// if normal exists

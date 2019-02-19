@@ -1275,20 +1275,22 @@ void loadFileData(
 
 // vulkanPipelineCreate
 void vulkanPipelineCreate(
-	VulkanDevice&                       device,
-	VkRenderPass                        renderPass,
-	uint32_t                            subpass,
-	const char*                         fileNameVS,
-	const char*                         fileNameFS,
-	uint32_t                            vertexInputBindingDescriptionCount,
-	VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
-	uint32_t                            vertexInputAttributeDescriptionCount,
-	VkVertexInputAttributeDescription   vertexInputAttributeDescriptions[],
-	uint32_t                            descriptorSetLayoutBindingCount,
-	VkDescriptorSetLayoutBinding        descriptorSetLayoutBindings[],
-	uint32_t                            pipelineColorBlendAttachmentStateCount,
-	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[],
-	VulkanPipeline*                     pipeline)
+	VulkanDevice&                             device,
+	VkRenderPass                              renderPass,
+	uint32_t                                  subpass,
+	const char*                               fileNameVS,
+	const char*                               fileNameFS,
+	VkPrimitiveTopology                       primitiveTopology,
+	VkPolygonMode                             polygonMode,
+	uint32_t                                  vertexInputBindingDescriptionCount,
+	const VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
+	uint32_t                                  vertexInputAttributeDescriptionCount,
+	const VkVertexInputAttributeDescription   vertexInputAttributeDescriptions[],
+	uint32_t                                  descriptorSetLayoutBindingCount,
+	const VkDescriptorSetLayoutBinding        descriptorSetLayoutBindings[],
+	uint32_t                                  pipelineColorBlendAttachmentStateCount,
+	const VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[],
+	VulkanPipeline*                           pipeline)
 {
 	// check handles
 	assert(fileNameVS);
@@ -1357,7 +1359,7 @@ void vulkanPipelineCreate(
 	pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	pipelineInputAssemblyStateCreateInfo.pNext = VK_NULL_HANDLE;
 	pipelineInputAssemblyStateCreateInfo.flags = 0;
-	pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	pipelineInputAssemblyStateCreateInfo.topology = primitiveTopology;
 	pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
 	// VkPipelineTessellationStateCreateInfo
@@ -1400,7 +1402,7 @@ void vulkanPipelineCreate(
 	pipelineRasterizationStateCreateInfo.flags = 0;
 	pipelineRasterizationStateCreateInfo.depthClampEnable = VK_FALSE;
 	pipelineRasterizationStateCreateInfo.rasterizerDiscardEnable = VK_FALSE;
-	pipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	pipelineRasterizationStateCreateInfo.polygonMode = polygonMode;
 	pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
 	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	pipelineRasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;

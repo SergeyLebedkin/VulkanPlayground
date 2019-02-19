@@ -280,20 +280,22 @@ void vulkanSwapchainEndFrame(
 );
 
 void vulkanPipelineCreate(
-	VulkanDevice&                       device,
-	VkRenderPass                        renderPass,
-	uint32_t                            subpass,
-	const char*                         fileNameVS,
-	const char*                         fileNameFS,
-	uint32_t                            vertexInputBindingDescriptionCount,
-	VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
-	uint32_t                            vertexInputAttributeDescriptionCount,
-	VkVertexInputAttributeDescription   vertexInputAttributeDescriptions[],
-	uint32_t                            descriptorSetLayoutBindingCount,
-	VkDescriptorSetLayoutBinding        descriptorSetLayoutBindings[],
-	uint32_t                            pipelineColorBlendAttachmentStateCount,
-	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[],
-	VulkanPipeline*                     pipeline
+	VulkanDevice&                             device,
+	VkRenderPass                              renderPass,
+	uint32_t                                  subpass,
+	const char*                               fileNameVS,
+	const char*                               fileNameFS,
+	VkPrimitiveTopology                       primitiveTopology,
+	VkPolygonMode                             polygonMode,
+	uint32_t                                  vertexInputBindingDescriptionCount,
+	const VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
+	uint32_t                                  vertexInputAttributeDescriptionCount,
+	const VkVertexInputAttributeDescription   vertexInputAttributeDescriptions[],
+	uint32_t                                  descriptorSetLayoutBindingCount,
+	const VkDescriptorSetLayoutBinding        descriptorSetLayoutBindings[],
+	uint32_t                                  pipelineColorBlendAttachmentStateCount,
+	const VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[],
+	VulkanPipeline*                           pipeline
 );
 
 void vulkanPipelineBindImage(

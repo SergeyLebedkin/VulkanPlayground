@@ -111,17 +111,18 @@ void loadMesh_obj(
 
 		// create mesh
 		VulkanMesh_obj* mesh = new VulkanMesh_obj(device);
+		vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 16 * sizeof(float), &mesh->bufferMVP);
 		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorPos.size() * sizeof(float), &mesh->bufferPos);
 		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorTex.size() * sizeof(float), &mesh->bufferTex);
 		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorNrm.size() * sizeof(float), &mesh->bufferNrm);
 		vulkanBufferWrite(device, mesh->bufferPos, 0, vectorPos.size() * sizeof(float), vectorPos.data());
 		vulkanBufferWrite(device, mesh->bufferTex, 0, vectorTex.size() * sizeof(float), vectorTex.data());
 		vulkanBufferWrite(device, mesh->bufferNrm, 0, vectorNrm.size() * sizeof(float), vectorNrm.data());
-		mesh->vertexCount = (uint32_t)vectorPos.size() / 3;
-		mesh->sampler = &sampler;
-		// set image and sampler
+		VulkanDescriptorSetCreate(device, pipeline, VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_T1_U1), descriptorSetLayoutBindings_T1_U1, &mesh->descriptorSet);
 		if (shape.mesh.material_ids[0] >= 0)
-			mesh->image = (*images)[shape.mesh.material_ids[0]];
+			vulkanDescriptorSetUpdateImage(device, mesh->descriptorSet, *(*images)[shape.mesh.material_ids[0]], sampler, 0);
+		vulkanDescriptorSetUpdateBufferUniform(device, mesh->descriptorSet, mesh->bufferMVP, 1);
+		mesh->vertexCount = (uint32_t)vectorPos.size() / 3;
 		meshes->push_back(mesh);
 	}
 }

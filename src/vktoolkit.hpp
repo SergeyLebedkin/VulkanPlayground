@@ -35,6 +35,10 @@ typedef struct VulkanDevice {
 	VkQueue                          queueTransfer;
 	VmaAllocator                     allocator;
 	VkCommandPool                    commandPool;
+	VkCommandPool                    commandPoolTrancient;
+	VkBuffer                         bufferStaging;
+	VmaAllocation                    bufferStagingAllocation;
+	VmaAllocationInfo                bufferStagingAllocationInfo;
 } VulkanDevice;
 
 typedef struct VulkanSurface {
@@ -96,9 +100,12 @@ typedef struct VulkanPipeline {
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout      pipelineLayout;
 	VkPipeline            pipeline;
+} VulkanPipeline;
+
+typedef struct VulkanDescriptorSet {
 	VkDescriptorPool      descriptorPool;
 	VkDescriptorSet       descriptorSet;
-} VulkanPipeline;
+} VulkanDescriptorSet;
 
 // create/destroy/read/write
 
@@ -298,24 +305,37 @@ void vulkanPipelineCreate(
 	VulkanPipeline*                           pipeline
 );
 
-void vulkanPipelineBindImage(
-	VulkanDevice&   device,
-	VulkanPipeline& pipeline,
-	VulkanImage&    image,
-	VulkanSampler&  sampler,
-	uint32_t        binding
-);
-
-void vulkanPipelineBindBufferUniform(
-	VulkanDevice&   device,
-	VulkanPipeline& pipeline,
-	VulkanBuffer&   buffer,
-	uint32_t        binding
-);
-
 void vulkanPipelineDestroy(
 	VulkanDevice&   device,
 	VulkanPipeline& pipeline
+);
+
+void VulkanDescriptorSetCreate(
+	VulkanDevice&                      device,
+	VulkanPipeline&                    pipeline,
+	uint32_t                           descriptorSetLayoutBindingCount,
+	const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[],
+	VulkanDescriptorSet*               descriptorSet
+);
+
+void vulkanDescriptorSetUpdateImage(
+	VulkanDevice&        device,
+	VulkanDescriptorSet& descriptorSet,
+	VulkanImage&         image,
+	VulkanSampler&       sampler,
+	uint32_t             binding
+);
+
+void vulkanDescriptorSetUpdateBufferUniform(
+	VulkanDevice&        device,
+	VulkanDescriptorSet& descriptorSet,
+	VulkanBuffer&        buffer,
+	uint32_t             binding
+);
+
+void VulkanDescriptorSetDestroy(
+	VulkanDevice&        device,
+	VulkanDescriptorSet& descriptorSet
 );
 
 // init utilities

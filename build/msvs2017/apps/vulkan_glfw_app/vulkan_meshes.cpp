@@ -9,25 +9,38 @@ VulkanMesh_obj::VulkanMesh_obj(VulkanDevice& device) :
 // VulkanMesh_obj::~VulkanMesh_obj
 VulkanMesh_obj::~VulkanMesh_obj()
 {
+	VulkanDescriptorSetDestroy(device, descriptorSet);
+	vulkanBufferDestroy(device, bufferMVP);
 	vulkanBufferDestroy(device, bufferNrm);
 	vulkanBufferDestroy(device, bufferTex);
 	vulkanBufferDestroy(device, bufferPos);
 }
 
 // VulkanMesh_obj::draw
-void VulkanMesh_obj::draw(VulkanPipeline& pipeline, VulkanCommandBuffer& commandBuffer)
+void VulkanMesh_obj::draw(
+	VulkanPipeline&      pipeline,
+	VulkanCommandBuffer& commandBuffer,
+	glm::mat4&           matProj,
+	glm::mat4&           matView,
+	glm::mat4&           matModl)
 {
 	// prepare buffers
 	VkDeviceSize offsets[] = { 0, 0, 0 };
 	VkBuffer buffers[]{ bufferPos.buffer, bufferTex.buffer, bufferNrm.buffer };
+	
+	// update data
+	
+	vulkanBufferWrite(device, bufferMVP, sizeof(glm::mat4) * 0, sizeof(glm::mat4), &matModl);
+	//if (!matwrite)
+	{
+		vulkanBufferWrite(device, bufferMVP, sizeof(glm::mat4) * 1, sizeof(glm::mat4), &matView);
+		vulkanBufferWrite(device, bufferMVP, sizeof(glm::mat4) * 2, sizeof(glm::mat4), &matProj);
+		matwrite = true;
+	}
 
-	// apply image and sampler
-	if (image && sampler)
-		vulkanPipelineBindImage(device, pipeline, *image, *sampler, 0);
-
-	// start render
+	// render
 	vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-	vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &pipeline.descriptorSet, 0, VK_NULL_HANDLE);
+	vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
 	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 3, buffers, offsets);
 	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
 };

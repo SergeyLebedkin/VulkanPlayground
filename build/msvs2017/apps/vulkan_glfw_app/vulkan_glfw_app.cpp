@@ -88,13 +88,6 @@ int main(void)
 		glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.f);
 
-	// buffer matrices
-	VulkanBuffer bufferMatrices{};
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4) * 3, &bufferMatrices);
- 	vulkanBufferWrite(device, bufferMatrices, sizeof(glm::mat4) * 0, sizeof(glm::mat4), &matModl);
- 	vulkanBufferWrite(device, bufferMatrices, sizeof(glm::mat4) * 1, sizeof(glm::mat4), &matView);
- 	vulkanBufferWrite(device, bufferMatrices, sizeof(glm::mat4) * 2, sizeof(glm::mat4), &matProj);
-
 	// main loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -119,7 +112,6 @@ int main(void)
 		}
 
 		matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), newTime, glm::vec3(0.0f, 1.0f, 0.0f));
-		vulkanBufferWrite(device, bufferMatrices, sizeof(glm::mat4) * 0, sizeof(glm::mat4), &matModl);
 
 		uint32_t frameIndex = 0;
 		vulkanSwapchainBeginFrame(device, swapchain, presentSemaphore, &frameIndex);
@@ -168,9 +160,8 @@ int main(void)
 		vkCmdSetScissor(commandBuffer.commandBuffer, 0, 1, &scissor);
 		
 		// draw obj
-		vulkanPipelineBindBufferUniform(device, pipeline_obj, bufferMatrices, 1);
 		for (auto mesh : meshes)
-			mesh->draw(pipeline_obj, commandBuffer);
+			mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
 
 		// END RENDER
 		vkCmdEndRenderPass(commandBuffer.commandBuffer);
@@ -196,7 +187,6 @@ int main(void)
 	meshes.clear();
 
 	// destroy vulkan
-	vulkanBufferDestroy(device, bufferMatrices);
 	vulkanSamplerDestroy(device, sampler);
 	vulkanImageDestroy(device, image);
 	vulkanPipelineDestroy(device, pipeline_default);

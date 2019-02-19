@@ -167,6 +167,36 @@ void vulkanDeviceCreate(
 	commandPoolCreateInfo.queueFamilyIndex = device->queueFamilyIndexGraphics;
 	VKT_CHECK(vkCreateCommandPool(device->device, &commandPoolCreateInfo, VK_NULL_HANDLE, &device->commandPool));
 	assert(device->commandPool);
+
+	// VkCommandPoolCreateInfo
+	VkCommandPoolCreateInfo commandPoolCreateInfoTrancient{};
+	commandPoolCreateInfoTrancient.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	commandPoolCreateInfoTrancient.pNext = VK_NULL_HANDLE;
+	commandPoolCreateInfoTrancient.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+	commandPoolCreateInfoTrancient.queueFamilyIndex = device->queueFamilyIndexTransfer;
+	VKT_CHECK(vkCreateCommandPool(device->device, &commandPoolCreateInfoTrancient, VK_NULL_HANDLE, &device->commandPoolTrancient));
+	assert(device->commandPoolTrancient);
+
+	// VkBufferCreateInfo
+	VkBufferCreateInfo bufferCreateInfo{};
+	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferCreateInfo.pNext = VK_NULL_HANDLE;
+	bufferCreateInfo.size = 1 << 22;
+	bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	bufferCreateInfo.queueFamilyIndexCount = 0;
+	bufferCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
+
+	// VmaAllocationCreateInfo
+	VmaAllocationCreateInfo allocationCreateInfo{};
+	allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+	allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+	// vmaCreateBuffer
+	VKT_CHECK(vmaCreateBuffer(device->allocator, &bufferCreateInfo, &allocationCreateInfo, &device->bufferStaging, &device->bufferStagingAllocation, &device->bufferStagingAllocationInfo));
+	assert(device->bufferStagingAllocationInfo.pMappedData);
+	assert(device->bufferStagingAllocation);
+	assert(device->bufferStaging);
 }
 
 // vulkanDeviceDestroy
@@ -174,10 +204,16 @@ void vulkanDeviceDestroy(
 	VulkanDevice& device)
 {
 	// destroy handles
+	vmaDestroyBuffer(device.allocator, device.bufferStaging, device.bufferStagingAllocation);
+	vkDestroyCommandPool(device.device, device.commandPoolTrancient, VK_NULL_HANDLE);
 	vkDestroyCommandPool(device.device, device.commandPool, VK_NULL_HANDLE);
 	vmaDestroyAllocator(device.allocator);
 	vkDestroyDevice(device.device, VK_NULL_HANDLE);
 	// clear handles
+	device.bufferStagingAllocationInfo = {};
+	device.bufferStagingAllocation = VK_NULL_HANDLE;
+	device.bufferStaging = VK_NULL_HANDLE;
+	device.commandPoolTrancient = VK_NULL_HANDLE;
 	device.commandPool = VK_NULL_HANDLE;
 	device.allocator = VK_NULL_HANDLE;
 	device.queueTransfer = VK_NULL_HANDLE;
@@ -817,44 +853,65 @@ void vulkanBufferWrite(
 	const void*   data)
 {
 	// check data
+	assert(offset + size <= buffer.size);
 	assert(data);
 
-	// create staging buffer and memory
-	VulkanBuffer stagingBuffer{};
-	stagingBuffer.size = size;
+	VkDeviceSize copyOffset = 0;
+	while (copyOffset < size) {
+		// get current copy buffer size
+		VkDeviceSize copySize = std::min(device.bufferStagingAllocationInfo.size, size - copyOffset);
 
-	// VkBufferCreateInfo
-	VkBufferCreateInfo bufferCreateInfo{};
-	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferCreateInfo.pNext = VK_NULL_HANDLE;
-	bufferCreateInfo.size = size;
-	bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	bufferCreateInfo.queueFamilyIndexCount = 0;
-	bufferCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
+		// VkCommandBufferAllocateInfo
+		VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		commandBufferAllocateInfo.pNext = VK_NULL_HANDLE;
+		commandBufferAllocateInfo.commandPool = device.commandPoolTrancient;
+		commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		commandBufferAllocateInfo.commandBufferCount = 1;
 
-	// VmaAllocationCreateInfo
-	VmaAllocationCreateInfo allocCreateInfo{};
-	allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-	allocCreateInfo.flags = 0;
+		// vkAllocateCommandBuffers
+		VkCommandBuffer commandBuffer;
+		VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer));
+		assert(commandBuffer);
 
-	// vmaCreateBuffer
-	VKT_CHECK(vmaCreateBuffer(device.allocator, &bufferCreateInfo, &allocCreateInfo, &stagingBuffer.buffer, &stagingBuffer.allocation, &stagingBuffer.allocationInfo));
-	assert(stagingBuffer.allocation);
-	assert(stagingBuffer.buffer);
+		// VkCommandBufferBeginInfo
+		VkCommandBufferBeginInfo commandBufferBeginInfo{};
+		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
+		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
+		VKT_CHECK(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
 
-	// map staging buffer and memory
-	void* mappedData = nullptr;
-	VKT_CHECK(vmaMapMemory(device.allocator, stagingBuffer.allocation, &mappedData));
-	assert(mappedData);
-	memcpy(mappedData, data, (size_t)size);
-	vmaUnmapMemory(device.allocator, stagingBuffer.allocation);
+		// copy memory to buffer
+		memcpy(device.bufferStagingAllocationInfo.pMappedData, (uint8_t*)data + copyOffset, (size_t)copySize);
 
-	// copy buffers
-	vulkanBufferCopy(device, stagingBuffer, 0, buffer, offset, size);
+		// VkBufferCopy
+		VkBufferCopy bufferCopy{};
+		bufferCopy.srcOffset = 0;
+		bufferCopy.dstOffset = offset + copyOffset;
+		bufferCopy.size = copySize;
+		vkCmdCopyBuffer(commandBuffer, device.bufferStaging, buffer.buffer, 1, &bufferCopy);
 
-	// destroy buffer and free memory
-	vmaDestroyBuffer(device.allocator, stagingBuffer.buffer, stagingBuffer.allocation);
+		// vkEndCommandBuffer
+		VKT_CHECK(vkEndCommandBuffer(commandBuffer));
+
+		// submit and wait
+		// VkSubmitInfo
+		VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.pWaitDstStageMask = &waitDstStageMask;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
+		VKT_CHECK(vkQueueSubmit(device.queueTransfer, 1, &submitInfo, VK_NULL_HANDLE));
+		VKT_CHECK(vkQueueWaitIdle(device.queueTransfer));
+
+		// free command buffer
+		vkFreeCommandBuffers(device.device, device.commandPoolTrancient, 1, &commandBuffer);
+
+		// accumulate copied size
+		copyOffset += copySize;
+	}
 }
 
 // vulkanBufferCopy
@@ -1520,6 +1577,39 @@ void vulkanPipelineCreate(
 	graphicsPipelineCreateInfo.basePipelineIndex = 0;
 	VKT_CHECK(vkCreateGraphicsPipelines(device.device, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, VK_NULL_HANDLE, &pipeline->pipeline));
 	assert(pipeline->pipeline);
+}
+
+
+
+// vulkanPipelineDestroy
+void vulkanPipelineDestroy(
+	VulkanDevice&   device,
+	VulkanPipeline& pipeline)
+{
+	// destroy handles
+	vkDestroyPipeline(device.device, pipeline.pipeline, VK_NULL_HANDLE);
+	vkDestroyPipelineLayout(device.device, pipeline.pipelineLayout, VK_NULL_HANDLE);
+	vkDestroyDescriptorSetLayout(device.device, pipeline.descriptorSetLayout, VK_NULL_HANDLE);
+	vkDestroyShaderModule(device.device, pipeline.shaderModuleFS, VK_NULL_HANDLE);
+	vkDestroyShaderModule(device.device, pipeline.shaderModuleVS, VK_NULL_HANDLE);
+	// clear handles
+	pipeline.pipeline = VK_NULL_HANDLE;
+	pipeline.pipelineLayout = VK_NULL_HANDLE;
+	pipeline.descriptorSetLayout = VK_NULL_HANDLE;
+	pipeline.shaderModuleFS = VK_NULL_HANDLE;
+	pipeline.shaderModuleVS = VK_NULL_HANDLE;
+}
+
+// VulkanDescriptorSetCreate
+void VulkanDescriptorSetCreate(
+	VulkanDevice&                      device,
+	VulkanPipeline&                    pipeline,
+	uint32_t                           descriptorSetLayoutBindingCount,
+	const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[],
+	VulkanDescriptorSet*               descriptorSet)
+{
+	assert(descriptorSetLayoutBindings);
+	assert(descriptorSet);
 
 	// get descriptor type counts
 	std::map<VkDescriptorType, uint32_t> descriptorTypeCounts{};
@@ -1539,27 +1629,27 @@ void vulkanPipelineCreate(
 	descriptorPoolCreateInfo.maxSets = 1;
 	descriptorPoolCreateInfo.poolSizeCount = (uint32_t)descriptorPoolSizes.size();
 	descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
-	vkCreateDescriptorPool(device.device, &descriptorPoolCreateInfo, VK_NULL_HANDLE, &pipeline->descriptorPool);
-	assert(pipeline->descriptorPool);
+	VKT_CHECK(vkCreateDescriptorPool(device.device, &descriptorPoolCreateInfo, VK_NULL_HANDLE, &descriptorSet->descriptorPool));
+	assert(descriptorSet->descriptorPool);
 
 	// VkDescriptorSetAllocateInfo
 	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
 	descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	descriptorSetAllocateInfo.pNext = VK_NULL_HANDLE;
-	descriptorSetAllocateInfo.descriptorPool = pipeline->descriptorPool;
+	descriptorSetAllocateInfo.descriptorPool = descriptorSet->descriptorPool;
 	descriptorSetAllocateInfo.descriptorSetCount = 1;
-	descriptorSetAllocateInfo.pSetLayouts = &pipeline->descriptorSetLayout;
-	VKT_CHECK(vkAllocateDescriptorSets(device.device, &descriptorSetAllocateInfo, &pipeline->descriptorSet));
-	assert(pipeline->descriptorSet);
+	descriptorSetAllocateInfo.pSetLayouts = &pipeline.descriptorSetLayout;
+	VKT_CHECK(vkAllocateDescriptorSets(device.device, &descriptorSetAllocateInfo, &descriptorSet->descriptorSet));
+	assert(descriptorSet->descriptorSet);
 }
 
-// vulkanPipelineBindImage
-void vulkanPipelineBindImage(
-	VulkanDevice&   device,
-	VulkanPipeline& pipeline,
-	VulkanImage&    image,
-	VulkanSampler&  sampler,
-	uint32_t        binding)
+// vulkanDescriptorSetUpdateImage
+void vulkanDescriptorSetUpdateImage(
+	VulkanDevice&        device,
+	VulkanDescriptorSet& descriptorSet,
+	VulkanImage&         image,
+	VulkanSampler&       sampler,
+	uint32_t             binding)
 {
 	// VkDescriptorImageInfo
 	VkDescriptorImageInfo descriptorImageInfo{};
@@ -1571,7 +1661,7 @@ void vulkanPipelineBindImage(
 	VkWriteDescriptorSet writeDescriptorSet{};
 	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	writeDescriptorSet.pNext = VK_NULL_HANDLE;
-	writeDescriptorSet.dstSet = pipeline.descriptorSet;
+	writeDescriptorSet.dstSet = descriptorSet.descriptorSet;
 	writeDescriptorSet.dstBinding = binding;
 	writeDescriptorSet.dstArrayElement = 0;
 	writeDescriptorSet.descriptorCount = 1;
@@ -1583,11 +1673,11 @@ void vulkanPipelineBindImage(
 }
 
 // vulkanPipelineBindBufferUniform
-void vulkanPipelineBindBufferUniform(
-	VulkanDevice&   device,
-	VulkanPipeline& pipeline,
-	VulkanBuffer&   buffer,
-	uint32_t        binding)
+void vulkanDescriptorSetUpdateBufferUniform(
+	VulkanDevice&        device,
+	VulkanDescriptorSet& descriptorSet,
+	VulkanBuffer&        buffer,
+	uint32_t             binding)
 {
 	// VkDescriptorImageInfo
 	VkDescriptorBufferInfo descriptorBufferInfo{};
@@ -1600,7 +1690,7 @@ void vulkanPipelineBindBufferUniform(
 	// VkWriteDescriptorSet - uniform buffer
 	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	writeDescriptorSet.pNext = VK_NULL_HANDLE;
-	writeDescriptorSet.dstSet = pipeline.descriptorSet;
+	writeDescriptorSet.dstSet = descriptorSet.descriptorSet;
 	writeDescriptorSet.dstBinding = binding;
 	writeDescriptorSet.dstArrayElement = 0;
 	writeDescriptorSet.descriptorCount = 1;
@@ -1611,27 +1701,17 @@ void vulkanPipelineBindBufferUniform(
 	vkUpdateDescriptorSets(device.device, 1, &writeDescriptorSet, 0, VK_NULL_HANDLE);
 }
 
-// vulkanPipelineDestroy
-void vulkanPipelineDestroy(
-	VulkanDevice&   device,
-	VulkanPipeline& pipeline)
+// VulkanDescriptorSetDestroy
+void VulkanDescriptorSetDestroy(
+	VulkanDevice&        device,
+	VulkanDescriptorSet& descriptorSet)
 {
 	// destroy handles
-	vkFreeDescriptorSets(device.device, pipeline.descriptorPool, 1, &pipeline.descriptorSet);
-	vkDestroyDescriptorPool(device.device, pipeline.descriptorPool, VK_NULL_HANDLE);
-	vkDestroyPipeline(device.device, pipeline.pipeline, VK_NULL_HANDLE);
-	vkDestroyPipelineLayout(device.device, pipeline.pipelineLayout, VK_NULL_HANDLE);
-	vkDestroyDescriptorSetLayout(device.device, pipeline.descriptorSetLayout, VK_NULL_HANDLE);
-	vkDestroyShaderModule(device.device, pipeline.shaderModuleFS, VK_NULL_HANDLE);
-	vkDestroyShaderModule(device.device, pipeline.shaderModuleVS, VK_NULL_HANDLE);
+	vkFreeDescriptorSets(device.device, descriptorSet.descriptorPool, 1, &descriptorSet.descriptorSet);
+	vkDestroyDescriptorPool(device.device, descriptorSet.descriptorPool, VK_NULL_HANDLE);
 	// clear handles
-	pipeline.descriptorSet = VK_NULL_HANDLE;
-	pipeline.descriptorPool = VK_NULL_HANDLE;
-	pipeline.pipeline = VK_NULL_HANDLE;
-	pipeline.pipelineLayout = VK_NULL_HANDLE;
-	pipeline.descriptorSetLayout = VK_NULL_HANDLE;
-	pipeline.shaderModuleFS = VK_NULL_HANDLE;
-	pipeline.shaderModuleVS = VK_NULL_HANDLE;
+	descriptorSet.descriptorSet = VK_NULL_HANDLE;
+	descriptorSet.descriptorPool = VK_NULL_HANDLE;
 }
 
 // vulkanInitDeviceQueueCreateInfo

@@ -27,14 +27,16 @@ void VulkanMesh_obj::draw(
 	// prepare buffers
 	VkDeviceSize offsets[] = { 0, 0, 0 };
 	VkBuffer buffers[]{ bufferPos.buffer, bufferTex.buffer, bufferNrm.buffer };
+
+	struct { glm::mat4 matM; glm::mat4 matV; glm::mat4 matP; } matrixes{ matModl, matView, matProj };
 	
 	// update data
-	
-	vulkanBufferWrite(device, bufferMVP, sizeof(glm::mat4) * 0, sizeof(glm::mat4), &matModl);
 	//if (!matwrite)
 	{
-		vulkanBufferWrite(device, bufferMVP, sizeof(glm::mat4) * 1, sizeof(glm::mat4), &matView);
-		vulkanBufferWrite(device, bufferMVP, sizeof(glm::mat4) * 2, sizeof(glm::mat4), &matProj);
+		vulkanBufferWrite(device, bufferMVP, 0, sizeof(matrixes), &matrixes);
+		//vulkanBufferWrite(device, bufferMVP, sizeof(glm::mat4) * 0, sizeof(glm::mat4), &matModl);
+		//vulkanBufferWrite(device, bufferMVP, sizeof(glm::mat4) * 1, sizeof(glm::mat4), &matView);
+		//vulkanBufferWrite(device, bufferMVP, sizeof(glm::mat4) * 2, sizeof(glm::mat4), &matProj);
 		matwrite = true;
 	}
 

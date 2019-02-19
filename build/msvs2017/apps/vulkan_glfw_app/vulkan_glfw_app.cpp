@@ -41,6 +41,7 @@ int main(void)
 	VkPhysicalDeviceFeatures physicalDeviceFeatures{};
 	physicalDeviceFeatures.depthBounds = VK_TRUE;
 	physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
+	physicalDeviceFeatures.fillModeNonSolid = VK_TRUE;
 
 	// init vulkan
 	VulkanInstance      instance{};
@@ -70,7 +71,7 @@ int main(void)
 
 	// create sampler
 	VulkanSampler sampler{};
-	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, &sampler);
+	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE, &sampler);
 
 	std::vector<VulkanMesh*> meshes;
 	std::vector<VulkanImage*> images;
@@ -106,7 +107,7 @@ int main(void)
 		currentTime += delta;
 		frames++;
 		if (currentTime >= 1.0f) {
-			std::cout << frames << "frames in " << currentTime << " seconds" << std::endl;
+			std::cout << frames << " frames in " << currentTime << " seconds" << std::endl;
 			frames = 0;
 			currentTime = 0.0f;
 		}

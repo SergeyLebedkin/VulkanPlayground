@@ -111,7 +111,7 @@ void loadMesh_obj(
 
 		// create mesh
 		VulkanMesh_obj* mesh = new VulkanMesh_obj(device);
-		vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 16 * sizeof(float), &mesh->bufferMVP);
+		vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 3 * sizeof(glm::mat4), &mesh->bufferMVP);
 		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorPos.size() * sizeof(float), &mesh->bufferPos);
 		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorTex.size() * sizeof(float), &mesh->bufferTex);
 		vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vectorNrm.size() * sizeof(float), &mesh->bufferNrm);

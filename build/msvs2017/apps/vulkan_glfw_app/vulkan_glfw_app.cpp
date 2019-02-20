@@ -152,6 +152,7 @@ int main(void)
 
 		vkCmdSetViewport(commandBuffer.commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffer.commandBuffer, 0, 1, &scissor);
+		vkCmdSetLineWidth(commandBuffer.commandBuffer, 1.0f);
 		
 		// draw obj
 		for (auto mesh : meshes)

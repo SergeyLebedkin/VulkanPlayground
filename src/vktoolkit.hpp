@@ -13,6 +13,10 @@
 #define VKT_ARRAY_ELEMENTS_COUNT(arr) (uint32_t)(sizeof(arr)/sizeof(arr[0]))
 #endif
 
+#ifndef VKT_VECTOR_DATA_SIZE
+#define VKT_VECTOR_DATA_SIZE(vec) (VkDeviceSize)(vec.size()*sizeof(vec[0]))
+#endif
+
 typedef struct VulkanInstance {
 	VkInstance                    instance;
 	std::vector<VkPhysicalDevice> physicalDevices;

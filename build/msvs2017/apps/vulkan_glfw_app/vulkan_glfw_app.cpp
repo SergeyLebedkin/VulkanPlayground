@@ -60,25 +60,24 @@ int main(void)
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 
 	// create pipeline
-	VulkanPipeline  pipeline_obj{};
 	VulkanPipeline  pipeline_default{};
-	createPipeline_obj(device, swapchain.renderPass, 0, pipeline_obj);
+	VulkanPipeline  pipeline_obj{};
+	VulkanPipeline  pipeline_line{};
 	createPipeline_default(device, swapchain.renderPass, 0, pipeline_default);
+	createPipeline_obj(device, swapchain.renderPass, 0, pipeline_obj);
+	createPipeline_line(device, swapchain.renderPass, 0, pipeline_line);
 	
-	// create texture
-	VulkanImage image{};
-	loadImageFromFile(device, image, "textures/texture.png");
-
 	// create sampler
 	VulkanSampler sampler{};
 	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE, &sampler);
 
 	std::vector<VulkanMesh*> meshes;
+	std::vector<VulkanMesh*> meshesLines;
 	std::vector<VulkanImage*> images;
-	//loadMesh_obj(device, pipeline_obj, sampler, "models/daisy3.obj", "models", &meshes);
-	loadMesh_obj(device, pipeline_obj, sampler, "models/rock/rock.obj", "models/rock", &meshes, &images);
-	//loadMesh_obj(device, pipeline_obj, sampler, "models/tea/tea.obj", "models/tea", &meshes, &images);
-	//loadMesh_obj(device, pipeline_obj, sampler, "models/train/train.obj", "models", &meshes, &images);
+	//loadMesh_obj(device, pipeline_obj, sampler, "models/daisy3.obj", "models", &meshesLines, &images);
+	loadMesh_obj(device, pipeline_obj, pipeline_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
+	//loadMesh_obj(device, pipeline_obj, pipeline_line, sampler, "models/tea/tea.obj", "models/tea", &meshes, &meshesLines, &images);
+	//loadMesh_obj(device, pipeline_obj, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
 
 	// matrices
 	float aspect = (float)swapchain.surfaceCapabilities.currentExtent.width / swapchain.surfaceCapabilities.currentExtent.height;
@@ -164,6 +163,10 @@ int main(void)
 		for (auto mesh : meshes)
 			mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
 
+		// draw lines
+		for (auto mesh : meshesLines)
+			mesh->draw(pipeline_line, commandBuffer, matProj, matView, matModl);
+
 		// END RENDER
 		vkCmdEndRenderPass(commandBuffer.commandBuffer);
 
@@ -180,18 +183,19 @@ int main(void)
 		vulkanImageDestroy(device, *image);
 		delete image;
 	}
+	images.clear();
 
 	// delete meshes
-	images.clear();
-	for (auto mesh : meshes) 
-		delete mesh;
+	for (auto mesh : meshesLines) delete mesh;
+	meshesLines.clear();
+	for (auto mesh : meshes) delete mesh;
 	meshes.clear();
 
 	// destroy vulkan
 	vulkanSamplerDestroy(device, sampler);
-	vulkanImageDestroy(device, image);
-	vulkanPipelineDestroy(device, pipeline_default);
+	vulkanPipelineDestroy(device, pipeline_line);
 	vulkanPipelineDestroy(device, pipeline_obj);
+	vulkanPipelineDestroy(device, pipeline_default);
 	vulkanCommandBufferFree(device, commandBuffer);
 	vulkanSemaphoreDestroy(device, presentSemaphore);
 	vulkanSemaphoreDestroy(device, renderSemaphore);

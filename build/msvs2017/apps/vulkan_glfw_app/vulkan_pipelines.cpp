@@ -35,3 +35,17 @@ void createPipeline_obj(
 		VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 		&pipeline);
 }
+
+// createPipeline_line
+void createPipeline_line(VulkanDevice & device, VkRenderPass renderPass, uint32_t subPass, VulkanPipeline & pipeline)
+{
+	vulkanPipelineCreate(device, renderPass, subPass,
+		"shaders/line.vert.spv", "shaders/line.frag.spv",
+		VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_POLYGON_MODE_FILL,
+		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_C4), vertexBindingDescriptions_P3_C4,
+		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P3_C4), vertexInputAttributeDescriptions_P3_C4,
+		VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_U1), descriptorSetLayoutBindings_U1,
+		VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
+		&pipeline);
+
+}

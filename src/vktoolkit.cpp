@@ -870,7 +870,7 @@ void vulkanBufferWrite(
 		commandBufferAllocateInfo.commandBufferCount = 1;
 
 		// vkAllocateCommandBuffers
-		VkCommandBuffer commandBuffer;
+		VkCommandBuffer commandBuffer{};
 		VKT_CHECK(vkAllocateCommandBuffers(device.device, &commandBufferAllocateInfo, &commandBuffer));
 		assert(commandBuffer);
 

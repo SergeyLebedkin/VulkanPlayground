@@ -23,6 +23,7 @@ const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P4_C4_T
 { 2, 0, VK_FORMAT_R32G32_SFLOAT      , 32 }, // texCoord - 2
 };
 
+
 //////////////////////////////////////////////////////////////////////////
 
 // VkVertexInputBindingDescription
@@ -41,10 +42,29 @@ const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P3_T2_N
 
 //////////////////////////////////////////////////////////////////////////
 
+// VkVertexInputBindingDescription
+const VkVertexInputBindingDescription vertexBindingDescriptions_P3_C4[]{
+{ 0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
+{ 1, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
+};
+
+// VkVertexInputAttributeDescription
+const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P3_C4[]{
+{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT,    0 }, // position - 3
+{ 1, 1, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // color    - 4
+};
+
+//////////////////////////////////////////////////////////////////////////
+
 // VkDescriptorSetLayoutBinding
 const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings_T1_U1[] {
 { 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // texture
 { 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1, VK_SHADER_STAGE_VERTEX_BIT  , VK_NULL_HANDLE }, // buffer
+};
+
+// VkDescriptorSetLayoutBinding
+const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings_U1[]{
+{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, VK_NULL_HANDLE }, // buffer
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -70,6 +90,12 @@ void createPipeline_default(
 	VulkanPipeline& pipeline);
 
 void createPipeline_obj(
+	VulkanDevice&   device,
+	VkRenderPass    renderPass,
+	uint32_t        subPass,
+	VulkanPipeline& pipeline);
+
+void createPipeline_line(
 	VulkanDevice&   device,
 	VkRenderPass    renderPass,
 	uint32_t        subPass,

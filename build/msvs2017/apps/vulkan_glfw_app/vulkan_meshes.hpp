@@ -3,9 +3,25 @@
 #include "vulkan_pipelines.hpp"
 
 // VulkanMesh
-struct VulkanMesh
+class VulkanMesh
 {
-	virtual ~VulkanMesh() {};
+protected:
+	// material
+	VulkanDevice&       device;
+	VulkanDescriptorSet descriptorSet{};
+	VulkanBuffer        bufferMVP{};
+	int32_t             vertexCount{};
+public:
+	VulkanMesh(VulkanDevice& device);
+	virtual ~VulkanMesh();
+
+	// set image
+	void setImage(
+		VulkanImage&   image,
+		VulkanSampler& sampler,
+		uint32_t       binding);
+
+	// draw
 	virtual void draw(
 		VulkanPipeline&      pipeline,
 		VulkanCommandBuffer& commandBuffer,
@@ -15,26 +31,45 @@ struct VulkanMesh
 };
 
 // VulkanMesh
-struct VulkanMesh_obj : public VulkanMesh
+class VulkanMesh_obj : public VulkanMesh
 {
+protected:
 	// buffers
 	VulkanBuffer bufferPos{};
 	VulkanBuffer bufferTex{};
 	VulkanBuffer bufferNrm{};
-	VulkanBuffer bufferMVP{};
-	int32_t      vertexCount;
-
-	bool matwrite = false;
-
-	// material
-	VulkanDescriptorSet descriptorSet{};
-
-	// general
-	VulkanDevice& device;
-
+public:
 	// constructor
-	VulkanMesh_obj(VulkanDevice& device);
+	VulkanMesh_obj(
+		VulkanDevice&           device,
+		VulkanPipeline&         pipeline,
+		std::vector<glm::vec3>& pos,
+		std::vector<glm::vec2>& tex,
+		std::vector<glm::vec3>& nrm);
 	~VulkanMesh_obj();
+	void draw(
+		VulkanPipeline&      pipeline,
+		VulkanCommandBuffer& commandBuffer,
+		glm::mat4&           matProj,
+		glm::mat4&           matView,
+		glm::mat4&           matModl) override;
+};
+
+// VulkanMesh_lines
+struct VulkanMesh_lines : public VulkanMesh
+{
+protected:
+	// buffers
+	VulkanBuffer bufferPos{};
+	VulkanBuffer bufferCol{};
+public:
+	// constructor
+	VulkanMesh_lines(
+		VulkanDevice&           device,
+		VulkanPipeline&         pipeline,
+		std::vector<glm::vec3>& pos,
+		std::vector<glm::vec4>& col);
+	~VulkanMesh_lines();
 	void draw(
 		VulkanPipeline&      pipeline,
 		VulkanCommandBuffer& commandBuffer,

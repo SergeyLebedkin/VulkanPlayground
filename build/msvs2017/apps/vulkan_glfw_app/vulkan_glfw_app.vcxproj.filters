@@ -38,4 +38,12 @@
     <ClInclude Include="vulkan_loaders.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\line.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\line.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
 </Project>

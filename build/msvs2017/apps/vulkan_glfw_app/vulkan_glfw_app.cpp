@@ -17,15 +17,9 @@ VertexStruct_P4_C4_T2 vertices[] = {
 // index array
 uint16_t indexes[] = { 0, 1, 2, 2, 1, 3 };
 
-void foo(VulkanImage& img) {}
-
 // main
 int main(void)
 {
-	VulkanImage* img = new VulkanImage;
-	foo((VulkanImage &)img);
-	delete img;
-
 	// init GLFW
 	glfwInit();
 	if (!glfwVulkanSupported()) assert(0 && "Vulkan not supported");

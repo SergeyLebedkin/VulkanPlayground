@@ -23,7 +23,6 @@ const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P4_C4_T
 { 2, 0, VK_FORMAT_R32G32_SFLOAT      , 32 }, // texCoord - 2
 };
 
-
 //////////////////////////////////////////////////////////////////////////
 
 // VkVertexInputBindingDescription

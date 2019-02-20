@@ -70,6 +70,7 @@ void VulkanMesh_obj::draw(
 	vulkanBufferWrite(device, bufferMVP, 0, sizeof(matrixes), &matrixes);
 
 	// render
+	//vkCmdUpdateBuffer(commandBuffer.commandBuffer, bufferMVP.buffer, 0, sizeof(matrixes), &matrixes);
 	vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 	vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
 	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 3, buffers, offsets);

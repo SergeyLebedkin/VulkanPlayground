@@ -914,6 +914,15 @@ void vulkanBufferWrite(
 	}
 }
 
+void vulkanBufferUpdate(
+	VulkanCommandBuffer& device,
+	VulkanBuffer& buffer,
+	VkDeviceSize  offset,
+	VkDeviceSize  size,
+	const void*   data)
+{
+}
+
 // vulkanBufferCopy
 void vulkanBufferCopy(
 	VulkanDevice& device,
@@ -1578,8 +1587,6 @@ void vulkanPipelineCreate(
 	VKT_CHECK(vkCreateGraphicsPipelines(device.device, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, VK_NULL_HANDLE, &pipeline->pipeline));
 	assert(pipeline->pipeline);
 }
-
-
 
 // vulkanPipelineDestroy
 void vulkanPipelineDestroy(

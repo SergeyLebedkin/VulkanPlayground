@@ -49,6 +49,20 @@ typedef struct VulkanSurface {
 	VkSurfaceKHR surface;
 } VulkanSurface;
 
+typedef struct VulkanSwapchain {
+	VkSurfaceFormatKHR         surfaceFormat;
+	VkPresentModeKHR           presentMode;
+	VkSurfaceCapabilitiesKHR   surfaceCapabilities;
+	VkSwapchainKHR             swapchain;
+	VkRenderPass               renderPass;
+	VkImage                    imageDS;
+	VmaAllocation              allocationDS;
+	VkImageView                imageViewDS;
+	std::vector<VkImage>       images;
+	std::vector<VkImageView>   imageViews;
+	std::vector<VkFramebuffer> framebuffers;
+} VulkanSwapchain;
+
 typedef struct VulkanSampler {
 	VkSampler sampler;
 	VkBool32  anisotropyEnable;
@@ -83,20 +97,6 @@ typedef struct VulkanSemaphore {
 typedef struct VulkanCommandBuffer {
 	VkCommandBuffer commandBuffer;
 } VulkanCommandBuffer;
-
-typedef struct VulkanSwapchain {
-	VkSurfaceFormatKHR         surfaceFormat;
-	VkPresentModeKHR           presentMode;
-	VkSurfaceCapabilitiesKHR   surfaceCapabilities;
-	VkSwapchainKHR             swapchain;
-	VkRenderPass               renderPass;
-	VkImage                    imageDS;
-	VmaAllocation              allocationDS;
-	VkImageView                imageViewDS;
-	std::vector<VkImage>       images;
-	std::vector<VkImageView>   imageViews;
-	std::vector<VkFramebuffer> framebuffers;
-} VulkanSwapchain;
 
 typedef struct VulkanPipeline {
 	VkShaderModule        shaderModuleVS;
@@ -133,6 +133,31 @@ void vulkanDeviceCreate(
 
 void vulkanDeviceDestroy(
 	VulkanDevice& device
+);
+
+void vulkanSwapchainCreate(
+	VulkanDevice&    device,
+	VulkanSurface&   surface,
+	VulkanSwapchain* swapchain
+);
+
+void vulkanSwapchainDestroy(
+	VulkanDevice&    device,
+	VulkanSwapchain& swapchain
+);
+
+void vulkanSwapchainBeginFrame(
+	VulkanDevice&    device,
+	VulkanSwapchain& swapchain,
+	VulkanSemaphore& semaphore,
+	uint32_t*        frameIndex
+);
+
+void vulkanSwapchainEndFrame(
+	VulkanDevice&    device,
+	VulkanSwapchain& swapchain,
+	VulkanSemaphore& semaphore,
+	uint32_t         frameIndex
 );
 
 void vulkanSamplerCreate(
@@ -263,31 +288,6 @@ void vulkanSemaphoreCreate(
 void vulkanSemaphoreDestroy(
 	VulkanDevice&    device,
 	VulkanSemaphore& semaphore
-);
-
-void vulkanSwapchainCreate(
-	VulkanDevice&    device,
-	VulkanSurface&   surface,
-	VulkanSwapchain* swapchain
-);
-
-void vulkanSwapchainDestroy(
-	VulkanDevice&    device,
-	VulkanSwapchain& swapchain
-);
-
-void vulkanSwapchainBeginFrame(
-	VulkanDevice&    device,
-	VulkanSwapchain& swapchain,
-	VulkanSemaphore& semaphore,
-	uint32_t*        frameIndex
-);
-
-void vulkanSwapchainEndFrame(
-	VulkanDevice&    device,
-	VulkanSwapchain& swapchain,
-	VulkanSemaphore& semaphore,
-	uint32_t         frameIndex
 );
 
 void vulkanPipelineCreate(

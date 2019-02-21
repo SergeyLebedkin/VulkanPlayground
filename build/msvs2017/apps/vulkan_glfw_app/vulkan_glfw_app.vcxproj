@@ -203,6 +203,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="time_measure.cpp" />
     <ClCompile Include="vulkan_glfw_app.cpp" />
     <ClCompile Include="vulkan_loaders.cpp" />
     <ClCompile Include="vulkan_meshes.cpp" />
@@ -274,6 +275,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="time_measure.hpp" />
     <ClInclude Include="vulkan_loaders.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />
     <ClInclude Include="vulkan_pipelines.hpp" />

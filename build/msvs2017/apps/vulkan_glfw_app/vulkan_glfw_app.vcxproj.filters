@@ -5,6 +5,7 @@
     <ClCompile Include="vulkan_pipelines.cpp" />
     <ClCompile Include="vulkan_loaders.cpp" />
     <ClCompile Include="vulkan_meshes.cpp" />
+    <ClCompile Include="time_measure.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="textures">
@@ -32,18 +33,13 @@
     <CustomBuild Include="shaders\obj.vert.glsl">
       <Filter>shaders</Filter>
     </CustomBuild>
+    <CustomBuild Include="shaders\line.frag.glsl" />
+    <CustomBuild Include="shaders\line.vert.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vulkan_pipelines.hpp" />
     <ClInclude Include="vulkan_loaders.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\line.frag.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\line.vert.glsl">
-      <Filter>shaders</Filter>
-    </None>
+    <ClInclude Include="time_measure.hpp" />
   </ItemGroup>
 </Project>

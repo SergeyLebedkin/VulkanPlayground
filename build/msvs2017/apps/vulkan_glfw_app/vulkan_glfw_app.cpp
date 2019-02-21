@@ -1,4 +1,5 @@
 #include "vulkan_loaders.hpp"
+#include "time_measure.hpp"
 #include <iostream>
 #include <chrono>
 #include <GLFW/glfw3.h>
@@ -90,30 +91,16 @@ int main(void)
 		glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.f);
 
+	TimeStamp timeStamp;
+	timeStampReset(timeStamp);
+
 	// main loop
 	while (!glfwWindowShouldClose(window))
 	{
-		// get time stamps
-		static uint32_t frames = 0;
-		static float newTime = 0.0f;
-		static float currentTime = 0.0f;
-		static auto prevTimePoint = std::chrono::high_resolution_clock::now();
-		static auto nextTimePoint = std::chrono::high_resolution_clock::now();
-		prevTimePoint = nextTimePoint;
-		nextTimePoint = std::chrono::high_resolution_clock::now();
+		timeStampTick(timeStamp);
+		timeStampPrint(timeStamp, 1.0f);
 
-		float delta = std::chrono::duration_cast<std::chrono::duration<float>>(nextTimePoint - prevTimePoint).count();
-		newTime += delta;
-
-		currentTime += delta;
-		frames++;
-		if (currentTime >= 1.0f) {
-			std::cout << frames << " frames in " << currentTime << " seconds" << std::endl;
-			frames = 0;
-			currentTime = 0.0f;
-		}
-
-		matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), newTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), timeStamp.accumTime, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		uint32_t frameIndex = 0;
 		vulkanSwapchainBeginFrame(device, swapchain, presentSemaphore, &frameIndex);
@@ -152,9 +139,6 @@ int main(void)
 		scissor.extent.width = swapchain.surfaceCapabilities.currentExtent.width;
 		scissor.extent.height = swapchain.surfaceCapabilities.currentExtent.height;
 
-		// VkDeviceSize
-		VkDeviceSize offsets[] = { 0, 0, 0 };
-
 		// GO RENDER
 		vkCmdBeginRenderPass(commandBuffer.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -163,9 +147,10 @@ int main(void)
 		vkCmdSetLineWidth(commandBuffer.commandBuffer, 1.0f);
 		
 		// draw obj
-		for (auto mesh : meshes)
-			mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
-			//mesh->draw(pipeline_obj_wf, commandBuffer, matProj, matView, matModl);
+		for (auto mesh : meshes) {
+			//mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
+			mesh->draw(pipeline_obj_wf, commandBuffer, matProj, matView, matModl);
+		}
 
 		// draw lines
 		//for (auto mesh : meshesLines)
@@ -198,7 +183,11 @@ int main(void)
 	// destroy vulkan
 	vulkanImageDestroy(device, imageDefault); 
 	vulkanSamplerDestroy(device, sampler);
+	vulkanShaderDestroy(device, shader_obj);
+	vulkanShaderDestroy(device, shader_line);
+	vulkanShaderDestroy(device, shader_default);
 	vulkanPipelineDestroy(device, pipeline_line);
+	vulkanPipelineDestroy(device, pipeline_obj_wf);
 	vulkanPipelineDestroy(device, pipeline_obj);
 	vulkanPipelineDestroy(device, pipeline_default);
 	vulkanCommandBufferFree(device, commandBuffer);

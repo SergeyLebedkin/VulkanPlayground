@@ -16,4 +16,4 @@ typedef struct TimeStamp {
 
 void timeStampTick(TimeStamp& timeStamp);
 void timeStampReset(TimeStamp& timeStamp);
-void timeStampPrint(TimeStamp& timeStamp, float period);
+void timeStampPrint(std::ostream& os, TimeStamp& timeStamp, float period);

@@ -98,7 +98,7 @@ int main(void)
 	while (!glfwWindowShouldClose(window))
 	{
 		timeStampTick(timeStamp);
-		timeStampPrint(timeStamp, 1.0f);
+		timeStampPrint(std::cout, timeStamp, 1.0f);
 
 		matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), timeStamp.accumTime, glm::vec3(0.0f, 1.0f, 0.0f));
 

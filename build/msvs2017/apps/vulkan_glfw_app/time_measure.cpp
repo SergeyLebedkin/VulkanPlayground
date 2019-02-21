@@ -1,6 +1,7 @@
 #include "time_measure.hpp"
 #include <iostream>
 
+// timeStampTick
 void timeStampTick(TimeStamp& timeStamp) 
 {
 	timeStamp.prevTimePoint = timeStamp.nextTimePoint;
@@ -11,6 +12,7 @@ void timeStampTick(TimeStamp& timeStamp)
 	timeStamp.ticks++;
 };
 
+// timeStampReset
 void timeStampReset(TimeStamp& timeStamp)
 {
 	timeStamp.prevTimePoint = std::chrono::high_resolution_clock::now();
@@ -21,10 +23,11 @@ void timeStampReset(TimeStamp& timeStamp)
 	timeStamp.ticks = 0;
 };
 
-void timeStampPrint(TimeStamp& timeStamp, float period)
+// timeStampPrint
+void timeStampPrint(std::ostream& os, TimeStamp& timeStamp, float period)
 {
 	if (timeStamp.printTime >= period) {
-		std::cout << timeStamp.ticks << " ticks in " << timeStamp.printTime << std::endl;
+		os << timeStamp.ticks << " ticks in " << timeStamp.printTime << std::endl;
 		timeStamp.printTime = 0.0f;
 		timeStamp.ticks = 0;
 	}

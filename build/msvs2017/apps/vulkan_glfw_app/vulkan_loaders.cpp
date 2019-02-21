@@ -9,6 +9,24 @@
 #include <stb_image_write.h>
 #pragma warning(pop)
 
+// createImageProcedural
+void createImageProcedural(VulkanDevice & device, uint32_t width, uint32_t height, VulkanImage & image)
+{
+	// create data for image
+	struct pixel_u8 { uint8_t r, g, b, a; };
+	pixel_u8* texData = new pixel_u8[width * height];
+
+	// create image instance
+	vulkanImageCreate(device, VK_FORMAT_R8G8B8A8_UNORM, width, height, 1, &image);
+
+	for (uint32_t mip = 0; mip < image.mipLevels; mip++) {
+		memset(texData, mip * (255 / image.mipLevels), width * height * sizeof(pixel_u8));
+		vulkanImageWrite(device, image, mip, texData);
+	}
+
+	delete[] texData;
+}
+
 // loadImageFromFile
 void loadImageFromFile(
 	VulkanDevice& device,
@@ -34,6 +52,7 @@ void loadMesh_obj(
 	VulkanShader&              shader,
 	VulkanShader&              shaderLines,
 	VulkanSampler&             sampler,
+	VulkanImage&               imageDefault,
 	std::string                fileName,
 	std::string                baseDir,
 	std::vector<VulkanMesh*>*  meshes,
@@ -179,9 +198,7 @@ void loadMesh_obj(
 		}
 
 		// get image from material
-		VulkanImage* image = nullptr;
-		if (shape.mesh.material_ids[0] >= 0)
-			image = (*images)[shape.mesh.material_ids[0]];
+		VulkanImage* image = (shape.mesh.material_ids[0] >= 0) ? (*images)[shape.mesh.material_ids[0]] : &imageDefault;
 
 		// create mesh
 		if (meshes) {

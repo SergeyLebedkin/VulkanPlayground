@@ -54,13 +54,13 @@ int main(void)
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 
 	// create pipelines and shaders
+	VulkanShader shader_default{};
+	VulkanShader shader_obj{};
+	VulkanShader shader_line{};
 	VulkanPipeline pipeline_default{};
 	VulkanPipeline pipeline_obj{}; 
 	VulkanPipeline pipeline_obj_wf{};
 	VulkanPipeline pipeline_line{};
-	VulkanShader shader_default{};
-	VulkanShader shader_obj{};
-	VulkanShader shader_line{};
 	createPipeline_default(device, swapchain.renderPass, 0, shader_default, pipeline_default);
 	createPipeline_obj(device, swapchain.renderPass, 0, shader_obj, pipeline_obj, pipeline_obj_wf);
 	createPipeline_line(device, swapchain.renderPass, 0, shader_line, pipeline_line);
@@ -69,12 +69,16 @@ int main(void)
 	VulkanSampler sampler{};
 	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE, &sampler);
 
+	// create default image
+	VulkanImage imageDefault{};
+	createImageProcedural(device, 1024, 1024, imageDefault);
+
 	std::vector<VulkanMesh*> meshes;
 	std::vector<VulkanMesh*> meshesLines;
 	std::vector<VulkanImage*> images;
 	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/daisy3.obj", "models", &meshesLines, &images);
 	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
-	loadMesh_obj(device, shader_obj, shader_line, sampler, "models/tea/tea.obj", "models/tea", &meshes, &meshesLines, &images);
+	loadMesh_obj(device, shader_obj, shader_line, sampler, imageDefault, "models/tea/tea.obj", "models/tea", &meshes, &meshesLines, &images);
 	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
 
 	// matrices
@@ -84,7 +88,7 @@ int main(void)
 		glm::vec3(0.0f, 1.0f, 2.0f),
 		glm::vec3(0.0f, 0.0f, 0.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.f);
+	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.f);
 
 	// main loop
 	while (!glfwWindowShouldClose(window))
@@ -160,12 +164,12 @@ int main(void)
 		
 		// draw obj
 		for (auto mesh : meshes)
-			//mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
-			mesh->draw(pipeline_obj_wf, commandBuffer, matProj, matView, matModl);
+			mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
+			//mesh->draw(pipeline_obj_wf, commandBuffer, matProj, matView, matModl);
 
 		// draw lines
-		for (auto mesh : meshesLines)
-			mesh->draw(pipeline_line, commandBuffer, matProj, matView, matModl);
+		//for (auto mesh : meshesLines)
+		//	mesh->draw(pipeline_line, commandBuffer, matProj, matView, matModl);
 
 		// END RENDER
 		vkCmdEndRenderPass(commandBuffer.commandBuffer);
@@ -192,6 +196,7 @@ int main(void)
 	meshes.clear();
 
 	// destroy vulkan
+	vulkanImageDestroy(device, imageDefault); 
 	vulkanSamplerDestroy(device, sampler);
 	vulkanPipelineDestroy(device, pipeline_line);
 	vulkanPipelineDestroy(device, pipeline_obj);

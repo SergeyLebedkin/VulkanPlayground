@@ -55,13 +55,14 @@ int main(void)
 
 	// create pipelines and shaders
 	VulkanPipeline pipeline_default{};
-	VulkanPipeline pipeline_obj{};
+	VulkanPipeline pipeline_obj{}; 
+	VulkanPipeline pipeline_obj_wf{};
 	VulkanPipeline pipeline_line{};
 	VulkanShader shader_default{};
 	VulkanShader shader_obj{};
 	VulkanShader shader_line{};
 	createPipeline_default(device, swapchain.renderPass, 0, shader_default, pipeline_default);
-	createPipeline_obj(device, swapchain.renderPass, 0, shader_obj, pipeline_obj);
+	createPipeline_obj(device, swapchain.renderPass, 0, shader_obj, pipeline_obj, pipeline_obj_wf);
 	createPipeline_line(device, swapchain.renderPass, 0, shader_line, pipeline_line);
 	
 	// create sampler
@@ -159,7 +160,8 @@ int main(void)
 		
 		// draw obj
 		for (auto mesh : meshes)
-			mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
+			//mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
+			mesh->draw(pipeline_obj_wf, commandBuffer, matProj, matView, matModl);
 
 		// draw lines
 		for (auto mesh : meshesLines)

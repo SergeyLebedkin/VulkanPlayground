@@ -1,8 +1,11 @@
 #include "vulkan_meshes.hpp"
 
 // VulkanMesh::VulkanMesh
-VulkanMesh::VulkanMesh(VulkanDevice& device, VulkanShader& shader) : 
-	device(device), shader(shader)
+VulkanMesh::VulkanMesh(
+	VulkanDevice& device,
+	VulkanShader& shader) : 
+	device(device),
+	shader(shader)
 {
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 3 * sizeof(glm::mat4), &bufferMVP);
 	vulkanDescriptorSetCreate(device, shader, &descriptorSet);

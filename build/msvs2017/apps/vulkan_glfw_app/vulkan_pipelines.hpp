@@ -94,7 +94,8 @@ void createPipeline_obj(
 	VkRenderPass    renderPass,
 	uint32_t        subPass,
 	VulkanShader&   shader,
-	VulkanPipeline& pipeline);
+	VulkanPipeline& pipeline,
+	VulkanPipeline& pipeline_wf);
 
 void createPipeline_line(
 	VulkanDevice&   device,

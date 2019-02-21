@@ -1,14 +1,17 @@
 #include "vulkan_meshes.hpp"
 
 // VulkanMesh::VulkanMesh
-VulkanMesh::VulkanMesh(VulkanDevice& device) : device(device)
+VulkanMesh::VulkanMesh(VulkanDevice& device, VulkanShader& shader) : 
+	device(device), shader(shader)
 {
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 3 * sizeof(glm::mat4), &bufferMVP);
+	vulkanDescriptorSetCreate(device, shader, &descriptorSet);
 }
 
 // VulkanMesh::~VulkanMesh
 VulkanMesh::~VulkanMesh()
 {
+	vulkanDescriptorSetDestroy(device, descriptorSet);
 	vulkanBufferDestroy(device, bufferMVP);
 }
 
@@ -24,12 +27,14 @@ void VulkanMesh::setImage(
 // VulkanMesh_obj::VulkanMesh_obj
 VulkanMesh_obj::VulkanMesh_obj(
 	VulkanDevice&           device,
-	VulkanPipeline&         pipeline,
+	VulkanShader&           shader,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec2>& tex,
 	std::vector<glm::vec3>& nrm) :
-	VulkanMesh(device)
+	VulkanMesh(device, shader)
 {
+	// update descriptor set
+	vulkanDescriptorSetUpdateBufferUniform(device, descriptorSet, bufferMVP, 1);
 	// create buffers
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(tex), &bufferTex);
@@ -38,16 +43,12 @@ VulkanMesh_obj::VulkanMesh_obj(
 	vulkanBufferWrite(device, bufferPos, 0, VKT_VECTOR_DATA_SIZE(pos), pos.data());
 	vulkanBufferWrite(device, bufferTex, 0, VKT_VECTOR_DATA_SIZE(tex), tex.data());
 	vulkanBufferWrite(device, bufferNrm, 0, VKT_VECTOR_DATA_SIZE(nrm), nrm.data());
-	// create descriptor set
-	VulkanDescriptorSetCreate(device, pipeline, VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_T1_U1), descriptorSetLayoutBindings_T1_U1, &descriptorSet);
-	vulkanDescriptorSetUpdateBufferUniform(device, descriptorSet, bufferMVP, 1);
 	vertexCount = (uint32_t)pos.size();
 }
 
 // VulkanMesh_obj::~VulkanMesh_obj
 VulkanMesh_obj::~VulkanMesh_obj()
-{
-	VulkanDescriptorSetDestroy(device, descriptorSet);
+{	
 	vulkanBufferDestroy(device, bufferNrm);
 	vulkanBufferDestroy(device, bufferTex);
 	vulkanBufferDestroy(device, bufferPos);
@@ -70,7 +71,6 @@ void VulkanMesh_obj::draw(
 	vulkanBufferWrite(device, bufferMVP, 0, sizeof(matrixes), &matrixes);
 
 	// render
-	//vkCmdUpdateBuffer(commandBuffer.commandBuffer, bufferMVP.buffer, 0, sizeof(matrixes), &matrixes);
 	vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 	vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
 	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 3, buffers, offsets);
@@ -80,27 +80,25 @@ void VulkanMesh_obj::draw(
 // VulkanMesh_lines::VulkanMesh_lines
 VulkanMesh_lines::VulkanMesh_lines(
 	VulkanDevice&           device,
-	VulkanPipeline&         pipeline,
+	VulkanShader&           shader,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec4>& col) :
-	VulkanMesh(device)
+	VulkanMesh(device, shader)
 {
+	// update descriptor set
+	vulkanDescriptorSetUpdateBufferUniform(device, descriptorSet, bufferMVP, 0);
 	// create buffers
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(col), &bufferCol);
 	// write buffers
 	vulkanBufferWrite(device, bufferPos, 0, VKT_VECTOR_DATA_SIZE(pos), pos.data());
 	vulkanBufferWrite(device, bufferCol, 0, VKT_VECTOR_DATA_SIZE(col), col.data());
-	// create descriptor set
-	VulkanDescriptorSetCreate(device, pipeline, VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_U1), descriptorSetLayoutBindings_U1, &descriptorSet);
-	vulkanDescriptorSetUpdateBufferUniform(device, descriptorSet, bufferMVP, 0);
 	vertexCount = (uint32_t)pos.size();
 }
 
 // VulkanMesh_lines::~VulkanMesh_lines
 VulkanMesh_lines::~VulkanMesh_lines()
 {
-	VulkanDescriptorSetDestroy(device, descriptorSet);
 	vulkanBufferDestroy(device, bufferCol);
 	vulkanBufferDestroy(device, bufferPos);
 }

@@ -553,11 +553,11 @@ void vulkanSamplerDestroy(
 // vulkanImageCreate
 void vulkanImageCreate(
 	VulkanDevice& device,
-	VkFormat format,
-	uint32_t width,
-	uint32_t height,
-	uint32_t depth,
-	VulkanImage* image)
+	VkFormat      format,
+	uint32_t      width,
+	uint32_t      height,
+	uint32_t      depth,
+	VulkanImage*  image)
 {
 	// check parameters
 	assert(width);
@@ -1330,33 +1330,20 @@ void loadFileData(
 	file.close();
 }
 
-// vulkanPipelineCreate
-void vulkanPipelineCreate(
-	VulkanDevice&                             device,
-	VkRenderPass                              renderPass,
-	uint32_t                                  subpass,
-	const char*                               fileNameVS,
-	const char*                               fileNameFS,
-	VkPrimitiveTopology                       primitiveTopology,
-	VkPolygonMode                             polygonMode,
-	uint32_t                                  vertexInputBindingDescriptionCount,
-	const VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
-	uint32_t                                  vertexInputAttributeDescriptionCount,
-	const VkVertexInputAttributeDescription   vertexInputAttributeDescriptions[],
-	uint32_t                                  descriptorSetLayoutBindingCount,
-	const VkDescriptorSetLayoutBinding        descriptorSetLayoutBindings[],
-	uint32_t                                  pipelineColorBlendAttachmentStateCount,
-	const VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[],
-	VulkanPipeline*                           pipeline)
+// vulkanShaderCreate
+void vulkanShaderCreate(
+	VulkanDevice&                      device,
+	const char*                        fileNameVS,
+	const char*                        fileNameFS,
+	uint32_t                           descriptorSetLayoutBindingCount,
+	const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[],
+	VulkanShader*                      shader)
 {
 	// check handles
 	assert(fileNameVS);
 	assert(fileNameFS);
-	assert(vertexInputBindingDescriptions);
-	assert(vertexInputAttributeDescriptions);
 	assert(descriptorSetLayoutBindings);
-	assert(pipelineColorBlendAttachmentStates);
-	assert(pipeline);
+	assert(shader);
 
 	// VkShaderModuleCreateInfo - vertex shader
 	std::vector<char> dataVS;
@@ -1367,8 +1354,8 @@ void vulkanPipelineCreate(
 	shaderModuleCreateInfoVS.flags = VK_NULL_HANDLE;
 	shaderModuleCreateInfoVS.codeSize = (uint32_t)dataVS.size();
 	shaderModuleCreateInfoVS.pCode = (uint32_t *)dataVS.data();
-	VKT_CHECK(vkCreateShaderModule(device.device, &shaderModuleCreateInfoVS, VK_NULL_HANDLE, &pipeline->shaderModuleVS));
-	assert(pipeline->shaderModuleVS);
+	VKT_CHECK(vkCreateShaderModule(device.device, &shaderModuleCreateInfoVS, VK_NULL_HANDLE, &shader->shaderModuleVS));
+	assert(shader->shaderModuleVS);
 
 	// VkShaderModuleCreateInfo - fragment shader
 	std::vector<char> dataFS;
@@ -1379,8 +1366,74 @@ void vulkanPipelineCreate(
 	shaderModuleCreateInfoFS.flags = VK_NULL_HANDLE;
 	shaderModuleCreateInfoFS.codeSize = (uint32_t)dataFS.size();
 	shaderModuleCreateInfoFS.pCode = (uint32_t *)dataFS.data();
-	VKT_CHECK(vkCreateShaderModule(device.device, &shaderModuleCreateInfoFS, VK_NULL_HANDLE, &pipeline->shaderModuleFS));
-	assert(pipeline->shaderModuleFS);
+	VKT_CHECK(vkCreateShaderModule(device.device, &shaderModuleCreateInfoFS, VK_NULL_HANDLE, &shader->shaderModuleFS));
+	assert(shader->shaderModuleFS);
+
+	// VkPipelineLayoutCreateInfo
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
+	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	descriptorSetLayoutCreateInfo.pNext = VK_NULL_HANDLE;
+	descriptorSetLayoutCreateInfo.flags = 0;
+	descriptorSetLayoutCreateInfo.bindingCount = descriptorSetLayoutBindingCount;
+	descriptorSetLayoutCreateInfo.pBindings = descriptorSetLayoutBindings;
+	VKT_CHECK(vkCreateDescriptorSetLayout(device.device, &descriptorSetLayoutCreateInfo, VK_NULL_HANDLE, &shader->descriptorSetLayout));
+	assert(shader->descriptorSetLayout);
+
+	// assign descriptor type counts
+	shader->descriptorSetLayoutBindings.clear();
+	shader->descriptorSetLayoutBindings.reserve(descriptorSetLayoutBindingCount);
+	for (uint32_t i = 0; i < descriptorSetLayoutBindingCount; i++)
+		shader->descriptorSetLayoutBindings.push_back(descriptorSetLayoutBindings[i]);
+
+	// get descriptor type counts
+	std::map<VkDescriptorType, uint32_t> descriptorTypeCounts{};
+	for (const auto& descriptorSetLayoutBinding : shader->descriptorSetLayoutBindings)
+		descriptorTypeCounts[descriptorSetLayoutBinding.descriptorType]++;
+
+	// fill descriptor pool sizes
+	shader->descriptorPoolSizes.clear();
+	for (const auto& descriptorTypeCount : descriptorTypeCounts)
+		shader->descriptorPoolSizes.push_back({ descriptorTypeCount.first, descriptorTypeCount.second });
+}
+
+// vulkanShaderDestroy
+void vulkanShaderDestroy(
+	VulkanDevice& device,
+	VulkanShader& shader)
+{
+	// destroy handles
+	vkDestroyDescriptorSetLayout(device.device, shader.descriptorSetLayout, VK_NULL_HANDLE);
+	vkDestroyShaderModule(device.device, shader.shaderModuleFS, VK_NULL_HANDLE);
+	vkDestroyShaderModule(device.device, shader.shaderModuleVS, VK_NULL_HANDLE);
+	// clear handles
+	shader.descriptorSetLayout = VK_NULL_HANDLE;
+	shader.shaderModuleFS = VK_NULL_HANDLE;
+	shader.shaderModuleVS = VK_NULL_HANDLE;
+	shader.descriptorSetLayoutBindings = {};
+	shader.descriptorPoolSizes = {};
+}
+
+// vulkanPipelineCreate
+void vulkanPipelineCreate(
+	VulkanDevice&                             device,
+	VulkanShader&                             shader,
+	VkRenderPass                              renderPass,
+	uint32_t                                  subpass,
+	VkPrimitiveTopology                       primitiveTopology,
+	VkPolygonMode                             polygonMode,
+	uint32_t                                  vertexInputBindingDescriptionCount,
+	const VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
+	uint32_t                                  vertexInputAttributeDescriptionCount,
+	const VkVertexInputAttributeDescription   vertexInputAttributeDescriptions[],
+	uint32_t                                  pipelineColorBlendAttachmentStateCount,
+	const VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[],
+	VulkanPipeline*                           pipeline)
+{
+	// check handles
+	assert(vertexInputBindingDescriptions);
+	assert(vertexInputAttributeDescriptions);
+	assert(pipelineColorBlendAttachmentStates);
+	assert(pipeline);
 
 	// VkPipelineShaderStageCreateInfo
 	std::array<VkPipelineShaderStageCreateInfo, 2> pipelineShaderStageCreateInfos;
@@ -1389,7 +1442,7 @@ void vulkanPipelineCreate(
 	pipelineShaderStageCreateInfos[0].pNext = VK_NULL_HANDLE;
 	pipelineShaderStageCreateInfos[0].flags = 0;
 	pipelineShaderStageCreateInfos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	pipelineShaderStageCreateInfos[0].module = pipeline->shaderModuleVS;
+	pipelineShaderStageCreateInfos[0].module = shader.shaderModuleVS;
 	pipelineShaderStageCreateInfos[0].pName = "main";
 	pipelineShaderStageCreateInfos[0].pSpecializationInfo = VK_NULL_HANDLE;
 	// fragment shader
@@ -1397,7 +1450,7 @@ void vulkanPipelineCreate(
 	pipelineShaderStageCreateInfos[1].pNext = VK_NULL_HANDLE;
 	pipelineShaderStageCreateInfos[1].flags = 0;
 	pipelineShaderStageCreateInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	pipelineShaderStageCreateInfos[1].module = pipeline->shaderModuleFS;
+	pipelineShaderStageCreateInfos[1].module = shader.shaderModuleFS;
 	pipelineShaderStageCreateInfos[1].pName = "main";
 	pipelineShaderStageCreateInfos[1].pSpecializationInfo = VK_NULL_HANDLE;
 
@@ -1533,22 +1586,12 @@ void vulkanPipelineCreate(
 	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
 
 	// VkPipelineLayoutCreateInfo
-	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
-	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	descriptorSetLayoutCreateInfo.pNext = VK_NULL_HANDLE;
-	descriptorSetLayoutCreateInfo.flags = 0;
-	descriptorSetLayoutCreateInfo.bindingCount = descriptorSetLayoutBindingCount;
-	descriptorSetLayoutCreateInfo.pBindings = descriptorSetLayoutBindings;
-	VKT_CHECK(vkCreateDescriptorSetLayout(device.device, &descriptorSetLayoutCreateInfo, VK_NULL_HANDLE, &pipeline->descriptorSetLayout));
-	assert(pipeline->descriptorSetLayout);
-
-	// VkPipelineLayoutCreateInfo
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
 	pipelineLayoutCreateInfo.flags = 0;
 	pipelineLayoutCreateInfo.setLayoutCount = 1;
-	pipelineLayoutCreateInfo.pSetLayouts = &pipeline->descriptorSetLayout;
+	pipelineLayoutCreateInfo.pSetLayouts = &shader.descriptorSetLayout;
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = VK_NULL_HANDLE;
 	VKT_CHECK(vkCreatePipelineLayout(device.device, &pipelineLayoutCreateInfo, VK_NULL_HANDLE, &pipeline->pipelineLayout));
@@ -1587,37 +1630,19 @@ void vulkanPipelineDestroy(
 	// destroy handles
 	vkDestroyPipeline(device.device, pipeline.pipeline, VK_NULL_HANDLE);
 	vkDestroyPipelineLayout(device.device, pipeline.pipelineLayout, VK_NULL_HANDLE);
-	vkDestroyDescriptorSetLayout(device.device, pipeline.descriptorSetLayout, VK_NULL_HANDLE);
-	vkDestroyShaderModule(device.device, pipeline.shaderModuleFS, VK_NULL_HANDLE);
-	vkDestroyShaderModule(device.device, pipeline.shaderModuleVS, VK_NULL_HANDLE);
 	// clear handles
 	pipeline.pipeline = VK_NULL_HANDLE;
 	pipeline.pipelineLayout = VK_NULL_HANDLE;
-	pipeline.descriptorSetLayout = VK_NULL_HANDLE;
-	pipeline.shaderModuleFS = VK_NULL_HANDLE;
-	pipeline.shaderModuleVS = VK_NULL_HANDLE;
 }
 
-// VulkanDescriptorSetCreate
-void VulkanDescriptorSetCreate(
-	VulkanDevice&                      device,
-	VulkanPipeline&                    pipeline,
-	uint32_t                           descriptorSetLayoutBindingCount,
-	const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[],
-	VulkanDescriptorSet*               descriptorSet)
+// vulkanDescriptorSetCreate
+void vulkanDescriptorSetCreate(
+	VulkanDevice&        device,
+	VulkanShader&        shader,
+	VulkanDescriptorSet* descriptorSet)
 {
-	assert(descriptorSetLayoutBindings);
+	// check handles
 	assert(descriptorSet);
-
-	// get descriptor type counts
-	std::map<VkDescriptorType, uint32_t> descriptorTypeCounts{};
-	for (uint32_t i = 0; i < descriptorSetLayoutBindingCount; i++)
-		descriptorTypeCounts[descriptorSetLayoutBindings[i].descriptorType]++;
-
-	// fill descriptor pool sizes
-	std::vector<VkDescriptorPoolSize> descriptorPoolSizes{};
-	for (const auto& descriptorTypeCount : descriptorTypeCounts)
-		descriptorPoolSizes.push_back({ descriptorTypeCount.first, descriptorTypeCount.second });
 
 	// VkDescriptorPoolCreateInfo
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
@@ -1625,8 +1650,8 @@ void VulkanDescriptorSetCreate(
 	descriptorPoolCreateInfo.pNext = VK_NULL_HANDLE;
 	descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 	descriptorPoolCreateInfo.maxSets = 1;
-	descriptorPoolCreateInfo.poolSizeCount = (uint32_t)descriptorPoolSizes.size();
-	descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
+	descriptorPoolCreateInfo.poolSizeCount = (uint32_t)shader.descriptorPoolSizes.size();
+	descriptorPoolCreateInfo.pPoolSizes = shader.descriptorPoolSizes.data();
 	VKT_CHECK(vkCreateDescriptorPool(device.device, &descriptorPoolCreateInfo, VK_NULL_HANDLE, &descriptorSet->descriptorPool));
 	assert(descriptorSet->descriptorPool);
 
@@ -1636,7 +1661,7 @@ void VulkanDescriptorSetCreate(
 	descriptorSetAllocateInfo.pNext = VK_NULL_HANDLE;
 	descriptorSetAllocateInfo.descriptorPool = descriptorSet->descriptorPool;
 	descriptorSetAllocateInfo.descriptorSetCount = 1;
-	descriptorSetAllocateInfo.pSetLayouts = &pipeline.descriptorSetLayout;
+	descriptorSetAllocateInfo.pSetLayouts = &shader.descriptorSetLayout;
 	VKT_CHECK(vkAllocateDescriptorSets(device.device, &descriptorSetAllocateInfo, &descriptorSet->descriptorSet));
 	assert(descriptorSet->descriptorSet);
 }
@@ -1699,8 +1724,8 @@ void vulkanDescriptorSetUpdateBufferUniform(
 	vkUpdateDescriptorSets(device.device, 1, &writeDescriptorSet, 0, VK_NULL_HANDLE);
 }
 
-// VulkanDescriptorSetDestroy
-void VulkanDescriptorSetDestroy(
+// vulkanDescriptorSetDestroy
+void vulkanDescriptorSetDestroy(
 	VulkanDevice&        device,
 	VulkanDescriptorSet& descriptorSet)
 {

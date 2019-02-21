@@ -10,8 +10,8 @@ void loadImageFromFile(
 
 void loadMesh_obj(
 	VulkanDevice&              device,
-	VulkanPipeline&            pipeline,
-	VulkanPipeline&            pipelineLines,
+	VulkanShader&              shader,
+	VulkanShader&              shaderLines,
 	VulkanSampler&             sampler,
 	std::string                fileName,
 	std::string                baseDir,

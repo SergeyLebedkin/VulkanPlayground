@@ -31,8 +31,8 @@ void loadImageFromFile(
 // loadMesh_obj
 void loadMesh_obj(
 	VulkanDevice&              device,
-	VulkanPipeline&            pipeline,
-	VulkanPipeline&            pipelineLines,
+	VulkanShader&              shader,
+	VulkanShader&              shaderLines,
 	VulkanSampler&             sampler,
 	std::string                fileName,
 	std::string                baseDir,
@@ -185,13 +185,13 @@ void loadMesh_obj(
 
 		// create mesh
 		if (meshes) {
-			VulkanMesh_obj* mesh = new VulkanMesh_obj(device, pipeline, vectorPos, vectorTex, vectorNrm);
+			VulkanMesh_obj* mesh = new VulkanMesh_obj(device, shader, vectorPos, vectorTex, vectorNrm);
 			if (image) mesh->setImage(*image, sampler, 0);
 			meshes->push_back(mesh);
 		}
 
 		// create mesh lines
 		if (meshesLines)
-			meshesLines->push_back(new VulkanMesh_lines(device, pipelineLines, vectorNrmPos, vectorNrmCol));
+			meshesLines->push_back(new VulkanMesh_lines(device, shaderLines, vectorNrmPos, vectorNrmCol));
 	}
 }

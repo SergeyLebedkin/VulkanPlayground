@@ -98,17 +98,22 @@ typedef struct VulkanCommandBuffer {
 	VkCommandBuffer commandBuffer;
 } VulkanCommandBuffer;
 
+typedef struct VulkanShader {
+	VkShaderModule                            shaderModuleVS;
+	VkShaderModule                            shaderModuleFS;
+	VkDescriptorSetLayout                     descriptorSetLayout;
+	std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings{};
+	std::vector<VkDescriptorPoolSize>         descriptorPoolSizes{};
+} VulkanShader;
+
 typedef struct VulkanPipeline {
-	VkShaderModule        shaderModuleVS;
-	VkShaderModule        shaderModuleFS;
-	VkDescriptorSetLayout descriptorSetLayout;
-	VkPipelineLayout      pipelineLayout;
-	VkPipeline            pipeline;
+	VkPipelineLayout pipelineLayout;
+	VkPipeline       pipeline;
 } VulkanPipeline;
 
 typedef struct VulkanDescriptorSet {
-	VkDescriptorPool      descriptorPool;
-	VkDescriptorSet       descriptorSet;
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSet  descriptorSet;
 } VulkanDescriptorSet;
 
 // create/destroy/read/write
@@ -174,12 +179,12 @@ void vulkanSamplerDestroy(
 );
 
 void vulkanImageCreate(
-	VulkanDevice&     device,
-	VkFormat          format,
-	uint32_t          width,
-	uint32_t          height,
-	uint32_t          depth,
-	VulkanImage*      image
+	VulkanDevice& device,
+	VkFormat      format,
+	uint32_t      width,
+	uint32_t      height,
+	uint32_t      depth,
+	VulkanImage*  image
 );
 
 void vulkanImageRead(
@@ -290,20 +295,31 @@ void vulkanSemaphoreDestroy(
 	VulkanSemaphore& semaphore
 );
 
+void vulkanShaderCreate(
+	VulkanDevice&                      device,
+	const char*                        fileNameVS,
+	const char*                        fileNameFS,
+	uint32_t                           descriptorSetLayoutBindingCount,
+	const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[],
+	VulkanShader*                      shader
+);
+
+void vulkanShaderDestroy(
+	VulkanDevice& device,
+	VulkanShader& shader
+);
+
 void vulkanPipelineCreate(
 	VulkanDevice&                             device,
+	VulkanShader&                             shader,
 	VkRenderPass                              renderPass,
 	uint32_t                                  subpass,
-	const char*                               fileNameVS,
-	const char*                               fileNameFS,
 	VkPrimitiveTopology                       primitiveTopology,
 	VkPolygonMode                             polygonMode,
 	uint32_t                                  vertexInputBindingDescriptionCount,
 	const VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
 	uint32_t                                  vertexInputAttributeDescriptionCount,
 	const VkVertexInputAttributeDescription   vertexInputAttributeDescriptions[],
-	uint32_t                                  descriptorSetLayoutBindingCount,
-	const VkDescriptorSetLayoutBinding        descriptorSetLayoutBindings[],
 	uint32_t                                  pipelineColorBlendAttachmentStateCount,
 	const VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates[],
 	VulkanPipeline*                           pipeline
@@ -314,12 +330,10 @@ void vulkanPipelineDestroy(
 	VulkanPipeline& pipeline
 );
 
-void VulkanDescriptorSetCreate(
-	VulkanDevice&                      device,
-	VulkanPipeline&                    pipeline,
-	uint32_t                           descriptorSetLayoutBindingCount,
-	const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[],
-	VulkanDescriptorSet*               descriptorSet
+void vulkanDescriptorSetCreate(
+	VulkanDevice&        device,
+	VulkanShader&        shader,
+	VulkanDescriptorSet* descriptorSet
 );
 
 void vulkanDescriptorSetUpdateImage(
@@ -337,7 +351,7 @@ void vulkanDescriptorSetUpdateBufferUniform(
 	uint32_t             binding
 );
 
-void VulkanDescriptorSetDestroy(
+void vulkanDescriptorSetDestroy(
 	VulkanDevice&        device,
 	VulkanDescriptorSet& descriptorSet
 );

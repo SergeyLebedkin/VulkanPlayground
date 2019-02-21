@@ -53,13 +53,16 @@ int main(void)
 	vulkanSemaphoreCreate(device, &presentSemaphore);
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 
-	// create pipeline
-	VulkanPipeline  pipeline_default{};
-	VulkanPipeline  pipeline_obj{};
-	VulkanPipeline  pipeline_line{};
-	createPipeline_default(device, swapchain.renderPass, 0, pipeline_default);
-	createPipeline_obj(device, swapchain.renderPass, 0, pipeline_obj);
-	createPipeline_line(device, swapchain.renderPass, 0, pipeline_line);
+	// create pipelines and shaders
+	VulkanPipeline pipeline_default{};
+	VulkanPipeline pipeline_obj{};
+	VulkanPipeline pipeline_line{};
+	VulkanShader shader_default{};
+	VulkanShader shader_obj{};
+	VulkanShader shader_line{};
+	createPipeline_default(device, swapchain.renderPass, 0, shader_default, pipeline_default);
+	createPipeline_obj(device, swapchain.renderPass, 0, shader_obj, pipeline_obj);
+	createPipeline_line(device, swapchain.renderPass, 0, shader_line, pipeline_line);
 	
 	// create sampler
 	VulkanSampler sampler{};
@@ -68,10 +71,10 @@ int main(void)
 	std::vector<VulkanMesh*> meshes;
 	std::vector<VulkanMesh*> meshesLines;
 	std::vector<VulkanImage*> images;
-	//loadMesh_obj(device, pipeline_obj, sampler, "models/daisy3.obj", "models", &meshesLines, &images);
-	loadMesh_obj(device, pipeline_obj, pipeline_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
-	//loadMesh_obj(device, pipeline_obj, pipeline_line, sampler, "models/tea/tea.obj", "models/tea", &meshes, &meshesLines, &images);
-	//loadMesh_obj(device, pipeline_obj, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
+	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/daisy3.obj", "models", &meshesLines, &images);
+	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
+	loadMesh_obj(device, shader_obj, shader_line, sampler, "models/tea/tea.obj", "models/tea", &meshes, &meshesLines, &images);
+	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
 
 	// matrices
 	float aspect = (float)swapchain.surfaceCapabilities.currentExtent.width / swapchain.surfaceCapabilities.currentExtent.height;

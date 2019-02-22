@@ -1,8 +1,26 @@
 #include "vktoolkit.hpp"
+#include <iostream>
 #include <cassert>
 #include <fstream>
 #include <array>
 #include <map>
+
+#if _DEBUG
+// MyDebugReportCallback
+VKAPI_ATTR VkBool32 VKAPI_CALL MyDebugReportCallback(
+	VkDebugReportFlagsEXT      flags,
+	VkDebugReportObjectTypeEXT objectType,
+	uint64_t                   object,
+	size_t                     location,
+	int32_t                    messageCode,
+	const char*                pLayerPrefix,
+	const char*                pMessage,
+	void*                      pUserData)
+{
+	std::cerr << pMessage << std::endl;
+	return VK_TRUE;
+}
+#endif
 
 // vulkanInstanceCreate
 void vulkanInstanceCreate(
@@ -37,6 +55,28 @@ void vulkanInstanceCreate(
 	VKT_CHECK(vkCreateInstance(&instanceCreateInfo, VK_NULL_HANDLE, &instance->instance));
 	assert(instance->instance);
 
+#ifdef _DEBUG
+	// vkCreateDebugUtilsMessengerEXT and vkDestroyDebugUtilsMessengerEXT
+	PFN_vkCreateDebugReportCallbackEXT fnCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance->instance, "vkCreateDebugReportCallbackEXT");
+
+	// VkDebugReportCallbackCreateInfoEXT
+	VkDebugReportCallbackCreateInfoEXT callbackCreateInfo;
+	callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+	callbackCreateInfo.pNext = nullptr;
+	callbackCreateInfo.flags =
+		//VK_DEBUG_REPORT_INFORMATION_BIT_EXT |
+		VK_DEBUG_REPORT_WARNING_BIT_EXT |
+		VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
+		VK_DEBUG_REPORT_ERROR_BIT_EXT |
+		VK_DEBUG_REPORT_DEBUG_BIT_EXT;
+	callbackCreateInfo.pfnCallback = &MyDebugReportCallback;
+	callbackCreateInfo.pUserData = nullptr;
+
+	// fnCreateDebugReportCallbackEXT
+	if (fnCreateDebugReportCallbackEXT)
+		VKT_CHECK(fnCreateDebugReportCallbackEXT(instance->instance, &callbackCreateInfo, nullptr, &instance->debugReportCallback));
+#endif
+
 	// get physical devices count
 	uint32_t physicalDevicesCount = 0;
 	VKT_CHECK(vkEnumeratePhysicalDevices(instance->instance, &physicalDevicesCount, nullptr));
@@ -50,6 +90,12 @@ void vulkanInstanceCreate(
 void vulkanInstanceDestroy(
 	VulkanInstance& instance)
 {
+#ifdef _DEBUG
+	PFN_vkDestroyDebugReportCallbackEXT fnDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(instance.instance, "vkDestroyDebugReportCallbackEXT");
+	if (fnDestroyDebugReportCallbackEXT)
+		fnDestroyDebugReportCallbackEXT(instance.instance, instance.debugReportCallback, nullptr);
+	instance.debugReportCallback = VK_NULL_HANDLE;
+#endif
 	// destroy handles
 	vkDestroyInstance(instance.instance, VK_NULL_HANDLE);
 	// clear handles

@@ -19,6 +19,7 @@
 
 typedef struct VulkanInstance {
 	VkInstance                    instance;
+	VkDebugReportCallbackEXT      debugReportCallback;
 	std::vector<VkPhysicalDevice> physicalDevices;
 } VulkanInstance;
 

@@ -6,6 +6,7 @@
     <ClCompile Include="vulkan_loaders.cpp" />
     <ClCompile Include="vulkan_meshes.cpp" />
     <ClCompile Include="time_measure.cpp" />
+    <ClCompile Include="vulkan_renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="textures">
@@ -45,5 +46,6 @@
     <ClInclude Include="vulkan_loaders.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />
     <ClInclude Include="time_measure.hpp" />
+    <ClInclude Include="vulkan_renderer.hpp" />
   </ItemGroup>
 </Project>

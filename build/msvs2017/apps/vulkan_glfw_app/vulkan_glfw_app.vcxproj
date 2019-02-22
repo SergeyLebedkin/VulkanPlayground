@@ -208,6 +208,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
     <ClCompile Include="vulkan_loaders.cpp" />
     <ClCompile Include="vulkan_meshes.cpp" />
     <ClCompile Include="vulkan_pipelines.cpp" />
+    <ClCompile Include="vulkan_renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\deps\glfw\glfw.vcxproj">
@@ -279,6 +280,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
     <ClInclude Include="vulkan_loaders.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />
     <ClInclude Include="vulkan_pipelines.hpp" />
+    <ClInclude Include="vulkan_renderer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\line.frag.glsl">

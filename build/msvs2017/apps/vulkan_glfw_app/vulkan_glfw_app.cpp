@@ -1,10 +1,7 @@
+#include "vulkan_renderer.hpp"
 #include "vulkan_loaders.hpp"
 #include "time_measure.hpp"
 #include <iostream>
-#include <chrono>
-#include <GLFW/glfw3.h>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 // vertex array
@@ -38,58 +35,25 @@ int main(void)
 	physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
 	physicalDeviceFeatures.fillModeNonSolid = VK_TRUE;
 
-	// init vulkan
-	VulkanInstance      instance{};
-	VulkanSurface       surface{};
-	VulkanDevice        device{};
-	VulkanSwapchain     swapchain{};
-	VulkanSemaphore     renderSemaphore{};
-	VulkanSemaphore     presentSemaphore{};
-	VulkanCommandBuffer commandBuffer{};
-	vulkanInstanceCreate(enabledInstanceLayerNames, enabledInstanceExtensionNames, &instance);
-	glfwCreateWindowSurface(instance.instance, window, NULL, &surface.surface);
-	vulkanDeviceCreate(instance, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, physicalDeviceFeatures, enabledDeviceExtensionNames, &device);
-	vulkanSwapchainCreate(device, surface, &swapchain);
-	vulkanSemaphoreCreate(device, &renderSemaphore);
-	vulkanSemaphoreCreate(device, &presentSemaphore);
-	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
-
-	// create pipelines and shaders
-	VulkanShader shader_obj{};
-	VulkanShader shader_line{};
-	VulkanPipeline pipeline_obj{}; 
-	VulkanPipeline pipeline_obj_wf{};
-	VulkanPipeline pipeline_line{};
-	createPipeline_obj(device, swapchain.renderPass, 0, shader_obj, pipeline_obj, pipeline_obj_wf);
-	createPipeline_line(device, swapchain.renderPass, 0, shader_line, pipeline_line);
-	
-	// create sampler
-	VulkanSampler sampler{};
-	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE, &sampler);
-
-	// create default image
-	VulkanImage imageDefault{};
-	createImageProcedural(device, 1024, 1024, imageDefault);
+	// create vulkan renderer
+	VulkanRender* vulkanRender = new VulkanRender(window,
+		enabledInstanceLayerNames, enabledInstanceExtensionNames,
+		enabledDeviceExtensionNames, physicalDeviceFeatures);
 
 	std::vector<VulkanMesh*> meshes;
 	std::vector<VulkanMesh*> meshesLines;
 	std::vector<VulkanImage*> images;
-	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
-	loadMesh_obj(device, shader_obj, shader_line, sampler, imageDefault, "models/tea/tea.obj", "models/tea", &meshes, &meshesLines, &images);
+	//loadMesh_obj(vulkanRender->device, shader_obj, shader_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
+	loadMesh_obj(vulkanRender->device, vulkanRender->shader_obj, vulkanRender->shader_line, vulkanRender->samplerDefault, vulkanRender->imageDefault, "models/tea/tea.obj", "models/tea", &meshes, &meshesLines, &images);
 	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
 
 	// create GUI mesh
-	VulkanShader shader_default{};
-	VulkanPipeline pipeline_default{};
-	createPipeline_default(device, swapchain.renderPass, 0, shader_default, pipeline_default);
-
-	// create GUI mesh
-	VulkanMesh* meshGUI = new VulkanMesh_gui(device, shader_default, vertices);
-	meshGUI->setImage(*images[0], sampler, 0);
+	VulkanMesh* meshGUI = new VulkanMesh_gui(vulkanRender->device, vulkanRender->shader_default, vertices);
+	meshGUI->setImage(*images[0], vulkanRender->samplerDefault, 0);
 
 	// matrices
-	float viewWidth = (float)swapchain.surfaceCapabilities.currentExtent.width;
-	float viewHeight = (float)swapchain.surfaceCapabilities.currentExtent.height;
+	float viewWidth = (float)vulkanRender->swapchain.surfaceCapabilities.currentExtent.width;
+	float viewHeight = (float)vulkanRender->swapchain.surfaceCapabilities.currentExtent.height;
 	glm::mat4 matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/1.0f)), 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), viewWidth / viewHeight, 0.1f, 10.f);
@@ -110,8 +74,8 @@ int main(void)
 		matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), timeStamp.accumTime, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		uint32_t frameIndex = 0;
-		vulkanSwapchainBeginFrame(device, swapchain, presentSemaphore, &frameIndex);
-		vulkanCommandBufferBegin(device, commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		vulkanSwapchainBeginFrame(vulkanRender->device, vulkanRender->swapchain, vulkanRender->presentSemaphore, &frameIndex);
+		vulkanCommandBufferBegin(vulkanRender->device, vulkanRender->commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		
 		// VkClearValue
 		VkClearValue clearColors[2];
@@ -123,19 +87,19 @@ int main(void)
 		VkRenderPassBeginInfo renderPassBeginInfo{};
 		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassBeginInfo.pNext = VK_NULL_HANDLE;
-		renderPassBeginInfo.renderPass = swapchain.renderPass;
-		renderPassBeginInfo.framebuffer = swapchain.framebuffers[frameIndex];
+		renderPassBeginInfo.renderPass = vulkanRender->swapchain.renderPass;
+		renderPassBeginInfo.framebuffer = vulkanRender->swapchain.framebuffers[frameIndex];
 		renderPassBeginInfo.renderArea.offset = { 0, 0 };
-		renderPassBeginInfo.renderArea.extent = swapchain.surfaceCapabilities.currentExtent;
+		renderPassBeginInfo.renderArea.extent = vulkanRender->swapchain.surfaceCapabilities.currentExtent;
 		renderPassBeginInfo.clearValueCount = 2;
 		renderPassBeginInfo.pClearValues = clearColors;
 
 		// VkViewport - viewport
 		VkViewport viewport{};
 		viewport.x = 0.0f;
-		viewport.y = (float)swapchain.surfaceCapabilities.currentExtent.height;
-		viewport.width = (float)swapchain.surfaceCapabilities.currentExtent.width;
-		viewport.height = -(float)swapchain.surfaceCapabilities.currentExtent.height;
+		viewport.y = (float)vulkanRender->swapchain.surfaceCapabilities.currentExtent.height;
+		viewport.width = (float)vulkanRender->swapchain.surfaceCapabilities.currentExtent.width;
+		viewport.height = -(float)vulkanRender->swapchain.surfaceCapabilities.currentExtent.height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 
@@ -143,19 +107,19 @@ int main(void)
 		VkRect2D scissor{};
 		scissor.offset.x = 0;
 		scissor.offset.y = 0;
-		scissor.extent.width = swapchain.surfaceCapabilities.currentExtent.width;
-		scissor.extent.height = swapchain.surfaceCapabilities.currentExtent.height;
+		scissor.extent.width = vulkanRender->swapchain.surfaceCapabilities.currentExtent.width;
+		scissor.extent.height = vulkanRender->swapchain.surfaceCapabilities.currentExtent.height;
 
 		// GO RENDER
-		vkCmdBeginRenderPass(commandBuffer.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(vulkanRender->commandBuffer.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdSetViewport(commandBuffer.commandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(commandBuffer.commandBuffer, 0, 1, &scissor);
-		vkCmdSetLineWidth(commandBuffer.commandBuffer, 1.0f);
+		vkCmdSetViewport(vulkanRender->commandBuffer.commandBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(vulkanRender->commandBuffer.commandBuffer, 0, 1, &scissor);
+		vkCmdSetLineWidth(vulkanRender->commandBuffer.commandBuffer, 1.0f);
 		
 		// draw obj
 		for (auto mesh : meshes) {
-			mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
+			mesh->draw(vulkanRender->pipeline_obj, vulkanRender->commandBuffer, matProj, matView, matModl);
 			//mesh->draw(pipeline_obj_wf, commandBuffer, matProj, matView, matModl);
 		}
 
@@ -167,19 +131,19 @@ int main(void)
 		//meshGUI->draw(pipeline_obj_wf, commandBuffer, matProjGUI, matViewGUI, matModlGUI);
 
 		// END RENDER
-		vkCmdEndRenderPass(commandBuffer.commandBuffer);
+		vkCmdEndRenderPass(vulkanRender->commandBuffer.commandBuffer);
 
 		// vkEndCommandBuffer
-		VKT_CHECK(vkEndCommandBuffer(commandBuffer.commandBuffer));
+		VKT_CHECK(vkEndCommandBuffer(vulkanRender->commandBuffer.commandBuffer));
 		
-		vulkanQueueSubmit(device, commandBuffer, &presentSemaphore, &renderSemaphore);
-		vulkanSwapchainEndFrame(device, swapchain, renderSemaphore, frameIndex);
+		vulkanQueueSubmit(vulkanRender->device, vulkanRender->commandBuffer, &vulkanRender->presentSemaphore, &vulkanRender->renderSemaphore);
+		vulkanSwapchainEndFrame(vulkanRender->device, vulkanRender->swapchain, vulkanRender->renderSemaphore, frameIndex);
 		glfwPollEvents();
 	}
 
 	// delete images
 	for (auto image : images) {
-		vulkanImageDestroy(device, *image);
+		vulkanImageDestroy(vulkanRender->device, *image);
 		delete image;
 	}
 	images.clear();
@@ -191,23 +155,7 @@ int main(void)
 	meshes.clear();
 	delete meshGUI;
 
-	// destroy vulkan
-	vulkanImageDestroy(device, imageDefault); 
-	vulkanSamplerDestroy(device, sampler);
-	vulkanShaderDestroy(device, shader_obj);
-	vulkanShaderDestroy(device, shader_line);
-	vulkanShaderDestroy(device, shader_default);
-	vulkanPipelineDestroy(device, pipeline_line);
-	vulkanPipelineDestroy(device, pipeline_obj_wf);
-	vulkanPipelineDestroy(device, pipeline_obj);
-	vulkanPipelineDestroy(device, pipeline_default);
-	vulkanCommandBufferFree(device, commandBuffer);
-	vulkanSemaphoreDestroy(device, presentSemaphore);
-	vulkanSemaphoreDestroy(device, renderSemaphore);
-	vulkanSwapchainDestroy(device, swapchain);
-	vkDestroySurfaceKHR(instance.instance, surface.surface, NULL);
-	vulkanDeviceDestroy(device);
-	vulkanInstanceDestroy(instance);
+	delete vulkanRender;
 
 	// destroy GLFW
 	glfwDestroyWindow(window);

@@ -10,7 +10,11 @@
 #pragma warning(pop)
 
 // createImageProcedural
-void createImageProcedural(VulkanDevice & device, uint32_t width, uint32_t height, VulkanImage & image)
+void createImageProcedural(
+	VulkanDevice& device,
+	uint32_t      width,
+	uint32_t      height,
+	VulkanImage&  image)
 {
 	// create data for image
 	struct pixel_u8 { uint8_t r, g, b, a; };
@@ -48,15 +52,11 @@ void loadImageFromFile(
 
 // loadMesh_obj
 void loadMesh_obj(
-	VulkanDevice&              device,
-	VulkanShader&              shader,
-	VulkanShader&              shaderLines,
-	VulkanSampler&             sampler,
-	VulkanImage&               imageDefault,
+	VulkanRender&              renderer,
 	std::string                fileName,
 	std::string                baseDir,
 	std::vector<VulkanMesh*>*  meshes,
-	std::vector<VulkanMesh*>*  meshesLines,
+	std::vector<VulkanMesh*>*  meshesDebug,
 	std::vector<VulkanImage*>* images)
 {
 	tinyobj::attrib_t attribs;
@@ -70,7 +70,7 @@ void loadMesh_obj(
 	for (const auto& material : materials) {
 		if (material.diffuse_texname.size() > 0) {
 			auto image = new VulkanImage();
-			loadImageFromFile(device, *image, baseDir + material.diffuse_texname);
+			loadImageFromFile(renderer.device, *image, baseDir + material.diffuse_texname);
 			images->push_back(image);
 		}
 	}
@@ -198,17 +198,30 @@ void loadMesh_obj(
 		}
 
 		// get image from material
-		VulkanImage* image = (shape.mesh.material_ids[0] >= 0) ? (*images)[shape.mesh.material_ids[0]] : &imageDefault;
+		VulkanImage* image = (shape.mesh.material_ids[0] >= 0)
+			? (*images)[shape.mesh.material_ids[0]]
+			: &renderer.imageDefault;
 
 		// create mesh
 		if (meshes) {
-			VulkanMesh_obj* mesh = new VulkanMesh_obj(device, shader, vectorPos, vectorTex, vectorNrm);
-			if (image) mesh->setImage(*image, sampler, 0);
+			VulkanMesh* mesh = new VulkanMesh_obj(
+				renderer.device,
+				renderer.shader_obj,
+				vectorPos,
+				vectorTex,
+				vectorNrm);
+			mesh->setImage(*image, renderer.samplerDefault, 0);
 			meshes->push_back(mesh);
 		}
 
 		// create mesh lines
-		if (meshesLines)
-			meshesLines->push_back(new VulkanMesh_lines(device, shaderLines, vectorNrmPos, vectorNrmCol));
+		if (meshesDebug) {
+			VulkanMesh* mesh = new VulkanMesh_lines(
+				renderer.device,
+				renderer.shader_line,
+				vectorNrmPos,
+				vectorNrmCol);
+			meshesDebug->push_back(mesh);
+		}
 	}
 }

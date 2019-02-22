@@ -27,6 +27,51 @@ void VulkanMesh::setImage(
 	vulkanDescriptorSetUpdateImage(device, descriptorSet, image, sampler, binding);
 }
 
+// VulkanMesh_gui::~VulkanMesh_gui
+VulkanMesh_gui::VulkanMesh_gui(
+	VulkanDevice&                       device,
+	VulkanShader&                       shader,
+	std::vector<VertexStruct_P4_C4_T2>& verts) :
+	VulkanMesh(device, shader)
+{
+	// update descriptor set
+	vulkanDescriptorSetUpdateBufferUniform(device, descriptorSet, bufferMVP, 1);
+	// create buffers
+	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(verts), &bufferVerts);
+	// write buffers
+	vulkanBufferWrite(device, bufferVerts, 0, VKT_VECTOR_DATA_SIZE(verts), verts.data());
+	vertexCount = (uint32_t)verts.size();
+}
+
+// VulkanMesh_gui::~VulkanMesh_gui
+VulkanMesh_gui::~VulkanMesh_gui()
+{
+	vulkanBufferDestroy(device, bufferVerts);
+}
+
+// VulkanMesh_gui::draw
+void VulkanMesh_gui::draw(
+	VulkanPipeline&      pipeline,
+	VulkanCommandBuffer& commandBuffer,
+	glm::mat4&           matProj,
+	glm::mat4&           matView,
+	glm::mat4&           matModl)
+{
+	// prepare buffers
+	VkDeviceSize offsets[] = { 0 };
+	VkBuffer buffers[] = { bufferVerts.buffer };
+
+	// update MVP
+	struct { glm::mat4 matM; glm::mat4 matV; glm::mat4 matP; } matrixes{ matModl, matView, matProj };
+	vulkanBufferWrite(device, bufferMVP, 0, sizeof(matrixes), &matrixes);
+
+	// render
+	vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+	vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 1, buffers, offsets);
+	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
+};
+
 // VulkanMesh_obj::VulkanMesh_obj
 VulkanMesh_obj::VulkanMesh_obj(
 	VulkanDevice&           device,

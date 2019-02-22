@@ -21,12 +21,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\base.frag.glsl">
-      <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\base.vert.glsl">
-      <Filter>shaders</Filter>
-    </CustomBuild>
     <CustomBuild Include="shaders\obj.frag.glsl">
       <Filter>shaders</Filter>
     </CustomBuild>
@@ -37,6 +31,12 @@
       <Filter>shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="shaders\line.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\default.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\default.vert.glsl">
       <Filter>shaders</Filter>
     </CustomBuild>
   </ItemGroup>

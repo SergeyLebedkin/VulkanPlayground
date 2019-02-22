@@ -32,6 +32,27 @@ public:
 };
 
 // VulkanMesh
+class VulkanMesh_gui : public VulkanMesh
+{
+protected:
+	// buffers
+	VulkanBuffer bufferVerts{};
+public:
+	// constructor
+	VulkanMesh_gui(
+		VulkanDevice&                       device,
+		VulkanShader&                       shader,
+		std::vector<VertexStruct_P4_C4_T2>& verts);
+	~VulkanMesh_gui();
+	void draw(
+		VulkanPipeline&      pipeline,
+		VulkanCommandBuffer& commandBuffer,
+		glm::mat4&           matProj,
+		glm::mat4&           matView,
+		glm::mat4&           matModl) override;
+};
+
+// VulkanMesh
 class VulkanMesh_obj : public VulkanMesh
 {
 protected:

@@ -11,9 +11,11 @@ layout(location = 0) out vec4 vColor;
 layout(location = 1) out vec2 vTexCoords;
 
 // uniforms
-layout(binding = 0) uniform buffer0 {
-	mat4 uWVP;
-} matrices;
+layout(binding = 1) uniform buffer1 {
+	mat4 model;
+	mat4 view;
+	mat4 proj;
+} uMatrices;
 
 // main
 void main()
@@ -25,5 +27,5 @@ void main()
 	// find position
 	//gl_Position = aPosition;
 	//gl_Position = matrices.uWVP * aPosition;
-	gl_Position = vec4(aPosition.xyz/2.0f, 1.0f);
+	gl_Position = uMatrices.proj * uMatrices.view * uMatrices.model * aPosition;
 }

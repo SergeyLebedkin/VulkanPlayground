@@ -8,11 +8,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 // vertex array
-VertexStruct_P4_C4_T2 vertices[] = {
-	{ +1.0f, -1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +0.0f, +1.0, /**/+1, +0 },
-	{ +1.0f, +1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +0.0f, +1.0, /**/+1, +1 },
-	{ -1.0f, -1.0f, +0.0f, +1.0, /**/+1.0f, +0.0f, +0.0f, +1.0, /**/+0, +0 },
-	{ -1.0f, +1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +0.0f, +1.0, /**/+0, +1 },
+std::vector<VertexStruct_P4_C4_T2> vertices = {
+	{ +1.0f, -1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+1, +0 },
+	{ +1.0f, +1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+1, +1 },
+	{ -1.0f, -1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+0, +0 },
+	{ -1.0f, +1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+0, +1 },
 };
 
 // index array
@@ -55,14 +55,11 @@ int main(void)
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 
 	// create pipelines and shaders
-	VulkanShader shader_default{};
 	VulkanShader shader_obj{};
 	VulkanShader shader_line{};
-	VulkanPipeline pipeline_default{};
 	VulkanPipeline pipeline_obj{}; 
 	VulkanPipeline pipeline_obj_wf{};
 	VulkanPipeline pipeline_line{};
-	createPipeline_default(device, swapchain.renderPass, 0, shader_default, pipeline_default);
 	createPipeline_obj(device, swapchain.renderPass, 0, shader_obj, pipeline_obj, pipeline_obj_wf);
 	createPipeline_line(device, swapchain.renderPass, 0, shader_line, pipeline_line);
 	
@@ -77,19 +74,29 @@ int main(void)
 	std::vector<VulkanMesh*> meshes;
 	std::vector<VulkanMesh*> meshesLines;
 	std::vector<VulkanImage*> images;
-	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/daisy3.obj", "models", &meshesLines, &images);
 	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
 	loadMesh_obj(device, shader_obj, shader_line, sampler, imageDefault, "models/tea/tea.obj", "models/tea", &meshes, &meshesLines, &images);
 	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
 
+	// create GUI mesh
+	VulkanShader shader_default{};
+	VulkanPipeline pipeline_default{};
+	createPipeline_default(device, swapchain.renderPass, 0, shader_default, pipeline_default);
+
+	// create GUI mesh
+	VulkanMesh* meshGUI = new VulkanMesh_gui(device, shader_default, vertices);
+	meshGUI->setImage(*images[0], sampler, 0);
+
 	// matrices
-	float aspect = (float)swapchain.surfaceCapabilities.currentExtent.width / swapchain.surfaceCapabilities.currentExtent.height;
+	float viewWidth = (float)swapchain.surfaceCapabilities.currentExtent.width;
+	float viewHeight = (float)swapchain.surfaceCapabilities.currentExtent.height;
 	glm::mat4 matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/1.0f)), 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 matView = glm::lookAt(
-		glm::vec3(0.0f, 1.0f, 2.0f),
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.f);
+	glm::mat4 matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), viewWidth / viewHeight, 0.1f, 10.f);
+
+	glm::mat4 matModlGUI = glm::mat4(1.0f);
+	glm::mat4 matViewGUI = glm::mat4(1.0f);
+	glm::mat4 matProjGUI = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, -1.0f, 1.0f);
 
 	TimeStamp timeStamp;
 	timeStampReset(timeStamp);
@@ -148,13 +155,16 @@ int main(void)
 		
 		// draw obj
 		for (auto mesh : meshes) {
-			//mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
-			mesh->draw(pipeline_obj_wf, commandBuffer, matProj, matView, matModl);
+			mesh->draw(pipeline_obj, commandBuffer, matProj, matView, matModl);
+			//mesh->draw(pipeline_obj_wf, commandBuffer, matProj, matView, matModl);
 		}
 
 		// draw lines
 		//for (auto mesh : meshesLines)
 		//	mesh->draw(pipeline_line, commandBuffer, matProj, matView, matModl);
+
+		//meshGUI->draw(pipeline_default, commandBuffer, matProjGUI, matViewGUI, matModlGUI);
+		//meshGUI->draw(pipeline_obj_wf, commandBuffer, matProjGUI, matViewGUI, matModlGUI);
 
 		// END RENDER
 		vkCmdEndRenderPass(commandBuffer.commandBuffer);
@@ -179,6 +189,7 @@ int main(void)
 	meshesLines.clear();
 	for (auto mesh : meshes) delete mesh;
 	meshes.clear();
+	delete meshGUI;
 
 	// destroy vulkan
 	vulkanImageDestroy(device, imageDefault); 

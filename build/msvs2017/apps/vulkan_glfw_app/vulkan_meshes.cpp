@@ -2,13 +2,13 @@
 
 // VulkanMesh::VulkanMesh
 VulkanMesh::VulkanMesh(
-	VulkanDevice& device,
-	VulkanShader& shader) : 
+	VulkanDevice&              device,
+	VulkanDescriptorSetLayout& descriptorSetLayout) :
 	device(device),
-	shader(shader)
+	descriptorSetLayout(descriptorSetLayout)
 {
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 3 * sizeof(glm::mat4), &bufferMVP);
-	vulkanDescriptorSetCreate(device, shader, &descriptorSet);
+	vulkanDescriptorSetCreate(device, descriptorSetLayout, &descriptorSet);
 }
 
 // VulkanMesh::~VulkanMesh
@@ -29,10 +29,10 @@ void VulkanMesh::setImage(
 
 // VulkanMesh_gui::~VulkanMesh_gui
 VulkanMesh_gui::VulkanMesh_gui(
-	VulkanDevice&                       device,
-	VulkanShader&                       shader,
-	std::vector<VertexStruct_P4_C4_T2>& verts) :
-	VulkanMesh(device, shader)
+		VulkanDevice&                       device,
+		VulkanDescriptorSetLayout&          descriptorSetLayout,
+		std::vector<VertexStruct_P4_C4_T2>& verts) :
+	VulkanMesh(device, descriptorSetLayout)
 {
 	// update descriptor set
 	vulkanDescriptorSetUpdateBufferUniform(device, descriptorSet, bufferMVP, 1);
@@ -74,12 +74,12 @@ void VulkanMesh_gui::draw(
 
 // VulkanMesh_obj::VulkanMesh_obj
 VulkanMesh_obj::VulkanMesh_obj(
-	VulkanDevice&           device,
-	VulkanShader&           shader,
-	std::vector<glm::vec3>& pos,
-	std::vector<glm::vec2>& tex,
-	std::vector<glm::vec3>& nrm) :
-	VulkanMesh(device, shader)
+	VulkanDevice&              device,
+	VulkanDescriptorSetLayout& descriptorSetLayout,
+	std::vector<glm::vec3>&    pos,
+	std::vector<glm::vec2>&    tex,
+	std::vector<glm::vec3>&    nrm) :
+	VulkanMesh(device, descriptorSetLayout)
 {
 	// update descriptor set
 	vulkanDescriptorSetUpdateBufferUniform(device, descriptorSet, bufferMVP, 1);
@@ -127,11 +127,11 @@ void VulkanMesh_obj::draw(
 
 // VulkanMesh_lines::VulkanMesh_lines
 VulkanMesh_lines::VulkanMesh_lines(
-	VulkanDevice&           device,
-	VulkanShader&           shader,
-	std::vector<glm::vec3>& pos,
-	std::vector<glm::vec4>& col) :
-	VulkanMesh(device, shader)
+	VulkanDevice&              device,
+	VulkanDescriptorSetLayout& descriptorSetLayout,
+	std::vector<glm::vec3>&    pos,
+	std::vector<glm::vec4>&    col) :
+	VulkanMesh(device, descriptorSetLayout)
 {
 	// update descriptor set
 	vulkanDescriptorSetUpdateBufferUniform(device, descriptorSet, bufferMVP, 0);

@@ -2,19 +2,23 @@
 
 // createPipeline_default
 void createPipeline_default(
-	VulkanDevice&   device, 
-	VkRenderPass    renderPass, 
-	uint32_t        subPass,
-	VulkanShader&   shader,
-	VulkanPipeline& pipeline)
+	VulkanDevice&              device,
+	VkRenderPass               renderPass,
+	uint32_t                   subPass,
+	VulkanShader&              shader,
+	VulkanDescriptorSetLayout& descriptorSetLayout,
+	VulkanPipeline&            pipeline)
 {
 	// create shader
-	vulkanShaderCreate(device, "shaders/default.vert.spv", "shaders/default.frag.spv",
+	vulkanShaderCreate(device, "shaders/default.vert.spv", "shaders/default.frag.spv", &shader);
+	
+	// create descriptos set layout
+	vulkanDescriptorSetLayoutCreate(device,
 		VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_T1_U1), descriptorSetLayoutBindings_T1_U1,
-		&shader);
+		&descriptorSetLayout);
 
 	// create pipeline
-	vulkanPipelineCreate(device, shader, renderPass, subPass,
+	vulkanPipelineCreate(device, shader, descriptorSetLayout, renderPass, subPass,
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, VK_POLYGON_MODE_FILL,
 		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_C4_T2), vertexBindingDescriptions_P4_C4_T2,
 		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_C4_T2), vertexInputAttributeDescriptions_P4_C4_T2,
@@ -24,20 +28,24 @@ void createPipeline_default(
 
 // createPipeline_obj
 void createPipeline_obj(
-	VulkanDevice&   device,
-	VkRenderPass    renderPass,
-	uint32_t        subPass,
-	VulkanShader&   shader,
-	VulkanPipeline& pipeline,
-	VulkanPipeline& pipeline_wf)
+	VulkanDevice&              device,
+	VkRenderPass               renderPass,
+	uint32_t                   subPass,
+	VulkanShader&              shader,
+	VulkanDescriptorSetLayout& descriptorSetLayout,
+	VulkanPipeline&            pipeline,
+	VulkanPipeline&            pipeline_wf)
 {
 	// create shader
-	vulkanShaderCreate(device, "shaders/obj.vert.spv", "shaders/obj.frag.spv",
+	vulkanShaderCreate(device, "shaders/obj.vert.spv", "shaders/obj.frag.spv", &shader);
+
+	// create descriptos set layout
+	vulkanDescriptorSetLayoutCreate(device,
 		VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_T1_U1), descriptorSetLayoutBindings_T1_U1,
-		&shader);
+		&descriptorSetLayout);
 
 	// create pipeline
-	vulkanPipelineCreate(device, shader, renderPass, subPass,
+	vulkanPipelineCreate(device, shader, descriptorSetLayout, renderPass, subPass,
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL,
 		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_T2_N3), vertexBindingDescriptions_P3_T2_N3,
 		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P3_T2_N3), vertexInputAttributeDescriptions_P3_T2_N3,
@@ -45,7 +53,7 @@ void createPipeline_obj(
 		&pipeline);
 
 	// create pipeline wire frame
-	vulkanPipelineCreate(device, shader, renderPass, subPass,
+	vulkanPipelineCreate(device, shader, descriptorSetLayout, renderPass, subPass,
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_LINE,
 		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_T2_N3), vertexBindingDescriptions_P3_T2_N3,
 		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P3_T2_N3), vertexInputAttributeDescriptions_P3_T2_N3,
@@ -55,19 +63,23 @@ void createPipeline_obj(
 
 // createPipeline_line
 void createPipeline_line(
-	VulkanDevice&   device,
-	VkRenderPass    renderPass,
-	uint32_t        subPass,
-	VulkanShader&   shader,
-	VulkanPipeline& pipeline)
+	VulkanDevice&              device,
+	VkRenderPass               renderPass,
+	uint32_t                   subPass,
+	VulkanShader&              shader,
+	VulkanDescriptorSetLayout& descriptorSetLayout,
+	VulkanPipeline&            pipeline)
 {
 	// create shader
-	vulkanShaderCreate(device, "shaders/line.vert.spv", "shaders/line.frag.spv",
+	vulkanShaderCreate(device, "shaders/line.vert.spv", "shaders/line.frag.spv", &shader);
+	
+	// create descriptos set layout
+	vulkanDescriptorSetLayoutCreate(device,
 		VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_U1), descriptorSetLayoutBindings_U1,
-		&shader);
+		&descriptorSetLayout);
 
 	// create pipeline
-	vulkanPipelineCreate(device, shader, renderPass, subPass,
+	vulkanPipelineCreate(device, shader, descriptorSetLayout, renderPass, subPass,
 		VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_POLYGON_MODE_FILL,
 		VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_C4), vertexBindingDescriptions_P3_C4,
 		VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P3_C4), vertexInputAttributeDescriptions_P3_C4,

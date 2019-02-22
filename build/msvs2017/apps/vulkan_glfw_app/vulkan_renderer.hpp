@@ -18,6 +18,9 @@ public:
 	VulkanShader shader_obj{};
 	VulkanShader shader_line{};
 	VulkanShader shader_default{};
+	VulkanDescriptorSetLayout descriptorSetLayout_obj;
+	VulkanDescriptorSetLayout descriptorSetLayout_line;
+	VulkanDescriptorSetLayout descriptorSetLayout_default;
 	VulkanPipeline pipeline_obj{};
 	VulkanPipeline pipeline_obj_wf{};
 	VulkanPipeline pipeline_line{};

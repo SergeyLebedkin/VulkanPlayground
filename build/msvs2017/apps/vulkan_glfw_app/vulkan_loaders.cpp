@@ -206,7 +206,7 @@ void loadMesh_obj(
 		if (meshes) {
 			VulkanMesh* mesh = new VulkanMesh_obj(
 				renderer.device,
-				renderer.shader_obj,
+				renderer.descriptorSetLayout_obj,
 				vectorPos,
 				vectorTex,
 				vectorNrm);
@@ -218,7 +218,7 @@ void loadMesh_obj(
 		if (meshesDebug) {
 			VulkanMesh* mesh = new VulkanMesh_lines(
 				renderer.device,
-				renderer.shader_line,
+				renderer.descriptorSetLayout_line,
 				vectorNrmPos,
 				vectorNrmCol);
 			meshesDebug->push_back(mesh);

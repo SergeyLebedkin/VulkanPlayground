@@ -83,23 +83,26 @@ const VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates_def
 // pipelines
 
 void createPipeline_default(
-	VulkanDevice&   device,
-	VkRenderPass    renderPass,
-	uint32_t        subPass,
-	VulkanShader&   shader,
-	VulkanPipeline& pipeline);
+	VulkanDevice&              device,
+	VkRenderPass               renderPass,
+	uint32_t                   subPass,
+	VulkanShader&              shader,
+	VulkanDescriptorSetLayout& descriptorSetLayout,
+	VulkanPipeline&            pipeline);
 
 void createPipeline_obj(
-	VulkanDevice&   device,
-	VkRenderPass    renderPass,
-	uint32_t        subPass,
-	VulkanShader&   shader,
-	VulkanPipeline& pipeline,
-	VulkanPipeline& pipeline_wf);
+	VulkanDevice&              device,
+	VkRenderPass               renderPass,
+	uint32_t                   subPass,
+	VulkanShader&              shader,
+	VulkanDescriptorSetLayout& descriptorSetLayout,
+	VulkanPipeline&            pipeline,
+	VulkanPipeline&            pipeline_wf);
 
 void createPipeline_line(
-	VulkanDevice&   device,
-	VkRenderPass    renderPass,
-	uint32_t        subPass,
-	VulkanShader&   shader,
-	VulkanPipeline& pipeline);
+	VulkanDevice&              device,
+	VkRenderPass               renderPass,
+	uint32_t                   subPass,
+	VulkanShader&              shader,
+	VulkanDescriptorSetLayout& descriptorSetLayout,
+	VulkanPipeline&            pipeline);

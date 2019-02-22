@@ -20,9 +20,9 @@ VulkanRender::VulkanRender(
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 
 	// create shaders and pipelines
-	createPipeline_default(device, swapchain.renderPass, 0, shader_default, pipeline_default);
-	createPipeline_obj(device, swapchain.renderPass, 0, shader_obj, pipeline_obj, pipeline_obj_wf);
-	createPipeline_line(device, swapchain.renderPass, 0, shader_line, pipeline_line);
+	createPipeline_default(device, swapchain.renderPass, 0, shader_default, descriptorSetLayout_default, pipeline_default);
+	createPipeline_obj(device, swapchain.renderPass, 0, shader_obj, descriptorSetLayout_obj, pipeline_obj, pipeline_obj_wf);
+	createPipeline_line(device, swapchain.renderPass, 0, shader_line, descriptorSetLayout_line, pipeline_line);
 
 	// create image and sampler default
 	createImageProcedural(device, 1024, 1024, imageDefault);

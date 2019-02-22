@@ -100,12 +100,15 @@ typedef struct VulkanCommandBuffer {
 } VulkanCommandBuffer;
 
 typedef struct VulkanShader {
-	VkShaderModule                            shaderModuleVS;
-	VkShaderModule                            shaderModuleFS;
+	VkShaderModule shaderModuleVS;
+	VkShaderModule shaderModuleFS;
+} VulkanShader;
+
+typedef struct VulkanDescriptorSetLayout {
 	VkDescriptorSetLayout                     descriptorSetLayout;
 	std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings{};
 	std::vector<VkDescriptorPoolSize>         descriptorPoolSizes{};
-} VulkanShader;
+} VulkanDescriptorSetLayout;
 
 typedef struct VulkanPipeline {
 	VkPipelineLayout pipelineLayout;
@@ -297,12 +300,10 @@ void vulkanSemaphoreDestroy(
 );
 
 void vulkanShaderCreate(
-	VulkanDevice&                      device,
-	const char*                        fileNameVS,
-	const char*                        fileNameFS,
-	uint32_t                           descriptorSetLayoutBindingCount,
-	const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[],
-	VulkanShader*                      shader
+	VulkanDevice& device,
+	const char*   fileNameVS,
+	const char*   fileNameFS,
+	VulkanShader* shader
 );
 
 void vulkanShaderDestroy(
@@ -310,9 +311,22 @@ void vulkanShaderDestroy(
 	VulkanShader& shader
 );
 
+void vulkanDescriptorSetLayoutCreate(
+	VulkanDevice&                      device,
+	uint32_t                           descriptorSetLayoutBindingCount,
+	const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[],
+	VulkanDescriptorSetLayout*         descriptorSetLayout
+);
+
+void vulkanDescriptorSetLayoutDestroy(
+	VulkanDevice&              device,
+	VulkanDescriptorSetLayout& descriptorSetLayout
+);
+
 void vulkanPipelineCreate(
 	VulkanDevice&                             device,
 	VulkanShader&                             shader,
+	VulkanDescriptorSetLayout&                descriptorSetLayout,
 	VkRenderPass                              renderPass,
 	uint32_t                                  subpass,
 	VkPrimitiveTopology                       primitiveTopology,
@@ -332,9 +346,9 @@ void vulkanPipelineDestroy(
 );
 
 void vulkanDescriptorSetCreate(
-	VulkanDevice&        device,
-	VulkanShader&        shader,
-	VulkanDescriptorSet* descriptorSet
+	VulkanDevice&              device,
+	VulkanDescriptorSetLayout& descriptorSetLayout,
+	VulkanDescriptorSet*       descriptorSet
 );
 
 void vulkanDescriptorSetUpdateImage(

@@ -7,13 +7,13 @@ class VulkanMesh
 {
 protected:
 	// material
-	VulkanDevice&       device;
-	VulkanShader&       shader;
-	VulkanDescriptorSet descriptorSet{};
-	VulkanBuffer        bufferMVP{};
-	int32_t             vertexCount{};
+	VulkanDevice&              device;
+	VulkanDescriptorSetLayout& descriptorSetLayout;
+	VulkanDescriptorSet        descriptorSet{};
+	VulkanBuffer               bufferMVP{};
+	int32_t                    vertexCount{};
 public:
-	VulkanMesh(VulkanDevice& device, VulkanShader& shader);
+	VulkanMesh(VulkanDevice& device, VulkanDescriptorSetLayout& descriptorSetLayout);
 	virtual ~VulkanMesh();
 
 	// set image
@@ -41,7 +41,7 @@ public:
 	// constructor
 	VulkanMesh_gui(
 		VulkanDevice&                       device,
-		VulkanShader&                       shader,
+		VulkanDescriptorSetLayout&          descriptorSetLayout,
 		std::vector<VertexStruct_P4_C4_T2>& verts);
 	~VulkanMesh_gui();
 	void draw(
@@ -63,11 +63,11 @@ protected:
 public:
 	// constructor
 	VulkanMesh_obj(
-		VulkanDevice&           device,
-		VulkanShader&           shader,
-		std::vector<glm::vec3>& pos,
-		std::vector<glm::vec2>& tex,
-		std::vector<glm::vec3>& nrm);
+		VulkanDevice&              device,
+		VulkanDescriptorSetLayout& descriptorSetLayout,
+		std::vector<glm::vec3>&    pos,
+		std::vector<glm::vec2>&    tex,
+		std::vector<glm::vec3>&    nrm);
 	~VulkanMesh_obj();
 	void draw(
 		VulkanPipeline&      pipeline,
@@ -87,10 +87,10 @@ protected:
 public:
 	// constructor
 	VulkanMesh_lines(
-		VulkanDevice&           device,
-		VulkanShader&           shader,
-		std::vector<glm::vec3>& pos,
-		std::vector<glm::vec4>& col);
+		VulkanDevice&              device,
+		VulkanDescriptorSetLayout& descriptorSetLayout,
+		std::vector<glm::vec3>&    pos,
+		std::vector<glm::vec4>&    col);
 	~VulkanMesh_lines();
 	void draw(
 		VulkanPipeline&      pipeline,

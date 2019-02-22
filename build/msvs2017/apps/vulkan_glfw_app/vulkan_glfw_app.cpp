@@ -44,12 +44,12 @@ int main(void)
 	std::vector<VulkanMesh*> meshesDebug;
 	std::vector<VulkanImage*> images;
 	//loadMesh_obj(vulkanRender->device, shader_obj, shader_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
-	loadMesh_obj(*renderer, "models/rock/rock.obj", "models/rock", &meshes, &meshesDebug, &images);
-	//loadMesh_obj(*renderer, "models/tea/tea.obj", "models/tea", &meshes, &meshesDebug, &images);
+	//loadMesh_obj(*renderer, "models/rock/rock.obj", "models/rock", &meshes, &meshesDebug, &images);
+	loadMesh_obj(*renderer, "models/tea/tea.obj", "models/tea", &meshes, &meshesDebug, &images);
 	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
 
 	// create GUI mesh
-	VulkanMesh* meshGUI = new VulkanMesh_gui(renderer->device, renderer->shader_default, vertices);
+	VulkanMesh* meshGUI = new VulkanMesh_gui(renderer->device, renderer->descriptorSetLayout_default, vertices);
 	meshGUI->setImage(*images[0], renderer->samplerDefault, 0);
 
 	// matrices

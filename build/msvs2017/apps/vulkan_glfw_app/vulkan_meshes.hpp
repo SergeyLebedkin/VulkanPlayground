@@ -13,7 +13,9 @@ protected:
 	VulkanBuffer               bufferMVP{};
 	int32_t                    vertexCount{};
 public:
-	VulkanMesh(VulkanDevice& device, VulkanDescriptorSetLayout& descriptorSetLayout);
+	VulkanMesh(
+		VulkanDevice&              device,
+		VulkanDescriptorSetLayout& descriptorSetLayout);
 	virtual ~VulkanMesh();
 
 	// set image
@@ -31,7 +33,7 @@ public:
 		glm::mat4&           matModl) = 0;
 };
 
-// VulkanMesh
+// VulkanMesh_gui
 class VulkanMesh_gui : public VulkanMesh
 {
 protected:
@@ -52,7 +54,7 @@ public:
 		glm::mat4&           matModl) override;
 };
 
-// VulkanMesh
+// VulkanMesh_obj
 class VulkanMesh_obj : public VulkanMesh
 {
 protected:

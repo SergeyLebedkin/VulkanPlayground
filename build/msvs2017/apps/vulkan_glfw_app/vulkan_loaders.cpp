@@ -206,11 +206,11 @@ void loadMesh_obj(
 		if (meshes) {
 			VulkanMesh* mesh = new VulkanMesh_obj(
 				renderer.device,
-				renderer.descriptorSetLayout_obj,
+				renderer.pipeline_obj,
+				new VulkanMaterial(),
 				vectorPos,
 				vectorTex,
 				vectorNrm);
-			mesh->setImage(*image, renderer.samplerDefault, 0);
 			meshes->push_back(mesh);
 		}
 
@@ -218,7 +218,7 @@ void loadMesh_obj(
 		if (meshesDebug) {
 			VulkanMesh* mesh = new VulkanMesh_lines(
 				renderer.device,
-				renderer.descriptorSetLayout_line,
+				renderer.pipeline_line,
 				vectorNrmPos,
 				vectorNrmCol);
 			meshesDebug->push_back(mesh);

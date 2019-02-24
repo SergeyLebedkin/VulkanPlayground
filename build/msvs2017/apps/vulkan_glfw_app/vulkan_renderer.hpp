@@ -14,21 +14,25 @@ public:
 	VulkanSemaphore     presentSemaphore{};
 	VulkanCommandBuffer commandBuffer{};
 
-	// pipelines and shaders
-	VulkanShader shader_obj{};
+	// descriptor set layouts
+	VulkanDescriptorSetLayout descriptorSetLayout_material{}; // set 0
+	VulkanDescriptorSetLayout descriptorSetLayout_model{};    // set 1
+	VulkanDescriptorSetLayout descriptorSetLayout_scene{};    // set 2
+
+	// shaders
+	VulkanShader shader_gui{};
 	VulkanShader shader_line{};
-	VulkanShader shader_default{};
-	VulkanDescriptorSetLayout descriptorSetLayout_obj{};
-	VulkanDescriptorSetLayout descriptorSetLayout_line{};
-	VulkanDescriptorSetLayout descriptorSetLayout_default{};
+	VulkanShader shader_obj{};
+
+	// pipelines
+	VulkanPipeline pipeline_gui{};
+	VulkanPipeline pipeline_line{};
 	VulkanPipeline pipeline_obj{};
 	VulkanPipeline pipeline_obj_wf{};
-	VulkanPipeline pipeline_line{};
-	VulkanPipeline pipeline_default{};
 
 	// images and samplers
 	VulkanSampler samplerDefault{};
-	VulkanImage imageDefault{};
+	VulkanImage   imageDefault{};
 public:
 	VulkanRender(
 		GLFWwindow*                window,

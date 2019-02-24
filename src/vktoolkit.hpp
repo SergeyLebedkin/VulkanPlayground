@@ -110,6 +110,11 @@ typedef struct VulkanDescriptorSetLayout {
 	std::vector<VkDescriptorPoolSize>         descriptorPoolSizes{};
 } VulkanDescriptorSetLayout;
 
+typedef struct VulkanPipelineLayout {
+	VkPipelineLayout                       pipelineLayout;
+	std::vector<VulkanDescriptorSetLayout> descriptorSetLayouts{};
+} VulkanPipelineLayout;
+
 typedef struct VulkanPipeline {
 	VkPipelineLayout pipelineLayout;
 	VkPipeline       pipeline;
@@ -326,11 +331,12 @@ void vulkanDescriptorSetLayoutDestroy(
 void vulkanPipelineCreate(
 	VulkanDevice&                             device,
 	VulkanShader&                             shader,
-	VulkanDescriptorSetLayout&                descriptorSetLayout,
 	VkRenderPass                              renderPass,
 	uint32_t                                  subpass,
 	VkPrimitiveTopology                       primitiveTopology,
 	VkPolygonMode                             polygonMode,
+	uint32_t                                  descriptorSetLayoutCount,
+	const VkDescriptorSetLayout               descriptorSetLayouts[],
 	uint32_t                                  vertexInputBindingDescriptionCount,
 	const VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
 	uint32_t                                  vertexInputAttributeDescriptionCount,

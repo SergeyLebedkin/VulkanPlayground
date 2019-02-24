@@ -55,15 +55,20 @@ const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P3_C4[]
 
 //////////////////////////////////////////////////////////////////////////
 
-// VkDescriptorSetLayoutBinding
-const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings_T1_U1[] {
-{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // texture
-{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1, VK_SHADER_STAGE_VERTEX_BIT  , VK_NULL_HANDLE }, // buffer
+// VkDescriptorSetLayoutBinding - Material set
+const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings_material[]{
+{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // deffuse texture
 };
 
-// VkDescriptorSetLayoutBinding
-const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings_U1[]{
-{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, VK_NULL_HANDLE }, // buffer
+// VkDescriptorSetLayoutBinding - Model set
+const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings_model[]{
+{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, VK_NULL_HANDLE }, // model matrix
+};
+
+// VkDescriptorSetLayoutBinding - Scene set
+const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings_scene[]{
+{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, VK_NULL_HANDLE }, // camera (view, projection)
+{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, VK_NULL_HANDLE }, // light sources
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -82,27 +87,27 @@ const VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates_def
 
 // pipelines
 
-void createPipeline_default(
-	VulkanDevice&              device,
-	VkRenderPass               renderPass,
-	uint32_t                   subPass,
-	VulkanShader&              shader,
-	VulkanDescriptorSetLayout& descriptorSetLayout,
-	VulkanPipeline&            pipeline);
+void createPipeline_gui(
+	VulkanDevice&                       device,
+	VkRenderPass                        renderPass,
+	uint32_t                            subPass,
+	std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+	VulkanShader&                       shader,
+	VulkanPipeline&                     pipeline);
 
 void createPipeline_obj(
-	VulkanDevice&              device,
-	VkRenderPass               renderPass,
-	uint32_t                   subPass,
-	VulkanShader&              shader,
-	VulkanDescriptorSetLayout& descriptorSetLayout,
-	VulkanPipeline&            pipeline,
-	VulkanPipeline&            pipeline_wf);
+	VulkanDevice&                       device,
+	VkRenderPass                        renderPass,
+	uint32_t                            subPass,
+	std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+	VulkanShader&                       shader,
+	VulkanPipeline&                     pipeline,
+	VulkanPipeline&                     pipeline_wf);
 
 void createPipeline_line(
-	VulkanDevice&              device,
-	VkRenderPass               renderPass,
-	uint32_t                   subPass,
-	VulkanShader&              shader,
-	VulkanDescriptorSetLayout& descriptorSetLayout,
-	VulkanPipeline&            pipeline);
+	VulkanDevice&                       device,
+	VkRenderPass                        renderPass,
+	uint32_t                            subPass,
+	std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+	VulkanShader&                       shader,
+	VulkanPipeline&                     pipeline);

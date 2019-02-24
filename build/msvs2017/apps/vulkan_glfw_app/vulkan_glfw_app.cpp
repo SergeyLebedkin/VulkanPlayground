@@ -1,5 +1,6 @@
 #include "vulkan_renderer.hpp"
 #include "vulkan_loaders.hpp"
+#include "vulkan_scene.hpp"
 #include "time_measure.hpp"
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
@@ -44,25 +45,27 @@ int main(void)
 	std::vector<VulkanMesh*> meshesDebug;
 	std::vector<VulkanImage*> images;
 	//loadMesh_obj(vulkanRender->device, shader_obj, shader_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
-	//loadMesh_obj(*renderer, "models/rock/rock.obj", "models/rock", &meshes, &meshesDebug, &images);
-	loadMesh_obj(*renderer, "models/tea/tea.obj", "models/tea", &meshes, &meshesDebug, &images);
+	loadMesh_obj(*renderer, "models/rock/rock.obj", "models/rock", &meshes, &meshesDebug, &images);
+	//loadMesh_obj(*renderer, "models/tea/tea.obj", "models/tea", &meshes, &meshesDebug, &images);
 	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
 
-	// create GUI mesh
-	VulkanMesh* meshGUI = new VulkanMesh_gui(renderer->device, renderer->descriptorSetLayout_default, vertices);
-	meshGUI->setImage(*images[0], renderer->samplerDefault, 0);
-
-	// matrices
+	// model rock
+	VulkanModel* modelRock = new VulkanModel(renderer->device, renderer->descriptorSetLayout_model);
+	modelRock->visibleDebug = VK_TRUE;
+	modelRock->meshes.insert(modelRock->meshes.end(), meshes.begin(), meshes.end());
+	modelRock->meshesDebug.insert(modelRock->meshesDebug.end(), meshesDebug.begin(), meshesDebug.end());
+	
+	// create scene
 	float viewWidth = (float)renderer->swapchain.surfaceCapabilities.currentExtent.width;
 	float viewHeight = (float)renderer->swapchain.surfaceCapabilities.currentExtent.height;
-	glm::mat4 matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/1.0f)), 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), viewWidth / viewHeight, 0.1f, 10.f);
 
-	glm::mat4 matModlGUI = glm::mat4(1.0f);
-	glm::mat4 matViewGUI = glm::mat4(1.0f);
-	glm::mat4 matProjGUI = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, -1.0f, 1.0f);
+	// create scene
+	VulkanScene* scene = new VulkanScene(renderer->device, renderer->descriptorSetLayout_scene);
+	scene->matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	scene->matProj = glm::perspective(glm::radians(45.0f), viewWidth / viewHeight, 0.1f, 10.f);
+	scene->models.push_back(modelRock);
 
+	// create time stamp
 	TimeStamp timeStamp;
 	timeStampReset(timeStamp);
 
@@ -72,8 +75,10 @@ int main(void)
 		timeStampTick(timeStamp);
 		timeStampPrint(std::cout, timeStamp, 1.0f);
 
-		matModl = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), timeStamp.accumTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		// rotate model
+		modelRock->matModel = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), timeStamp.accumTime, glm::vec3(0.0f, 1.0f, 0.0f));
 
+		// begin frame
 		uint32_t frameIndex = 0;
 		vulkanSwapchainBeginFrame(renderer->device, renderer->swapchain, renderer->presentSemaphore, &frameIndex);
 		vulkanCommandBufferBegin(renderer->device, renderer->commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -114,22 +119,14 @@ int main(void)
 		// GO RENDER
 		vkCmdBeginRenderPass(renderer->commandBuffer.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+		// set parameters
 		vkCmdSetViewport(renderer->commandBuffer.commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(renderer->commandBuffer.commandBuffer, 0, 1, &scissor);
 		vkCmdSetLineWidth(renderer->commandBuffer.commandBuffer, 1.0f);
-		
-		// draw obj
-		for (auto mesh : meshes) {
-			//mesh->draw(renderer->pipeline_obj, renderer->commandBuffer, matProj, matView, matModl);
-			mesh->draw(renderer->pipeline_obj_wf, renderer->commandBuffer, matProj, matView, matModl);
-		}
 
-		// draw lines
-		//for (auto mesh : meshesDebug)
-		//	mesh->draw(renderer->pipeline_line, renderer->commandBuffer, matProj, matView, matModl);
-
-		//meshGUI->draw(pipeline_default, commandBuffer, matProjGUI, matViewGUI, matModlGUI);
-		//meshGUI->draw(pipeline_obj_wf, commandBuffer, matProjGUI, matViewGUI, matModlGUI);
+		// DRAW
+		//scene->draw(renderer->pipeline_obj, renderer->commandBuffer);
+		scene->draw(renderer->pipeline_obj_wf, renderer->commandBuffer);
 
 		// END RENDER
 		vkCmdEndRenderPass(renderer->commandBuffer.commandBuffer);
@@ -137,10 +134,14 @@ int main(void)
 		// vkEndCommandBuffer
 		VKT_CHECK(vkEndCommandBuffer(renderer->commandBuffer.commandBuffer));
 		
+		// and frame
 		vulkanQueueSubmit(renderer->device, renderer->commandBuffer, &renderer->presentSemaphore, &renderer->renderSemaphore);
 		vulkanSwapchainEndFrame(renderer->device, renderer->swapchain, renderer->renderSemaphore, frameIndex);
 		glfwPollEvents();
 	}
+
+	delete scene;
+	delete modelRock;
 
 	// delete images
 	for (auto image : images) {
@@ -154,7 +155,6 @@ int main(void)
 	meshesDebug.clear();
 	for (auto mesh : meshes) delete mesh;
 	meshes.clear();
-	delete meshGUI;
 
 	delete renderer;
 

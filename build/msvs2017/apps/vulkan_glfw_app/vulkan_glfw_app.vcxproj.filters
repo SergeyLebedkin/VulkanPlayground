@@ -8,6 +8,7 @@
     <ClCompile Include="time_measure.cpp" />
     <ClCompile Include="vulkan_renderer.cpp" />
     <ClCompile Include="vulkan_model.cpp" />
+    <ClCompile Include="vulkan_scene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="textures">
@@ -29,16 +30,16 @@
     <CustomBuild Include="shaders\obj.vert.glsl">
       <Filter>shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="shaders\line.vert.glsl">
+    <CustomBuild Include="shaders\gui.frag.glsl">
       <Filter>shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="shaders\line.frag.glsl">
+    <CustomBuild Include="shaders\gui.vert.glsl">
       <Filter>shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="shaders\default.frag.glsl">
+    <CustomBuild Include="shaders\lines.frag.glsl">
       <Filter>shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="shaders\default.vert.glsl">
+    <CustomBuild Include="shaders\lines.vert.glsl">
       <Filter>shaders</Filter>
     </CustomBuild>
   </ItemGroup>
@@ -49,5 +50,6 @@
     <ClInclude Include="time_measure.hpp" />
     <ClInclude Include="vulkan_renderer.hpp" />
     <ClInclude Include="vulkan_model.hpp" />
+    <ClInclude Include="vulkan_scene.hpp" />
   </ItemGroup>
 </Project>

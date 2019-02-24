@@ -1481,11 +1481,12 @@ void vulkanDescriptorSetLayoutDestroy(
 void vulkanPipelineCreate(
 	VulkanDevice&                             device,
 	VulkanShader&                             shader,
-	VulkanDescriptorSetLayout&                descriptorSetLayout,
 	VkRenderPass                              renderPass,
 	uint32_t                                  subpass,
 	VkPrimitiveTopology                       primitiveTopology,
 	VkPolygonMode                             polygonMode,
+	uint32_t                                  descriptorSetLayoutCount,
+	const VkDescriptorSetLayout               descriptorSetLayouts[],
 	uint32_t                                  vertexInputBindingDescriptionCount,
 	const VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
 	uint32_t                                  vertexInputAttributeDescriptionCount,
@@ -1655,8 +1656,8 @@ void vulkanPipelineCreate(
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
 	pipelineLayoutCreateInfo.flags = 0;
-	pipelineLayoutCreateInfo.setLayoutCount = 1;
-	pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout.descriptorSetLayout;
+	pipelineLayoutCreateInfo.setLayoutCount = descriptorSetLayoutCount;
+	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = VK_NULL_HANDLE;
 	VKT_CHECK(vkCreatePipelineLayout(device.device, &pipelineLayoutCreateInfo, VK_NULL_HANDLE, &pipeline->pipelineLayout));

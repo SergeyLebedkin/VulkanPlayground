@@ -2,81 +2,77 @@
 #include <glm/mat4x4.hpp>
 #include "vulkan_pipelines.hpp"
 
+// VulkanMaterial
+class VulkanMaterial {};
+
 // VulkanMesh
 class VulkanMesh
 {
 protected:
-	// material
-	VulkanDevice&              device;
-	VulkanDescriptorSetLayout& descriptorSetLayout;
-	VulkanDescriptorSet        descriptorSet{};
-	VulkanBuffer               bufferMVP{};
-	int32_t                    vertexCount{};
+	VulkanDevice&   device;
+	VulkanPipeline& pipeline;
 public:
 	VulkanMesh(
-		VulkanDevice&              device,
-		VulkanDescriptorSetLayout& descriptorSetLayout);
-	virtual ~VulkanMesh();
+		VulkanDevice&   device,
+		VulkanPipeline& pipeline) :
+		device(device),
+		pipeline(pipeline) {};
+	virtual ~VulkanMesh() {};
+	virtual void draw(VulkanCommandBuffer& commandBuffer) = 0;
+	void setPipeline(VulkanPipeline& pipeline) { this->pipeline = pipeline; };
+};
 
-	// set image
-	void setImage(
-		VulkanImage&   image,
-		VulkanSampler& sampler,
-		uint32_t       binding);
-
-	// draw
-	virtual void draw(
-		VulkanPipeline&      pipeline,
-		VulkanCommandBuffer& commandBuffer,
-		glm::mat4&           matProj,
-		glm::mat4&           matView,
-		glm::mat4&           matModl) = 0;
+// VulkanMesh_material
+class VulkanMesh_material : public VulkanMesh
+{
+protected:
+	// material
+	VulkanMaterial* material{};
+public:
+	VulkanMesh_material(
+		VulkanDevice&   device,
+		VulkanPipeline& pipeline,
+		VulkanMaterial* material) : VulkanMesh(device, pipeline), material(material) {};
 };
 
 // VulkanMesh_gui
-class VulkanMesh_gui : public VulkanMesh
+struct VulkanMesh_gui : public VulkanMesh_material
 {
 protected:
 	// buffers
-	VulkanBuffer bufferVerts{};
+	VulkanBuffer bufferVerteces{};
+	uint32_t     vertexCount;
 public:
 	// constructor
 	VulkanMesh_gui(
 		VulkanDevice&                       device,
-		VulkanDescriptorSetLayout&          descriptorSetLayout,
+		VulkanPipeline&                     pipeline,
+		VulkanMaterial*                     material,
 		std::vector<VertexStruct_P4_C4_T2>& verts);
 	~VulkanMesh_gui();
-	void draw(
-		VulkanPipeline&      pipeline,
-		VulkanCommandBuffer& commandBuffer,
-		glm::mat4&           matProj,
-		glm::mat4&           matView,
-		glm::mat4&           matModl) override;
+	void draw(VulkanCommandBuffer& commandBuffer) override;
 };
 
 // VulkanMesh_obj
-class VulkanMesh_obj : public VulkanMesh
+class VulkanMesh_obj : public VulkanMesh_material
 {
 protected:
 	// buffers
 	VulkanBuffer bufferPos{};
 	VulkanBuffer bufferTex{};
 	VulkanBuffer bufferNrm{};
+	uint32_t     vertexCount;
 public:
 	// constructor
 	VulkanMesh_obj(
-		VulkanDevice&              device,
-		VulkanDescriptorSetLayout& descriptorSetLayout,
-		std::vector<glm::vec3>&    pos,
-		std::vector<glm::vec2>&    tex,
-		std::vector<glm::vec3>&    nrm);
+		VulkanDevice&           device,
+		VulkanPipeline&         pipeline,
+		VulkanMaterial*         material,
+		std::vector<glm::vec3>& pos,
+		std::vector<glm::vec2>& tex,
+		std::vector<glm::vec3>& nrm);
 	~VulkanMesh_obj();
-	void draw(
-		VulkanPipeline&      pipeline,
-		VulkanCommandBuffer& commandBuffer,
-		glm::mat4&           matProj,
-		glm::mat4&           matView,
-		glm::mat4&           matModl) override;
+	void draw(VulkanCommandBuffer& commandBuffer) override;
 };
 
 // VulkanMesh_lines
@@ -86,18 +82,14 @@ protected:
 	// buffers
 	VulkanBuffer bufferPos{};
 	VulkanBuffer bufferCol{};
+	uint32_t     vertexCount;
 public:
 	// constructor
 	VulkanMesh_lines(
-		VulkanDevice&              device,
-		VulkanDescriptorSetLayout& descriptorSetLayout,
-		std::vector<glm::vec3>&    pos,
-		std::vector<glm::vec4>&    col);
+		VulkanDevice&           device,
+		VulkanPipeline&         pipeline,
+		std::vector<glm::vec3>& pos,
+		std::vector<glm::vec4>& col);
 	~VulkanMesh_lines();
-	void draw(
-		VulkanPipeline&      pipeline,
-		VulkanCommandBuffer& commandBuffer,
-		glm::mat4&           matProj,
-		glm::mat4&           matView,
-		glm::mat4&           matModl) override;
+	void draw(VulkanCommandBuffer& commandBuffer) override;
 };

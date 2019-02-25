@@ -6,7 +6,9 @@
 // VulkanModel
 class VulkanModel {
 protected:
-	VulkanDevice&       device;
+	VulkanDevice&         device;
+	VulkanPipelineLayout& pipelineLayout;
+protected:
 	VulkanBuffer        bufferModelMatrix;
 	VulkanDescriptorSet descriptorSet;
 public:
@@ -18,6 +20,7 @@ public:
 public:
 	VulkanModel(
 		VulkanDevice&              device,
+		VulkanPipelineLayout&      pipelineLayout,
 		VulkanDescriptorSetLayout& descriptorSetLayout);
 	virtual ~VulkanModel();
 	virtual void draw(VulkanCommandBuffer& commandBuffer);

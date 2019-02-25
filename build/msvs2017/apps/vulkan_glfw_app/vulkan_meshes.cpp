@@ -3,10 +3,9 @@
 // VulkanMesh_gui::~VulkanMesh_gui
 VulkanMesh_gui::VulkanMesh_gui(
 	VulkanDevice&                       device,
-	VulkanPipeline&                     pipeline,
 	VulkanMaterial*                     material,
 	std::vector<VertexStruct_P4_C4_T2>& verts) :
-	VulkanMesh_material(device, pipeline, material)
+	VulkanMesh_material(device, material)
 {
 	// create buffers
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(verts), &bufferVerteces);
@@ -29,7 +28,6 @@ void VulkanMesh_gui::draw(VulkanCommandBuffer& commandBuffer)
 	VkBuffer buffers[] = { bufferVerteces.buffer };
 
 	// render
-	vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 1, buffers, offsets);
 	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
 };
@@ -39,12 +37,11 @@ void VulkanMesh_gui::draw(VulkanCommandBuffer& commandBuffer)
 // VulkanMesh_obj::VulkanMesh_obj
 VulkanMesh_obj::VulkanMesh_obj(
 	VulkanDevice&           device,
-	VulkanPipeline&         pipeline,
 	VulkanMaterial*         material,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec2>& tex,
 	std::vector<glm::vec3>& nrm) :
-	VulkanMesh_material(device, pipeline, material)
+	VulkanMesh_material(device, material)
 {
 	// create buffers
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
@@ -73,7 +70,6 @@ void VulkanMesh_obj::draw(VulkanCommandBuffer& commandBuffer)
 	VkBuffer buffers[]{ bufferPos.buffer, bufferTex.buffer, bufferNrm.buffer };
 
 	// render
-	vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 3, buffers, offsets);
 	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
 };
@@ -83,10 +79,9 @@ void VulkanMesh_obj::draw(VulkanCommandBuffer& commandBuffer)
 // VulkanMesh_lines::VulkanMesh_lines
 VulkanMesh_lines::VulkanMesh_lines(
 	VulkanDevice&           device,
-	VulkanPipeline&         pipeline,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec4>& col) :
-	VulkanMesh(device, pipeline)
+	VulkanMesh(device)
 {
 	// create buffers
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
@@ -112,7 +107,6 @@ void VulkanMesh_lines::draw(VulkanCommandBuffer& commandBuffer)
 	VkBuffer buffers[]{ bufferPos.buffer, bufferCol.buffer };
 
 	// render
-	vkCmdBindPipeline(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 2, buffers, offsets);
 	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
 };

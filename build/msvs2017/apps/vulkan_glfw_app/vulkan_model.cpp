@@ -3,10 +3,10 @@
 // VulkanModel::VulkanModel
 VulkanModel::VulkanModel(
 	VulkanDevice&              device,
+	VulkanPipelineLayout&      pipelineLayout,
 	VulkanDescriptorSetLayout& descriptorSetLayout) :
-	device(device),
-	visible(VK_TRUE),
-	visibleDebug(VK_FALSE)
+	device(device), pipelineLayout(pipelineLayout),
+	visible(VK_TRUE), visibleDebug(VK_TRUE)
 {
 	// create view-proj matrices buffer
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4), &bufferModelMatrix);
@@ -34,7 +34,7 @@ void VulkanModel::draw(VulkanCommandBuffer& commandBuffer)
 		vulkanBufferWrite(device, bufferModelMatrix, 0, sizeof(matModel), &matModel);
 
 		// bind descroptor set
-		//vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 1, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
+		vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.pipelineLayout, 1, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
 
 		// draw meshes
 		for (auto& mesh : meshes)

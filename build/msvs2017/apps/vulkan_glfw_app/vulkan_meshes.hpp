@@ -9,17 +9,11 @@ class VulkanMaterial {};
 class VulkanMesh
 {
 protected:
-	VulkanDevice&   device;
-	VulkanPipeline& pipeline;
+	VulkanDevice&         device;
 public:
-	VulkanMesh(
-		VulkanDevice&   device,
-		VulkanPipeline& pipeline) :
-		device(device),
-		pipeline(pipeline) {};
+	VulkanMesh(VulkanDevice& device) : device(device) {};
 	virtual ~VulkanMesh() {};
 	virtual void draw(VulkanCommandBuffer& commandBuffer) = 0;
-	void setPipeline(VulkanPipeline& pipeline) { this->pipeline = pipeline; };
 };
 
 // VulkanMesh_material
@@ -31,8 +25,8 @@ protected:
 public:
 	VulkanMesh_material(
 		VulkanDevice&   device,
-		VulkanPipeline& pipeline,
-		VulkanMaterial* material) : VulkanMesh(device, pipeline), material(material) {};
+		VulkanMaterial* material) :
+		VulkanMesh(device), material(material) {};
 };
 
 // VulkanMesh_gui
@@ -46,7 +40,6 @@ public:
 	// constructor
 	VulkanMesh_gui(
 		VulkanDevice&                       device,
-		VulkanPipeline&                     pipeline,
 		VulkanMaterial*                     material,
 		std::vector<VertexStruct_P4_C4_T2>& verts);
 	~VulkanMesh_gui();
@@ -66,7 +59,6 @@ public:
 	// constructor
 	VulkanMesh_obj(
 		VulkanDevice&           device,
-		VulkanPipeline&         pipeline,
 		VulkanMaterial*         material,
 		std::vector<glm::vec3>& pos,
 		std::vector<glm::vec2>& tex,
@@ -87,7 +79,6 @@ public:
 	// constructor
 	VulkanMesh_lines(
 		VulkanDevice&           device,
-		VulkanPipeline&         pipeline,
 		std::vector<glm::vec3>& pos,
 		std::vector<glm::vec4>& col);
 	~VulkanMesh_lines();

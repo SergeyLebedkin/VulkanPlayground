@@ -25,16 +25,19 @@ VulkanRender::VulkanRender(
 	vulkanDescriptorSetLayoutCreate(device, VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_scene), descriptorSetLayoutBindings_scene, &descriptorSetLayout_scene);
 
 	// list of descriptor set layout
-	std::vector<VkDescriptorSetLayout> descriptorSetLayouts = {
+	VkDescriptorSetLayout descriptorSetLayouts[] = {
 		descriptorSetLayout_material.descriptorSetLayout,
 		descriptorSetLayout_model.descriptorSetLayout,
 		descriptorSetLayout_scene.descriptorSetLayout,
 	};
 
+	// create pipeline layout object
+	vulkanPipelineLayoutCreate(device, VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayouts), descriptorSetLayouts, &pipelineLayout);
+
 	// create shaders and pipelines
-	createPipeline_gui(device, swapchain.renderPass, 0, descriptorSetLayouts, shader_gui, pipeline_gui);
-	createPipeline_line(device, swapchain.renderPass, 0, descriptorSetLayouts, shader_line, pipeline_line);
-	createPipeline_obj(device, swapchain.renderPass, 0, descriptorSetLayouts, shader_obj, pipeline_obj, pipeline_obj_wf);
+	createPipeline_gui(device, pipelineLayout, swapchain.renderPass, 0, &shader_gui, &pipeline_gui);
+	createPipeline_line(device, pipelineLayout, swapchain.renderPass, 0, &shader_line, &pipeline_line);
+	createPipeline_obj(device, pipelineLayout, swapchain.renderPass, 0, &shader_obj, &pipeline_obj, &pipeline_obj_wf);
 
 	// create image and sampler default
 	createImageProcedural(device, 1024, 1024, imageDefault);
@@ -58,6 +61,9 @@ VulkanRender::~VulkanRender()
 	vulkanShaderDestroy(device, shader_obj);
 	vulkanShaderDestroy(device, shader_line);
 	vulkanShaderDestroy(device, shader_gui);
+
+	// destroy pipeline layouts
+	vulkanPipelineLayoutDestroy(device, pipelineLayout);
 
 	// destroy shaders
 	vulkanDescriptorSetLayoutDestroy(device, descriptorSetLayout_scene);

@@ -19,6 +19,9 @@ public:
 	VulkanDescriptorSetLayout descriptorSetLayout_model{};    // set 1
 	VulkanDescriptorSetLayout descriptorSetLayout_scene{};    // set 2
 
+	// pipeline layout
+	VulkanPipelineLayout pipelineLayout{};
+
 	// shaders
 	VulkanShader shader_gui{};
 	VulkanShader shader_line{};

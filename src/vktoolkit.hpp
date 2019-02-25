@@ -111,13 +111,11 @@ typedef struct VulkanDescriptorSetLayout {
 } VulkanDescriptorSetLayout;
 
 typedef struct VulkanPipelineLayout {
-	VkPipelineLayout                       pipelineLayout;
-	std::vector<VulkanDescriptorSetLayout> descriptorSetLayouts{};
+	VkPipelineLayout pipelineLayout;
 } VulkanPipelineLayout;
 
 typedef struct VulkanPipeline {
-	VkPipelineLayout pipelineLayout;
-	VkPipeline       pipeline;
+	VkPipeline pipeline;
 } VulkanPipeline;
 
 typedef struct VulkanDescriptorSet {
@@ -328,15 +326,24 @@ void vulkanDescriptorSetLayoutDestroy(
 	VulkanDescriptorSetLayout& descriptorSetLayout
 );
 
+void vulkanPipelineLayoutCreate(
+	VulkanDevice&               device,
+	uint32_t                    descriptorSetLayoutCount,
+	const VkDescriptorSetLayout descriptorSetLayouts[],
+	VulkanPipelineLayout*       pipelineLayout);
+
+void vulkanPipelineLayoutDestroy(
+	VulkanDevice&         device,
+	VulkanPipelineLayout& pipelineLayout);
+
 void vulkanPipelineCreate(
 	VulkanDevice&                             device,
 	VulkanShader&                             shader,
+	VulkanPipelineLayout&                     pipelineLayout,
 	VkRenderPass                              renderPass,
 	uint32_t                                  subpass,
 	VkPrimitiveTopology                       primitiveTopology,
 	VkPolygonMode                             polygonMode,
-	uint32_t                                  descriptorSetLayoutCount,
-	const VkDescriptorSetLayout               descriptorSetLayouts[],
 	uint32_t                                  vertexInputBindingDescriptionCount,
 	const VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
 	uint32_t                                  vertexInputAttributeDescriptionCount,

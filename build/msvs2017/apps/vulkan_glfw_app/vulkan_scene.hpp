@@ -6,7 +6,9 @@
 // VulkanScene
 class VulkanScene {
 protected:
-	VulkanDevice&       device;
+	VulkanDevice&         device;
+	VulkanPipelineLayout& pipelineLayout;
+protected:
 	VulkanBuffer        bufferViewProjMatrices;
 	VulkanDescriptorSet descriptorSet;
 public:
@@ -16,9 +18,8 @@ public:
 public:
 	VulkanScene(
 		VulkanDevice&              device,
+		VulkanPipelineLayout&      pipelineLayout,
 		VulkanDescriptorSetLayout& descriptorSetLayout);
 	virtual ~VulkanScene();
-	virtual void draw(
-		VulkanPipeline&      pipeline,
-		VulkanCommandBuffer& commandBuffer);
+	virtual void draw(VulkanCommandBuffer& commandBuffer);
 };

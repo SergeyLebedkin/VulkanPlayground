@@ -1477,16 +1477,46 @@ void vulkanDescriptorSetLayoutDestroy(
 	descriptorSetLayout.descriptorPoolSizes = {};
 }
 
+// vulkanPipelineLayoutCreate
+void vulkanPipelineLayoutCreate(
+	VulkanDevice&               device,
+	uint32_t                    descriptorSetLayoutCount,
+	const VkDescriptorSetLayout descriptorSetLayouts[],
+	VulkanPipelineLayout*       pipelineLayout)
+{
+	// VkPipelineLayoutCreateInfo
+	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
+	pipelineLayoutCreateInfo.flags = 0;
+	pipelineLayoutCreateInfo.setLayoutCount = descriptorSetLayoutCount;
+	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	pipelineLayoutCreateInfo.pPushConstantRanges = VK_NULL_HANDLE;
+	VKT_CHECK(vkCreatePipelineLayout(device.device, &pipelineLayoutCreateInfo, VK_NULL_HANDLE, &pipelineLayout->pipelineLayout));
+	assert(pipelineLayout->pipelineLayout);
+}
+
+// vulkanPipelineLayoutDestroy
+void vulkanPipelineLayoutDestroy(
+	VulkanDevice&         device,
+	VulkanPipelineLayout& pipelineLayout)
+{
+	// destroy handles
+	vkDestroyPipelineLayout(device.device, pipelineLayout.pipelineLayout, VK_NULL_HANDLE);
+	// clear handles
+	pipelineLayout.pipelineLayout = VK_NULL_HANDLE;
+}
+
 // vulkanPipelineCreate
 void vulkanPipelineCreate(
 	VulkanDevice&                             device,
 	VulkanShader&                             shader,
+	VulkanPipelineLayout&                     pipelineLayout,
 	VkRenderPass                              renderPass,
 	uint32_t                                  subpass,
 	VkPrimitiveTopology                       primitiveTopology,
 	VkPolygonMode                             polygonMode,
-	uint32_t                                  descriptorSetLayoutCount,
-	const VkDescriptorSetLayout               descriptorSetLayouts[],
 	uint32_t                                  vertexInputBindingDescriptionCount,
 	const VkVertexInputBindingDescription     vertexInputBindingDescriptions[],
 	uint32_t                                  vertexInputAttributeDescriptionCount,
@@ -1651,18 +1681,6 @@ void vulkanPipelineCreate(
 	pipelineDynamicStateCreateInfo.dynamicStateCount = (uint32_t)dynamicStates.size();
 	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
 
-	// VkPipelineLayoutCreateInfo
-	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
-	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
-	pipelineLayoutCreateInfo.flags = 0;
-	pipelineLayoutCreateInfo.setLayoutCount = descriptorSetLayoutCount;
-	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
-	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-	pipelineLayoutCreateInfo.pPushConstantRanges = VK_NULL_HANDLE;
-	VKT_CHECK(vkCreatePipelineLayout(device.device, &pipelineLayoutCreateInfo, VK_NULL_HANDLE, &pipeline->pipelineLayout));
-	assert(pipeline->pipelineLayout);
-
 	// VkGraphicsPipelineCreateInfo
 	VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo{};
 	graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -1679,7 +1697,7 @@ void vulkanPipelineCreate(
 	graphicsPipelineCreateInfo.pDepthStencilState = &pipelineDepthStencilStateCreateInfo;
 	graphicsPipelineCreateInfo.pColorBlendState = &pipelineColorBlendStateCreateInfo;
 	graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
-	graphicsPipelineCreateInfo.layout = pipeline->pipelineLayout;
+	graphicsPipelineCreateInfo.layout = pipelineLayout.pipelineLayout;
 	graphicsPipelineCreateInfo.renderPass = renderPass;
 	graphicsPipelineCreateInfo.subpass = subpass;
 	graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
@@ -1695,10 +1713,8 @@ void vulkanPipelineDestroy(
 {
 	// destroy handles
 	vkDestroyPipeline(device.device, pipeline.pipeline, VK_NULL_HANDLE);
-	vkDestroyPipelineLayout(device.device, pipeline.pipelineLayout, VK_NULL_HANDLE);
 	// clear handles
 	pipeline.pipeline = VK_NULL_HANDLE;
-	pipeline.pipelineLayout = VK_NULL_HANDLE;
 }
 
 // vulkanDescriptorSetCreate

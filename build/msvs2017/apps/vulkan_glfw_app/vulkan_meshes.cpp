@@ -1,5 +1,13 @@
 #include "vulkan_meshes.hpp"
 
+// VulkanMesh_material
+void VulkanMesh_material::draw(VulkanCommandBuffer& commandBuffer)
+{
+	// bind material if exists
+	if (material)
+		material->bind(commandBuffer);
+}
+
 // VulkanMesh_gui::~VulkanMesh_gui
 VulkanMesh_gui::VulkanMesh_gui(
 	VulkanDevice&                       device,
@@ -23,6 +31,9 @@ VulkanMesh_gui::~VulkanMesh_gui()
 // VulkanMesh_gui::draw
 void VulkanMesh_gui::draw(VulkanCommandBuffer& commandBuffer)
 {
+	// bind material
+	VulkanMesh_material::draw(commandBuffer);
+
 	// prepare buffers
 	VkDeviceSize offsets[] = { 0 };
 	VkBuffer buffers[] = { bufferVerteces.buffer };
@@ -65,6 +76,9 @@ VulkanMesh_obj::~VulkanMesh_obj()
 // VulkanMesh_obj::draw
 void VulkanMesh_obj::draw(VulkanCommandBuffer& commandBuffer)
 {
+	// bind material
+	VulkanMesh_material::draw(commandBuffer);
+
 	// prepare buffers
 	VkDeviceSize offsets[] = { 0, 0, 0 };
 	VkBuffer buffers[]{ bufferPos.buffer, bufferTex.buffer, bufferNrm.buffer };

@@ -42,12 +42,15 @@ VulkanRender::VulkanRender(
 	// create image and sampler default
 	createImageProcedural(device, 1024, 1024, imageDefault);
 	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE, &samplerDefault);
+	materialDefault = new VulkanMaterial(device, pipelineLayout, descriptorSetLayout_material);
+	materialDefault->setImage(imageDefault, samplerDefault, 0);
 }
 
 // VulkanRender::~VulkanRender
 VulkanRender::~VulkanRender() 
 {
 	// destroy image and sampler default
+	delete materialDefault;
 	vulkanImageDestroy(device, imageDefault);
 	vulkanSamplerDestroy(device, samplerDefault);
 

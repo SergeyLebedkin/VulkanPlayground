@@ -1,6 +1,7 @@
 #pragma once
 #include <vktoolkit.hpp>
 #include <GLFW/glfw3.h>
+#include "vulkan_material.hpp"
 
 // VulkanRender
 class VulkanRender {
@@ -34,8 +35,9 @@ public:
 	VulkanPipeline pipeline_obj_wf{};
 
 	// images and samplers
-	VulkanSampler samplerDefault{};
-	VulkanImage   imageDefault{};
+	VulkanMaterial* materialDefault{};
+	VulkanSampler   samplerDefault{};
+	VulkanImage     imageDefault{};
 public:
 	VulkanRender(
 		GLFWwindow*                window,

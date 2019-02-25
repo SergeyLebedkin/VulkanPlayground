@@ -10,7 +10,7 @@ protected:
 	VulkanPipelineLayout& pipelineLayout;
 protected:
 	VulkanBuffer        bufferViewProjMatrices;
-	VulkanDescriptorSet descriptorSet;
+	VulkanDescriptorSet descriptorSet{};
 public:
 	std::vector<VulkanModel*> models{};
 	glm::mat4                 matView;

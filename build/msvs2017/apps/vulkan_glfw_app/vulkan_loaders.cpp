@@ -52,12 +52,13 @@ void loadImageFromFile(
 
 // loadMesh_obj
 void loadMesh_obj(
-	VulkanRender&              renderer,
-	std::string                fileName,
-	std::string                baseDir,
-	std::vector<VulkanMesh*>*  meshes,
-	std::vector<VulkanMesh*>*  meshesDebug,
-	std::vector<VulkanImage*>* images)
+	VulkanRender&                 renderer,
+	std::string                   fileName,
+	std::string                   baseDir,
+	std::vector<VulkanMesh*>*     meshes,
+	std::vector<VulkanMesh*>*     meshesDebug,
+	std::vector<VulkanImage*>*    images,
+	std::vector<VulkanMaterial*>* materialList)
 {
 	tinyobj::attrib_t attribs;
 	std::vector<tinyobj::shape_t> shapes;
@@ -69,9 +70,18 @@ void loadMesh_obj(
 	// load materials
 	for (const auto& material : materials) {
 		if (material.diffuse_texname.size() > 0) {
-			auto image = new VulkanImage();
+			// create image
+			VulkanImage* image = new VulkanImage();
 			loadImageFromFile(renderer.device, *image, baseDir + material.diffuse_texname);
 			images->push_back(image);
+
+			// create material
+			VulkanMaterial* material = new VulkanMaterial(
+				renderer.device,
+				renderer.pipelineLayout,
+				renderer.descriptorSetLayout_material);
+			material->setImage(*image, renderer.samplerDefault, 0);
+			materialList->push_back(material);
 		}
 	}
 
@@ -198,15 +208,15 @@ void loadMesh_obj(
 		}
 
 		// get image from material
-		VulkanImage* image = (shape.mesh.material_ids[0] >= 0)
-			? (*images)[shape.mesh.material_ids[0]]
-			: &renderer.imageDefault;
+		VulkanMaterial* material = (shape.mesh.material_ids[0] >= 0)
+			? materialList->at(shape.mesh.material_ids[0])
+			: renderer.materialDefault;
 
 		// create mesh
 		if (meshes) {
 			VulkanMesh* mesh = new VulkanMesh_obj(
 				renderer.device,
-				new VulkanMaterial(),
+				material,
 				vectorPos,
 				vectorTex,
 				vectorNrm);

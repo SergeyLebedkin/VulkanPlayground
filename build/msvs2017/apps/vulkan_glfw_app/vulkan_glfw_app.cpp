@@ -44,9 +44,10 @@ int main(void)
 	std::vector<VulkanMesh*> meshes;
 	std::vector<VulkanMesh*> meshesDebug;
 	std::vector<VulkanImage*> images;
+	std::vector<VulkanMaterial*> materials;
 	//loadMesh_obj(vulkanRender->device, shader_obj, shader_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
-	loadMesh_obj(*renderer, "models/rock/rock.obj", "models/rock", &meshes, &meshesDebug, &images);
-	//loadMesh_obj(*renderer, "models/tea/tea.obj", "models/tea", &meshes, &meshesDebug, &images);
+	loadMesh_obj(*renderer, "models/rock/rock.obj", "models/rock", &meshes, &meshesDebug, &images, &materials);
+	//loadMesh_obj(*renderer, "models/tea/tea.obj", "models/tea", &meshes, &meshesDebug, &images, &materials);
 	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
 
 	// model rock
@@ -151,8 +152,12 @@ int main(void)
 	delete scene;
 	delete modelRock;
 
+	// clear materials
+	for (auto& material : materials) delete material;
+	materials.clear();
+
 	// delete images
-	for (auto image : images) {
+	for (auto& image : images) {
 		vulkanImageDestroy(renderer->device, *image);
 		delete image;
 	}

@@ -1,9 +1,6 @@
 #pragma once
 #include <glm/mat4x4.hpp>
-#include "vulkan_pipelines.hpp"
-
-// VulkanMaterial
-class VulkanMaterial {};
+#include "vulkan_material.hpp"
 
 // VulkanMesh
 class VulkanMesh
@@ -27,6 +24,7 @@ public:
 		VulkanDevice&   device,
 		VulkanMaterial* material) :
 		VulkanMesh(device), material(material) {};
+	void draw(VulkanCommandBuffer& commandBuffer) override;
 };
 
 // VulkanMesh_gui

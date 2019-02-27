@@ -216,6 +216,7 @@ void loadMesh_obj(
 		if (meshes) {
 			VulkanMesh* mesh = new VulkanMesh_obj(
 				renderer.device,
+				renderer.pipeline_obj,
 				material,
 				vectorPos,
 				vectorTex,
@@ -227,6 +228,7 @@ void loadMesh_obj(
 		if (meshesDebug) {
 			VulkanMesh* mesh = new VulkanMesh_lines(
 				renderer.device,
+				renderer.pipeline_line,
 				vectorNrmPos,
 				vectorNrmCol);
 			meshesDebug->push_back(mesh);

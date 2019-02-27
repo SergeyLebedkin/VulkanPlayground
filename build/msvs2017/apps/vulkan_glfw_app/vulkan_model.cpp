@@ -35,15 +35,14 @@ void VulkanModel::beforeRender(VulkanCommandBuffer& commandBuffer)
 // VulkanModel::draw
 void VulkanModel::render(VulkanCommandBuffer& commandBuffer)
 {
-	if (visible)
-	{
-		// bind descriptor set
-		vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.pipelineLayout, 1, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
+	// bind descriptor set
+	vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.pipelineLayout, 1, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
 
-		// draw meshes
-		for (auto& mesh : meshes)
-			mesh->draw(commandBuffer);
-	}
+	// draw meshes
+	if (visible) for (auto& mesh : meshes) mesh->draw(commandBuffer);
+
+	// draw draw debug
+	if (visibleDebug) for (auto& mesh : meshesDebug) mesh->draw(commandBuffer);
 }
 
 // VulkanModel::afterRender

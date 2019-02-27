@@ -32,7 +32,7 @@ void main()
 	//gl_Position = aPosition;
 	//gl_Position = matrices.uWVP * aPosition;
 	gl_Position =
-		uSceneMatrices.proj *
-		uSceneMatrices.view *
-		uModelMatrices.model * aPosition;
+		//uSceneMatrices.proj *
+		//uSceneMatrices.view *
+		uModelMatrices.model * vec4(aPosition.xyz*0.5f, 1.0f);
 }

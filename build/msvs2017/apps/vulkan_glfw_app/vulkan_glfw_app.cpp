@@ -55,9 +55,19 @@ int main(void)
 		renderer->device,
 		renderer->pipelineLayout,
 		renderer->descriptorSetLayout_model);
-	modelRock->visibleDebug = VK_TRUE;
+	modelRock->visibleDebug = VK_FALSE;
 	modelRock->meshes.insert(modelRock->meshes.end(), meshes.begin(), meshes.end());
 	modelRock->meshesDebug.insert(modelRock->meshesDebug.end(), meshesDebug.begin(), meshesDebug.end());
+
+	// models rock
+	VulkanModel* modelRock1 = new VulkanModel(
+		renderer->device,
+		renderer->pipelineLayout,
+		renderer->descriptorSetLayout_model);
+	modelRock1->matModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.0f));
+	modelRock1->visibleDebug = VK_FALSE;
+	modelRock1->meshes.insert(modelRock1->meshes.end(), meshes.begin(), meshes.end());
+	modelRock1->meshesDebug.insert(modelRock1->meshesDebug.end(), meshesDebug.begin(), meshesDebug.end());
 	
 	// create scene
 	float viewWidth = (float)renderer->swapchain.surfaceCapabilities.currentExtent.width;
@@ -71,6 +81,7 @@ int main(void)
 	scene->matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	scene->matProj = glm::perspective(glm::radians(45.0f), viewWidth / viewHeight, 0.1f, 10.f);
 	scene->models.push_back(modelRock);
+	scene->models.push_back(modelRock1);
 
 	// create time stamp
 	TimeStamp timeStamp;
@@ -132,11 +143,8 @@ int main(void)
 		vkCmdSetViewport(renderer->commandBuffer.commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(renderer->commandBuffer.commandBuffer, 0, 1, &scissor);
 		vkCmdSetLineWidth(renderer->commandBuffer.commandBuffer, 1.0f);
-		vkCmdBindPipeline(renderer->commandBuffer.commandBuffer, 
-			VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->pipeline_obj.pipeline);
 
 		// DRAW
-		//scene->draw(renderer->commandBuffer);
 		scene->render(renderer->commandBuffer);
 
 		// END RENDER
@@ -155,6 +163,7 @@ int main(void)
 
 	delete scene;
 	delete modelRock;
+	delete modelRock1;
 
 	// clear materials
 	for (auto& material : materials) delete material;

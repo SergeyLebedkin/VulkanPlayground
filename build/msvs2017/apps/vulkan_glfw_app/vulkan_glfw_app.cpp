@@ -123,6 +123,8 @@ int main(void)
 		scissor.extent.width = (uint32_t)viewWidth;
 		scissor.extent.height = (uint32_t)viewHeight;
 
+		scene->beforeRender(renderer->commandBuffer);
+
 		// GO RENDER
 		vkCmdBeginRenderPass(renderer->commandBuffer.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -135,10 +137,12 @@ int main(void)
 
 		// DRAW
 		//scene->draw(renderer->commandBuffer);
-		scene->draw(renderer->commandBuffer);
+		scene->render(renderer->commandBuffer);
 
 		// END RENDER
 		vkCmdEndRenderPass(renderer->commandBuffer.commandBuffer);
+
+		scene->afterRender(renderer->commandBuffer);
 
 		// vkEndCommandBuffer
 		VKT_CHECK(vkEndCommandBuffer(renderer->commandBuffer.commandBuffer));

@@ -23,5 +23,7 @@ public:
 		VulkanPipelineLayout&      pipelineLayout,
 		VulkanDescriptorSetLayout& descriptorSetLayout);
 	virtual ~VulkanModel();
-	virtual void draw(VulkanCommandBuffer& commandBuffer);
+	virtual void beforeRender(VulkanCommandBuffer& commandBuffer);
+	virtual void render(VulkanCommandBuffer& commandBuffer);
+	virtual void afterRender(VulkanCommandBuffer& commandBuffer);
 };

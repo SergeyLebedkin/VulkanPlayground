@@ -1,20 +1,9 @@
-#include "vulkan_renderer.hpp"
+#include "vulkan_assets.hpp"
 #include "vulkan_loaders.hpp"
 #include "vulkan_scene.hpp"
 #include "time_measure.hpp"
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
-
-// vertex array
-std::vector<VertexStruct_P4_C4_T2> vertices = {
-	{ +1.0f, -1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+1, +0 },
-	{ +1.0f, +1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+1, +1 },
-	{ -1.0f, -1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+0, +0 },
-	{ -1.0f, +1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+0, +1 },
-};
-
-// index array
-uint16_t indexes[] = { 0, 1, 2, 2, 1, 3 };
 
 // main
 int main(void)
@@ -40,6 +29,9 @@ int main(void)
 	VulkanRender* renderer = new VulkanRender(window,
 		enabledInstanceLayerNames, enabledInstanceExtensionNames,
 		enabledDeviceExtensionNames, physicalDeviceFeatures);
+
+	// create assets manages
+	VulkanAssetManager* assetsManager = new VulkanAssetManager(renderer);
 
 	std::vector<VulkanMesh*> meshes;
 	std::vector<VulkanMesh*> meshesDebug;
@@ -81,7 +73,7 @@ int main(void)
 	scene->matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	scene->matProj = glm::perspective(glm::radians(45.0f), viewWidth / viewHeight, 0.1f, 10.f);
 	scene->models.push_back(modelRock);
-	scene->models.push_back(modelRock1);
+	//scene->models.push_back(modelRock1);
 
 	// create time stamp
 	TimeStamp timeStamp;
@@ -182,6 +174,7 @@ int main(void)
 	for (auto mesh : meshes) delete mesh;
 	meshes.clear();
 
+	delete assetsManager;
 	delete renderer;
 
 	// destroy GLFW

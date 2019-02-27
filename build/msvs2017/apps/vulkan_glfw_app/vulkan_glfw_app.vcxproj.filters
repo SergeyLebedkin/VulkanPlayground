@@ -10,6 +10,7 @@
     <ClCompile Include="vulkan_model.cpp" />
     <ClCompile Include="vulkan_scene.cpp" />
     <ClCompile Include="vulkan_material.cpp" />
+    <ClCompile Include="vulkan_assets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="textures">
@@ -53,5 +54,6 @@
     <ClInclude Include="vulkan_model.hpp" />
     <ClInclude Include="vulkan_scene.hpp" />
     <ClInclude Include="vulkan_material.hpp" />
+    <ClInclude Include="vulkan_assets.hpp" />
   </ItemGroup>
 </Project>

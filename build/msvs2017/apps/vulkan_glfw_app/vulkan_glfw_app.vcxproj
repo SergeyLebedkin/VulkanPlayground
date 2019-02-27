@@ -204,6 +204,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="time_measure.cpp" />
+    <ClCompile Include="vulkan_assets.cpp" />
     <ClCompile Include="vulkan_glfw_app.cpp" />
     <ClCompile Include="vulkan_loaders.cpp" />
     <ClCompile Include="vulkan_material.cpp" />
@@ -280,6 +281,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="time_measure.hpp" />
+    <ClInclude Include="vulkan_assets.hpp" />
     <ClInclude Include="vulkan_loaders.hpp" />
     <ClInclude Include="vulkan_material.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />

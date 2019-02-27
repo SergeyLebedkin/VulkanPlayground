@@ -1,12 +1,13 @@
 #pragma once
-#include <glm/mat4x4.hpp>
 #include "vulkan_material.hpp"
+#include <glm/mat4x4.hpp>
+#include <array>
 
 // VulkanMesh
 class VulkanMesh
 {
 protected:
-	VulkanDevice&         device;
+	VulkanDevice& device;
 public:
 	VulkanMesh(VulkanDevice& device) : device(device) {};
 	virtual ~VulkanMesh() {};
@@ -31,6 +32,9 @@ public:
 struct VulkanMesh_gui : public VulkanMesh_material
 {
 protected:
+	std::array<VkBuffer, 1>     bufferHandles;
+	std::array<VkDeviceSize, 1> bufferOffsets;
+protected:
 	// buffers
 	VulkanBuffer bufferVerteces{};
 	uint32_t     vertexCount;
@@ -47,6 +51,9 @@ public:
 // VulkanMesh_obj
 class VulkanMesh_obj : public VulkanMesh_material
 {
+protected:
+	std::array<VkBuffer, 3>     bufferHandles;
+	std::array<VkDeviceSize, 3> bufferOffsets;
 protected:
 	// buffers
 	VulkanBuffer bufferPos{};
@@ -68,6 +75,9 @@ public:
 // VulkanMesh_lines
 struct VulkanMesh_lines : public VulkanMesh
 {
+protected:
+	std::array<VkBuffer, 2>     bufferHandles;
+	std::array<VkDeviceSize, 2> bufferOffsets;
 protected:
 	// buffers
 	VulkanBuffer bufferPos{};

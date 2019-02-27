@@ -20,6 +20,9 @@ VulkanMesh_gui::VulkanMesh_gui(
 	// write buffers
 	vulkanBufferWrite(device, bufferVerteces, 0, VKT_VECTOR_DATA_SIZE(verts), verts.data());
 	vertexCount = (uint32_t)verts.size();
+	// setup buffer handles and offsets
+	bufferHandles = { bufferVerteces.buffer };
+	bufferOffsets = { 0 };
 }
 
 // VulkanMesh_gui::~VulkanMesh_gui
@@ -34,12 +37,8 @@ void VulkanMesh_gui::draw(VulkanCommandBuffer& commandBuffer)
 	// bind material
 	VulkanMesh_material::draw(commandBuffer);
 
-	// prepare buffers
-	VkDeviceSize offsets[] = { 0 };
-	VkBuffer buffers[] = { bufferVerteces.buffer };
-
 	// render
-	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 1, buffers, offsets);
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 1, bufferHandles.data(), bufferOffsets.data());
 	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
 };
 
@@ -63,6 +62,9 @@ VulkanMesh_obj::VulkanMesh_obj(
 	vulkanBufferWrite(device, bufferTex, 0, VKT_VECTOR_DATA_SIZE(tex), tex.data());
 	vulkanBufferWrite(device, bufferNrm, 0, VKT_VECTOR_DATA_SIZE(nrm), nrm.data());
 	vertexCount = (uint32_t)pos.size();
+	// setup buffer handles and offsets
+	bufferHandles = { bufferPos.buffer, bufferTex.buffer, bufferNrm.buffer };
+	bufferOffsets = { 0, 0, 0 };
 }
 
 // VulkanMesh_obj::~VulkanMesh_obj
@@ -79,12 +81,8 @@ void VulkanMesh_obj::draw(VulkanCommandBuffer& commandBuffer)
 	// bind material
 	VulkanMesh_material::draw(commandBuffer);
 
-	// prepare buffers
-	VkDeviceSize offsets[] = { 0, 0, 0 };
-	VkBuffer buffers[]{ bufferPos.buffer, bufferTex.buffer, bufferNrm.buffer };
-
 	// render
-	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 3, buffers, offsets);
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 3, bufferHandles.data(), bufferOffsets.data());
 	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
 };
 
@@ -104,6 +102,9 @@ VulkanMesh_lines::VulkanMesh_lines(
 	vulkanBufferWrite(device, bufferPos, 0, VKT_VECTOR_DATA_SIZE(pos), pos.data());
 	vulkanBufferWrite(device, bufferCol, 0, VKT_VECTOR_DATA_SIZE(col), col.data());
 	vertexCount = (uint32_t)pos.size();
+	// setup buffer handles and offsets
+	bufferHandles = { bufferPos.buffer, bufferCol.buffer };
+	bufferOffsets = { 0, 0 };
 }
 
 // VulkanMesh_lines::~VulkanMesh_lines
@@ -116,11 +117,7 @@ VulkanMesh_lines::~VulkanMesh_lines()
 // VulkanMesh_lines::draw(
 void VulkanMesh_lines::draw(VulkanCommandBuffer& commandBuffer)
 {
-	// prepare buffers
-	VkDeviceSize offsets[] = { 0, 0 };
-	VkBuffer buffers[]{ bufferPos.buffer, bufferCol.buffer };
-
 	// render
-	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 2, buffers, offsets);
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 2, bufferHandles.data(), bufferOffsets.data());
 	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
 };

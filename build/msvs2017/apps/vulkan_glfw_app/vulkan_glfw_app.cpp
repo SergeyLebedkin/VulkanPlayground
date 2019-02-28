@@ -32,14 +32,14 @@ int main(void)
 
 	// create assets manages
 	VulkanAssetManager* assetsManager = new VulkanAssetManager(renderer);
-	assetsManager->loadFileObj("models/train/train.obj", "models/train");
-	//assetsManager->loadFileObj("models/rock/rock.obj", "models/rock");
-	//assetsManager->loadFileObj("models/tea/tea.obj", "models/tea");
+	auto modelMeshes_train = assetsManager->loadFromFileObj("models/train/train.obj", "models/train");
+	auto modelMeshes_rock = assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
+	//std::vector<std::string> modelMeshes_tea = assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
 
 	// get loaded models
-	VulkanModel* modelTrain = assetsManager->createOrDefaut_Model("models/train/train.obj");
-	//VulkanModel* modelRock = assetsManager->createOrDefaut_Model("models/rock/rock.obj");
-	//VulkanModel* modelTea = assetsManager->createOrDefaut_Model("models/tea/tea.obj");
+	//VulkanModel* modelTrain = assetsManager->createModelByMeshNames(modelMeshes_train);
+	VulkanModel* modelRock = assetsManager->createModelByMeshNames(modelMeshes_rock);
+	//VulkanModel* modelTea = assetsManager->createModelByMeshNames(modelMeshes_tea);
 	
 	// create scene
 	float viewWidth = (float)renderer->swapchain.surfaceCapabilities.currentExtent.width;
@@ -49,9 +49,9 @@ int main(void)
 	VulkanScene* scene = new VulkanScene(renderer->device, renderer->pipelineLayout, renderer->descriptorSetLayout_scene);
 	scene->matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	scene->matProj = glm::perspective(glm::radians(45.0f), viewWidth / viewHeight, 0.1f, 10.f);
-	//scene->models.push_back(modelRock);
+	//scene->models.push_back(modelTrain);
+	scene->models.push_back(modelRock);
 	//scene->models.push_back(modelTea);
-	scene->models.push_back(modelTrain);
 
 	// create time stamp
 	TimeStamp timeStamp;
@@ -132,7 +132,7 @@ int main(void)
 	}
 
 	delete scene;
-	delete modelTea;
+	//delete modelTrain;
 	delete modelRock;
 
 	delete assetsManager;

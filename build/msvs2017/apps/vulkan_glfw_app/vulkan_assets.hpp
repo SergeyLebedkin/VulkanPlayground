@@ -1,14 +1,34 @@
 #pragma once
 #include "vulkan_model.hpp"
-#include <map>
+#include <tiny_obj_loader.h>
+#include <memory>
 
 // VulkanRender
 class VulkanRender;
 
-// VulkanModelAsset 
-struct VulkanModelAsset {
-	std::vector<VulkanMesh*> meshes{};
-	std::vector<VulkanMesh*> meshesDebug{};
+// VulkanImageItem
+struct VulkanImageItem {
+	std::string  name{};
+	VulkanImage* image{};
+	VulkanImageItem(std::string name, VulkanImage* image) : 
+		name(name), image(image) {}
+};
+
+// VulkanMaterialItem
+struct VulkanMaterialItem {
+	std::string     name{};
+	VulkanMaterial* material{};
+	VulkanMaterialItem(std::string name, VulkanMaterial* material) : 
+		name(name), material(material) {}
+};
+
+// VulkanMeshItem
+struct VulkanMeshItem {
+	std::string name{};
+	VulkanMesh* mesh{};
+	VulkanMesh* meshDebug{};
+	VulkanMeshItem(std::string name, VulkanMesh* mesh, VulkanMesh* meshDebug) :
+		name(name), mesh(mesh), meshDebug(meshDebug) {}
 };
 
 // VulkanAssetManager
@@ -16,45 +36,42 @@ class VulkanAssetManager {
 protected:
 	VulkanRender* renderer{};
 protected:
-	// default assets
-	VulkanImage       defaultImage{};
-	VulkanMaterial*   defaultMaterial{};
-	VulkanMesh*       defaultMesh{};
-	VulkanModelAsset* defaultModelAsset{};
-
-	// meshes
-	std::vector<VulkanMesh*> meshes{};
-
-	// assets maps
-	std::map<std::string, VulkanImage*>      mapImages{};
-	std::map<std::string, VulkanMaterial*>   mapMaterials{};
-	std::map<std::string, VulkanModelAsset*> mapModelAssets{};
+	// base items
+	std::vector<VulkanImageItem*>    imageItems{};
+	std::vector<VulkanMaterialItem*> materialItems{};
+	std::vector<VulkanMeshItem*>     meshItems{};
 public:
 	// constructor and destructor
 	VulkanAssetManager(VulkanRender* renderer);
 	~VulkanAssetManager();
 
 	// is exists functions
-	bool isExist_Image(const std::string name);
-	bool isExist_Material(const std::string name);
-	bool isExist_ModelAsset(const std::string name);
+	bool isImageExist(const std::string name);
+	bool isMaterialExist(const std::string name);
+	bool isMeshExist(const std::string name);
 
 	// add functions
-	void add_Image(VulkanImage* image, const std::string name = "");
-	void add_Material(VulkanMaterial* material, const std::string name = "");
-	void add_ModelAsset(VulkanModelAsset* modelAsset, const std::string name = "");
+	void addImage(const std::string name, VulkanImage* image);
+	void addImageFromfile(const std::string fileName);
+	void addMaterial(const std::string name, VulkanMaterial* material);
+	void addMesh(const std::string name, VulkanMesh* mesh);
 
-	// get or default functions
-	VulkanImage*      getOrDefault_Image(const std::string name);
-	VulkanMaterial*   getOrDefault_Material(const std::string name);
-	VulkanModelAsset* getOrDefault_ModelAsset(const std::string name);
+	// get functions
+	VulkanImage*    getImageByName(const std::string name);
+	VulkanMaterial* getMaterialByName(const std::string name);
+	VulkanMesh*     getMeshByName(const std::string name);
 
-	// get or load from file image
-	VulkanImage* getOrLoadFromFile_Image(const std::string fileName);
+	// get names functions
+	std::vector<std::string> getImageNames();
+	std::vector<std::string> getMaterialNames();
+	std::vector<std::string> getMeshNames();
 
-	// create functions
-	VulkanModel* createOrDefaut_Model(std::string name);
+	// model functions
+	VulkanModel* createModelByMeshNames(const std::vector<std::string> names);
 
-	// load from obj file with materials
-	bool loadFileObj(std::string fileName, std::string basePath);
+	// load obj mesh and material utils
+	void addMeterialFromObj(const std::string basePath, const tinyobj::material_t& material_obj);
+
+	// load obj file
+	std::vector<std::string> loadFromFileObj(const std::string fileName, const std::string basePath);
 };

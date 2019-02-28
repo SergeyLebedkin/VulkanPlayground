@@ -2,171 +2,183 @@
 #include "vulkan_loaders.hpp"
 #include "vulkan_renderer.hpp"
 #include <tiny_obj_loader.h>
-
-// vertex array
-std::vector<VertexStruct_P4_C4_T2> vertices = {
-	{ +1.0f, -1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+1, +0 },
-	{ +1.0f, +1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+1, +1 },
-	{ -1.0f, -1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+0, +0 },
-	{ -1.0f, +1.0f, +0.0f, +1.0, /**/+1.0f, +1.0f, +1.0f, +1.0, /**/+0, +1 },
-};
-
-// index array
-uint16_t indexes[] = { 0, 1, 2, 2, 1, 3 };
-
-//////////////////////////////////////////////////////////////////////////
+#include <algorithm>
 
 // VulkanAssetManager::VulkanAssetManager
 VulkanAssetManager::VulkanAssetManager(VulkanRender* renderer)
 	: renderer(renderer)
 {
-	// check handles
-	assert(renderer);
-
-	// create default image
-	createImageProcedural(renderer->device, 256, 256, defaultImage);
-
-	// create default material
-	defaultMaterial = new VulkanMaterial(
-		renderer->device,
-		renderer->pipelineLayout,
-		renderer->descriptorSetLayout_material);
-	defaultMaterial->setImage(defaultImage, renderer->samplerDefault, 0);
-
-	// create default mesh
-	defaultMesh = new VulkanMesh_gui(
-		renderer->device,
-		renderer->pipeline_gui,
-		defaultMaterial,
-		vertices
-	);
-
-	// create default model
-	defaultModelAsset = new VulkanModelAsset();
-	defaultModelAsset->meshes.push_back(defaultMesh);
 };
 
 // VulkanAssetManager::~VulkanAssetManager
 VulkanAssetManager::~VulkanAssetManager()
 {
-	// destroy default handles
-	delete defaultModelAsset;
-	delete defaultMesh;
-	delete defaultMaterial;
-	vulkanImageDestroy(renderer->device, defaultImage);
-
-	// destroy handles
-	for (auto& modelAsset : mapModelAssets) delete modelAsset.second;
-	for (auto& material : mapMaterials) delete material.second;
-	for (auto& image : mapImages) vulkanImageDestroy(renderer->device, *image.second);
-
-	// delete meshes
-	for (auto& mesh : meshes) delete mesh;
-	meshes.clear();
+	// destroy meshes
+	for (auto mesh_item : meshItems) {
+		delete mesh_item->mesh;
+		delete mesh_item->meshDebug;
+	};
+	// destroy materials
+	for (auto material_item : materialItems)
+		delete material_item->material;
+	// destroy images
+	for (auto image_item : imageItems)
+		vulkanImageDestroy(renderer->device, *image_item->image);
 
 	// clear maps
-	mapModelAssets.clear();
-	mapMaterials.clear();
-	mapImages.clear();
+	meshItems.clear();
+	materialItems.clear();
+	imageItems.clear();
 };
 
-// VulkanAssetManager::isExist_Image
-bool VulkanAssetManager::isExist_Image(const std::string name) {
-	return (mapImages.find(name) != mapImages.end());
+// VulkanAssetManager::isImageExist
+bool VulkanAssetManager::isImageExist(const std::string name) {
+	for (auto image_item : imageItems) if (image_item->name == name) return true;
+	return false;
 }
 
 // VulkanAssetManager::isExist_Material
-bool VulkanAssetManager::isExist_Material(const std::string name) {
-	return (mapMaterials.find(name) != mapMaterials.end());
+bool VulkanAssetManager::isMaterialExist(const std::string name) {
+	for (auto material_item : materialItems) if (material_item->name == name) return true;
+	return false;
 }
 
 // VulkanAssetManager::isExist_ModelAsset
-bool VulkanAssetManager::isExist_ModelAsset(const std::string name) {
-	return (mapModelAssets.find(name) != mapModelAssets.end());
+bool VulkanAssetManager::isMeshExist(const std::string name) {
+	for (auto mesh_item : meshItems) if (mesh_item->name == name) return true;
+	return false;
 }
 
-// VulkanAssetManager::add_Image
-void VulkanAssetManager::add_Image(VulkanImage* image, const std::string name)
-{
-	assert(image);
-	if (!isExist_Image(name)) mapImages[name] = image;
-};
-
-// VulkanAssetManager::add_Material
-void VulkanAssetManager::add_Material(VulkanMaterial* material, const std::string name)
-{
-	assert(material);
-	if (!isExist_Material(name)) mapMaterials[name] = material;
-};
-
-// VulkanAssetManager::add_ModelAsset
-void VulkanAssetManager::add_ModelAsset(VulkanModelAsset* modelAsset, const std::string name)
-{
-	assert(modelAsset);
-	if (!isExist_ModelAsset(name)) mapModelAssets[name] = modelAsset;
-};
-
-// VulkanAssetManager::getOrDefault_Image
-VulkanImage* VulkanAssetManager::getOrDefault_Image(const std::string name) 
-{ 
-	if (isExist_Image(name)) 
-		return mapImages[name];
-	return &defaultImage;
-};
-
-// VulkanAssetManager::getOrDefault_Material
-VulkanMaterial* VulkanAssetManager::getOrDefault_Material(const std::string name)
-{ 
-	if (isExist_Material(name))
-		return mapMaterials[name];
-	return defaultMaterial;
-};
-
-// VulkanAssetManager::getOrDefault_ModelAsset
-VulkanModelAsset* VulkanAssetManager::getOrDefault_ModelAsset(const std::string name)
-{ 
-	if (isExist_ModelAsset(name))
-		return mapModelAssets[name];
-	return defaultModelAsset;
+// VulkanAssetManager::addImage
+void VulkanAssetManager::addImage(const std::string name, VulkanImage* image) {
+	// check name
+	assert(name.size() > 0);
+	// add if not exist
+	if (!isImageExist(name))
+		imageItems.push_back(new VulkanImageItem(name, image));
 }
 
-// VulkanAssetManager::getOrLoadFromFile_Image
-VulkanImage* VulkanAssetManager::getOrLoadFromFile_Image(const std::string fileName)
-{
-	// if already loaded or exists
-	if (isExist_Image(fileName))
-		return getOrDefault_Image(fileName);
+// VulkanAssetManager::addImageFromfile
+void VulkanAssetManager::addImageFromfile(const std::string fileName) {
+	// check name
+	assert(fileName.size() > 0);
+	// add if not exist
+	if (!isImageExist(fileName)) {
+		VulkanImage* image = new VulkanImage;
+		loadImageFromFile(renderer->device, *image, fileName);
+		imageItems.push_back(new VulkanImageItem(fileName, image));
+	}
+}
 
-	// load image from file 
-	VulkanImage* image = new VulkanImage();
-	loadImageFromFile(renderer->device, *image, fileName);
-	add_Image(image, fileName);
-	return image;
-};
+// VulkanAssetManager::addMaterial
+void VulkanAssetManager::addMaterial(const std::string name, VulkanMaterial* material) {
+	// check name
+	assert(name.size() > 0);
+	// add if not exist
+	if (!isImageExist(name))
+		materialItems.push_back(new VulkanMaterialItem(name, material));
+}
 
-// VulkanAssetManager::createOrDefaut_Model
-VulkanModel* VulkanAssetManager::createOrDefaut_Model(std::string name) 
-{
-	// get or default model asset by name
-	VulkanModelAsset* modelAsset = getOrDefault_ModelAsset(name);
+// VulkanAssetManager::addMesh
+void VulkanAssetManager::addMesh(const std::string name, VulkanMesh* mesh) {
+	// check name
+	assert(name.size() > 0);
+	// add if not exist
+	if (!isImageExist(name))
+		meshItems.push_back(new VulkanMeshItem(name, mesh, nullptr));
+}
 
-	// create new model
+// VulkanAssetManager::getImageByName
+VulkanImage* VulkanAssetManager::getImageByName(const std::string name) {
+	for (auto image_item : imageItems)
+		if (image_item->name == name)
+			return image_item->image;
+	return false;
+}
+
+// VulkanAssetManager::getMaterialByName
+VulkanMaterial* VulkanAssetManager::getMaterialByName(const std::string name) {
+	for (auto material_item : materialItems)
+		if (material_item->name == name)
+			return material_item->material;
+	return false;
+}
+
+// VulkanAssetManager::getMeshByName
+VulkanMesh* VulkanAssetManager::getMeshByName(const std::string name) {
+	for (auto mesh_item : meshItems)
+		if (mesh_item->name == name)
+			return mesh_item->mesh;
+	return false;
+}
+
+// VulkanAssetManager::getImageNames
+std::vector<std::string> VulkanAssetManager::getImageNames() {
+	std::vector<std::string> names;
+	for (auto image_item : imageItems)
+		names.push_back(image_item->name);
+	return names;
+}
+
+// VulkanAssetManager::getMaterialNames
+std::vector<std::string> VulkanAssetManager::getMaterialNames() {
+	std::vector<std::string> names;
+	for (auto material_item : materialItems)
+		names.push_back(material_item->name);
+	return names;
+}
+
+// VulkanAssetManager::getMeshNames
+std::vector<std::string> VulkanAssetManager::getMeshNames() {
+	std::vector<std::string> names;
+	for (auto mesh_item : meshItems)
+		names.push_back(mesh_item->name);
+	return names;
+}
+
+// VulkanAssetManager::createModelByMeshNames
+VulkanModel* VulkanAssetManager::createModelByMeshNames(const std::vector<std::string> names) {
+	// create model
 	VulkanModel* model = new VulkanModel(
-		renderer->device, 
-		renderer->pipelineLayout, 
+		renderer->device,
+		renderer->pipelineLayout,
 		renderer->descriptorSetLayout_model);
-	model->meshes.insert(model->meshes.end(), modelAsset->meshes.begin(), modelAsset->meshes.end());
-	model->meshesDebug.insert(model->meshesDebug.end(), modelAsset->meshesDebug.begin(), modelAsset->meshesDebug.end());
+	// add meshes
+	for (auto& name : names) {
+		for (auto& mesh_item : meshItems) {
+			if (mesh_item->name == name) {
+				if (mesh_item->mesh) model->meshes.push_back(mesh_item->mesh);
+				if (mesh_item->meshDebug) model->meshesDebug.push_back(mesh_item->meshDebug);
+			}
+		}
+	}
 	return model;
-};
+}
 
-// loadFromFileObj
-bool VulkanAssetManager::loadFileObj(std::string fileName, std::string basePath)
+// VulkanAssetManager::addMeterialFromObj
+void VulkanAssetManager::addMeterialFromObj(
+	const std::string          basePath,
+	const tinyobj::material_t& material_obj) 
 {
-	// return if exists
-	if (isExist_ModelAsset(fileName))
-		return true;
+	// check material name
+	assert(material_obj.name.size() > 0);
+	// load diffuse image
+	if (material_obj.diffuse_texname.size() > 0)
+		addImageFromfile(basePath + material_obj.diffuse_texname);
+	// create material
+	VulkanMaterial* material = new VulkanMaterial(
+		renderer->device,
+		renderer->pipelineLayout,
+		renderer->descriptorSetLayout_material);
+	material->setImage(*getImageByName(basePath + material_obj.diffuse_texname), renderer->samplerDefault, 0);
+	addMaterial(material_obj.name, material);
+}
 
+// VulkanAssetManager::loadFromFileObj
+std::vector<std::string> VulkanAssetManager::loadFromFileObj(
+	const std::string fileName,
+	const std::string basePath)
+{
 	// load and parse obj file
 	std::string warm, err;
 	tinyobj::attrib_t attribs;
@@ -176,24 +188,8 @@ bool VulkanAssetManager::loadFileObj(std::string fileName, std::string basePath)
 	assert(shapes.size() > 0);
 
 	// load materials
-	for (const auto& material_obj : materials) {
-		// check material name
-		assert(material_obj.name.size() > 0);
-
-		// create material
-		VulkanMaterial* material = new VulkanMaterial(
-			renderer->device,
-			renderer->pipelineLayout,
-			renderer->descriptorSetLayout_material);
-		add_Material(material, material_obj.name);
-
-		// load diffuse image
-		if (material_obj.diffuse_texname.size() > 0) {
-			VulkanImage* image = getOrLoadFromFile_Image(basePath + material_obj.diffuse_texname);
-			// add diffuse image to material
-			material->setImage(*image, renderer->samplerDefault, 0);
-		}
-	}
+	for (const auto& material_obj : materials)
+		addMeterialFromObj(basePath, material_obj);
 
 	// find min and max
 	glm::vec3 maxPos = glm::vec3(FLT_MIN);
@@ -214,9 +210,8 @@ bool VulkanAssetManager::loadFileObj(std::string fileName, std::string basePath)
 	glm::vec3 lengthPos = maxPos - minPos;
 	float scale = 1.0f / (std::max(std::max(lengthPos.x, lengthPos.y), lengthPos.z)*0.5f);
 
-	// local meshes
-	std::vector<VulkanMesh*> local_meshes{};
-	std::vector<VulkanMesh*> local_meshes_debug{};
+	// mesh names
+	std::vector<std::string> mesh_names;
 
 	// allocate buffers mesh
 	std::vector<glm::vec3> vectorPos{};
@@ -328,7 +323,8 @@ bool VulkanAssetManager::loadFileObj(std::string fileName, std::string basePath)
 			materialName = materials[shape.mesh.material_ids[0]].name;
 
 		// get image from material
-		VulkanMaterial* material = getOrDefault_Material(materialName);
+		VulkanMaterial* material = getMaterialByName(materialName);
+		if (!material) material = renderer->materialDefault;
 
 		// create mesh
 		VulkanMesh* mesh = new VulkanMesh_obj(
@@ -338,25 +334,20 @@ bool VulkanAssetManager::loadFileObj(std::string fileName, std::string basePath)
 			vectorPos,
 			vectorTex,
 			vectorNrm);
-		meshes.push_back(mesh);
-		
+
 		// create debug mesh
 		VulkanMesh* meshDebug = new VulkanMesh_lines(
-				renderer->device,
-				renderer->pipeline_line,
-				vectorNrmPos,
-				vectorNrmCol);
-		meshes.push_back(meshDebug);
+			renderer->device,
+			renderer->pipeline_line,
+			vectorNrmPos,
+			vectorNrmCol);
+
+		// create and add mesh item
+		VulkanMeshItem* mesh_item = new VulkanMeshItem(shape.name, mesh, meshDebug);
+		meshItems.push_back(mesh_item);
 
 		// store local meshes
-		local_meshes.push_back(mesh);
-		local_meshes_debug.push_back(meshDebug);
+		mesh_names.push_back(shape.name);
 	}
-
-	// create model asset and add to map
-	VulkanModelAsset* modelAsset = new VulkanModelAsset();
-	modelAsset->meshes.insert(modelAsset->meshes.end(), local_meshes.begin(), local_meshes.end());
-	modelAsset->meshesDebug.insert(modelAsset->meshesDebug.end(), local_meshes_debug.begin(), local_meshes_debug.end());
-	add_ModelAsset(modelAsset, fileName); 
-	return true;
+	return mesh_names;
 }

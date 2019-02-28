@@ -6,7 +6,7 @@ VulkanModel::VulkanModel(
 	VulkanPipelineLayout&      pipelineLayout,
 	VulkanDescriptorSetLayout& descriptorSetLayout) :
 	device(device), pipelineLayout(pipelineLayout),
-	visible(VK_TRUE), visibleDebug(VK_TRUE)
+	visible(VK_TRUE), visibleDebug(VK_FALSE), matModel(glm::mat4(1.0f))
 {
 	// create model matrix buffer
 	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4), &bufferModelMatrix);

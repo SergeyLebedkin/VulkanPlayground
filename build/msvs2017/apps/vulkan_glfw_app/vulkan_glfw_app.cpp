@@ -1,5 +1,5 @@
+#include "vulkan_renderer.hpp"
 #include "vulkan_assets.hpp"
-#include "vulkan_loaders.hpp"
 #include "vulkan_scene.hpp"
 #include "time_measure.hpp"
 #include <iostream>
@@ -32,48 +32,26 @@ int main(void)
 
 	// create assets manages
 	VulkanAssetManager* assetsManager = new VulkanAssetManager(renderer);
+	assetsManager->loadFileObj("models/train/train.obj", "models/train");
+	//assetsManager->loadFileObj("models/rock/rock.obj", "models/rock");
+	//assetsManager->loadFileObj("models/tea/tea.obj", "models/tea");
 
-	std::vector<VulkanMesh*> meshes;
-	std::vector<VulkanMesh*> meshesDebug;
-	std::vector<VulkanImage*> images;
-	std::vector<VulkanMaterial*> materials;
-	//loadMesh_obj(vulkanRender->device, shader_obj, shader_line, sampler, "models/rock/rock.obj", "models/rock", &meshes, &meshesLines, &images);
-	loadMesh_obj(*renderer, "models/rock/rock.obj", "models/rock", &meshes, &meshesDebug, &images, &materials);
-	//loadMesh_obj(*renderer, "models/tea/tea.obj", "models/tea", &meshes, &meshesDebug, &images, &materials);
-	//loadMesh_obj(device, shader_obj, shader_line, sampler, "models/train/train.obj", "models", &meshes, &meshesLines, &images);
-
-	// model rock
-	VulkanModel* modelRock = new VulkanModel(
-		renderer->device,
-		renderer->pipelineLayout,
-		renderer->descriptorSetLayout_model);
-	modelRock->visibleDebug = VK_FALSE;
-	modelRock->meshes.insert(modelRock->meshes.end(), meshes.begin(), meshes.end());
-	modelRock->meshesDebug.insert(modelRock->meshesDebug.end(), meshesDebug.begin(), meshesDebug.end());
-
-	// models rock
-	VulkanModel* modelRock1 = new VulkanModel(
-		renderer->device,
-		renderer->pipelineLayout,
-		renderer->descriptorSetLayout_model);
-	modelRock1->matModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.0f));
-	modelRock1->visibleDebug = VK_FALSE;
-	modelRock1->meshes.insert(modelRock1->meshes.end(), meshes.begin(), meshes.end());
-	modelRock1->meshesDebug.insert(modelRock1->meshesDebug.end(), meshesDebug.begin(), meshesDebug.end());
+	// get loaded models
+	VulkanModel* modelTrain = assetsManager->createOrDefaut_Model("models/train/train.obj");
+	//VulkanModel* modelRock = assetsManager->createOrDefaut_Model("models/rock/rock.obj");
+	//VulkanModel* modelTea = assetsManager->createOrDefaut_Model("models/tea/tea.obj");
 	
 	// create scene
 	float viewWidth = (float)renderer->swapchain.surfaceCapabilities.currentExtent.width;
 	float viewHeight = (float)renderer->swapchain.surfaceCapabilities.currentExtent.height;
 
 	// create scene
-	VulkanScene* scene = new VulkanScene(
-		renderer->device,
-		renderer->pipelineLayout,
-		renderer->descriptorSetLayout_scene);
+	VulkanScene* scene = new VulkanScene(renderer->device, renderer->pipelineLayout, renderer->descriptorSetLayout_scene);
 	scene->matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	scene->matProj = glm::perspective(glm::radians(45.0f), viewWidth / viewHeight, 0.1f, 10.f);
-	scene->models.push_back(modelRock);
-	//scene->models.push_back(modelRock1);
+	//scene->models.push_back(modelRock);
+	//scene->models.push_back(modelTea);
+	scene->models.push_back(modelTrain);
 
 	// create time stamp
 	TimeStamp timeStamp;
@@ -154,25 +132,8 @@ int main(void)
 	}
 
 	delete scene;
+	delete modelTea;
 	delete modelRock;
-	delete modelRock1;
-
-	// clear materials
-	for (auto& material : materials) delete material;
-	materials.clear();
-
-	// delete images
-	for (auto& image : images) {
-		vulkanImageDestroy(renderer->device, *image);
-		delete image;
-	}
-	images.clear();
-
-	// delete meshes
-	for (auto mesh : meshesDebug) delete mesh;
-	meshesDebug.clear();
-	for (auto mesh : meshes) delete mesh;
-	meshes.clear();
 
 	delete assetsManager;
 	delete renderer;

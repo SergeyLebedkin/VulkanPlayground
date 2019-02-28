@@ -14,19 +14,18 @@ struct VulkanModelAsset {
 // VulkanAssetManager
 class VulkanAssetManager {
 protected:
-	VulkanRender* renderer;
+	VulkanRender* renderer{};
 protected:
-	uint64_t imageUnicIndex{};
-	uint64_t materialUnicIndex{};
-	uint64_t modelAssetUnicIndex{};
+	// default assets
+	VulkanImage       defaultImage{};
+	VulkanMaterial*   defaultMaterial{};
+	VulkanMesh*       defaultMesh{};
+	VulkanModelAsset* defaultModelAsset{};
 
-	VulkanImage       imageDefault{};
-	VulkanMaterial*   materialDefault{};
-	VulkanMesh*       meshDefault{};
-	VulkanModelAsset* modelAssetDefault{};
+	// meshes
+	std::vector<VulkanMesh*> meshes{};
 
-	// asset maps
-	std::vector<VulkanMesh*>                 meshes{};
+	// assets maps
 	std::map<std::string, VulkanImage*>      mapImages{};
 	std::map<std::string, VulkanMaterial*>   mapMaterials{};
 	std::map<std::string, VulkanModelAsset*> mapModelAssets{};
@@ -34,6 +33,11 @@ public:
 	// constructor and destructor
 	VulkanAssetManager(VulkanRender* renderer);
 	~VulkanAssetManager();
+
+	// is exists functions
+	bool isExist_Image(const std::string name);
+	bool isExist_Material(const std::string name);
+	bool isExist_ModelAsset(const std::string name);
 
 	// add functions
 	void add_Image(VulkanImage* image, const std::string name = "");
@@ -45,6 +49,12 @@ public:
 	VulkanMaterial*   getOrDefault_Material(const std::string name);
 	VulkanModelAsset* getOrDefault_ModelAsset(const std::string name);
 
+	// get or load from file image
+	VulkanImage* getOrLoadFromFile_Image(const std::string fileName);
+
 	// create functions
 	VulkanModel* createOrDefaut_Model(std::string name);
+
+	// load from obj file with materials
+	bool loadFileObj(std::string fileName, std::string basePath);
 };

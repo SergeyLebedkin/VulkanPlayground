@@ -32,14 +32,15 @@ int main(void)
 
 	// create assets manages
 	VulkanAssetManager* assetsManager = new VulkanAssetManager(renderer);
-	auto modelMeshes_train = assetsManager->loadFromFileObj("models/train/train.obj", "models/train");
-	auto modelMeshes_rock = assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
-	//std::vector<std::string> modelMeshes_tea = assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
+	//assetsManager->loadFromFileObj("models/train/train.obj", "models/train");
+	//assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
+	assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
 
 	// get loaded models
 	//VulkanModel* modelTrain = assetsManager->createModelByMeshNames(modelMeshes_train);
-	VulkanModel* modelRock = assetsManager->createModelByMeshNames(modelMeshes_rock);
-	//VulkanModel* modelTea = assetsManager->createModelByMeshNames(modelMeshes_tea);
+	//VulkanModel* modelRock = assetsManager->createModelByMeshGroupName("models/rock/rock.obj");
+	//VulkanModel* modelRock = assetsManager->createModelByMeshGroupName("models/train/train.obj");
+	VulkanModel* modelRock = assetsManager->createModelByMeshGroupName("models/tea/tea.obj");
 	
 	// create scene
 	float viewWidth = (float)renderer->swapchain.surfaceCapabilities.currentExtent.width;

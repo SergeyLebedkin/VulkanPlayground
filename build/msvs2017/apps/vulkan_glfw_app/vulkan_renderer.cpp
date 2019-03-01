@@ -19,7 +19,7 @@ VulkanRender::VulkanRender(
 	vulkanSemaphoreCreate(device, &presentSemaphore);
 	vulkanCommandBufferAllocate(device, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer);
 
-	// create descriptos set layouts
+	// create descriptor set layouts
 	vulkanDescriptorSetLayoutCreate(device, VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_material), descriptorSetLayoutBindings_material, &descriptorSetLayout_material);
 	vulkanDescriptorSetLayoutCreate(device, VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_model), descriptorSetLayoutBindings_model, &descriptorSetLayout_model);
 	vulkanDescriptorSetLayoutCreate(device, VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayoutBindings_scene), descriptorSetLayoutBindings_scene, &descriptorSetLayout_scene);

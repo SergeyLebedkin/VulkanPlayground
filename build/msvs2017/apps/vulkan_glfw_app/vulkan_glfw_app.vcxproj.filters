@@ -11,6 +11,7 @@
     <ClCompile Include="vulkan_scene.cpp" />
     <ClCompile Include="vulkan_material.cpp" />
     <ClCompile Include="vulkan_assets.cpp" />
+    <ClCompile Include="vulkan_context.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="textures">
@@ -26,26 +27,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\obj.frag.glsl">
-      <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\obj.vert.glsl">
-      <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\gui.frag.glsl">
-      <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\gui.vert.glsl">
-      <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\lines.frag.glsl">
-      <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\lines.vert.glsl">
-      <Filter>shaders</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="vulkan_pipelines.hpp" />
     <ClInclude Include="vulkan_loaders.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />
@@ -55,5 +36,32 @@
     <ClInclude Include="vulkan_scene.hpp" />
     <ClInclude Include="vulkan_material.hpp" />
     <ClInclude Include="vulkan_assets.hpp" />
+    <ClInclude Include="vulkan_context.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\debug.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\debug.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\gui.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\gui.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\obj.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\obj.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shadow.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shadow.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

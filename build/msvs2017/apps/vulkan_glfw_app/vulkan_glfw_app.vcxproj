@@ -205,6 +205,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
   <ItemGroup>
     <ClCompile Include="time_measure.cpp" />
     <ClCompile Include="vulkan_assets.cpp" />
+    <ClCompile Include="vulkan_context.cpp" />
     <ClCompile Include="vulkan_glfw_app.cpp" />
     <ClCompile Include="vulkan_loaders.cpp" />
     <ClCompile Include="vulkan_material.cpp" />
@@ -229,59 +230,12 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\gui.frag.glsl">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="shaders\gui.vert.glsl">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="textures\texture.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="shaders\obj.frag.glsl">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="shaders\obj.vert.glsl">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="time_measure.hpp" />
     <ClInclude Include="vulkan_assets.hpp" />
+    <ClInclude Include="vulkan_context.hpp" />
     <ClInclude Include="vulkan_loaders.hpp" />
     <ClInclude Include="vulkan_material.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />
@@ -291,26 +245,92 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
     <ClInclude Include="vulkan_scene.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\lines.frag.glsl">
+    <CustomBuild Include="shaders\debug.frag.glsl">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
     </CustomBuild>
-    <CustomBuild Include="shaders\lines.vert.glsl">
+    <CustomBuild Include="shaders\debug.vert.glsl">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="shaders\gui.frag.glsl">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="shaders\gui.vert.glsl">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="shaders\obj.frag.glsl">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="shaders\obj.vert.glsl">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="shaders\shadow.frag.glsl">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="shaders\shadow.vert.glsl">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)../../tools/glslangValidator.exe -V $(ProjectDir)shaders/%(Filename).glsl -o $(ProjectDir)shaders/%(Filename).spv</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)shaders/%(Filename).spv</Outputs>
     </CustomBuild>
   </ItemGroup>

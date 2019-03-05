@@ -1,3 +1,4 @@
+#include "vulkan_context.hpp"
 #include "vulkan_renderer.hpp"
 #include "vulkan_assets.hpp"
 #include "vulkan_scene.hpp"
@@ -24,6 +25,15 @@ int main(void)
 	physicalDeviceFeatures.depthBounds = VK_TRUE;
 	physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
 	physicalDeviceFeatures.fillModeNonSolid = VK_TRUE;
+
+	// create vulkan context
+	VulkanContext* context = new VulkanContext(
+		enabledInstanceLayerNames, enabledInstanceExtensionNames,
+		enabledDeviceExtensionNames, physicalDeviceFeatures);
+
+	// create window surface
+	VulkanSurface* surface = new VulkanSurface();
+	glfwCreateWindowSurface(context->instance.instance, window, NULL, &surface->surface);
 
 	// create vulkan renderer
 	VulkanRender* renderer = new VulkanRender(window,

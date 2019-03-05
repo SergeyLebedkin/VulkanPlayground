@@ -1,49 +1,117 @@
-#pragma once
-#include <vktoolkit.hpp>
-#include <GLFW/glfw3.h>
-#include "vulkan_material.hpp"
+#include "vulkan_context.hpp"
+#include "vulkan_scene.hpp"
 
-// VulkanRender
-class VulkanRender {
+// VulkanRenderer
+class VulkanRenderer {
+protected:
+	// base handles
+	VulkanContext& context;
+	VulkanSurface& surface;
 public:
-	// init vulkan
-	VulkanInstance      instance{};
-	VulkanSurface       surface{};
-	VulkanDevice        device{};
-	VulkanSwapchain     swapchain{};
-	VulkanSemaphore     renderSemaphore{};
-	VulkanSemaphore     presentSemaphore{};
-	VulkanCommandBuffer commandBuffer{};
+	// constructor and destructor
+	VulkanRenderer(
+		VulkanContext& context,
+		VulkanSurface& surface) :
+		context(context),
+		surface(surface) {};
+	virtual ~VulkanRenderer() {}
 
-	// descriptor set layouts
-	VulkanDescriptorSetLayout descriptorSetLayout_material{}; // set 0
-	VulkanDescriptorSetLayout descriptorSetLayout_model{};    // set 1
-	VulkanDescriptorSetLayout descriptorSetLayout_scene{};    // set 2
+	// draw scene
+	virtual void drawScene(VulkanScene* scene) = 0;
+};
 
-	// pipeline layout
-	VulkanPipelineLayout pipelineLayout{};
-
+// VulkanRenderer_default
+class VulkanRenderer_default : public VulkanRenderer {
+protected:
+	// swapchain
+	VulkanSwapchain swapchain{};
+protected:
+	// present depth-stencil attachments
+	std::vector<VkImage>       colorAttachementImages{};
+	std::vector<VkImageView>   colorAttachementImageViews{};
+	std::vector<VmaAllocation> colorAttachementAllocations{};
+	// present depth-stencil attachments
+	std::vector<VkImage>       depthStencilAttachementImages{};
+	std::vector<VkImageView>   depthStencilAttachementImageViews{};
+	std::vector<VmaAllocation> depthStencilAttachementAllocations{};
+	// frame buffers and command buffers
+	std::vector<VkFramebuffer>   frameBuffers{};
+	std::vector<VkCommandBuffer> commandBuffers{};
+	// render and present semaphores
+	std::vector<VkSemaphore> renderSemaphores{};
+	std::vector<VkSemaphore> presentSemaphores{};
+protected:
 	// shaders
-	VulkanShader shader_gui{};
-	VulkanShader shader_line{};
 	VulkanShader shader_obj{};
+	VulkanShader shader_debug{};
+	VulkanShader shader_shadow{};
+	VulkanShader shader_gui{};
+	// objects pipelines
+	VulkanPipeline pipeline_obj_point{};
+	VulkanPipeline pipeline_obj_line{};
+	VulkanPipeline pipeline_obj_linestrip{};
+	VulkanPipeline pipeline_obj_tri{};
+	VulkanPipeline pipeline_obj_tristrip{};
+	VulkanPipeline pipeline_obj_trifan{};
+	// objects pipelines
+	VulkanPipeline pipeline_obj_tri_wf{};
+	VulkanPipeline pipeline_obj_tristrip_wf{};
+	VulkanPipeline pipeline_obj_trifan_wf{};
+	// shadow pipelines
+	VulkanPipeline pipeline_shadow_point{};
+	VulkanPipeline pipeline_shadow_line{};
+	VulkanPipeline pipeline_shadow_linestrip{};
+	VulkanPipeline pipeline_shadow_tri{};
+	VulkanPipeline pipeline_shadow_tristrip{};
+	VulkanPipeline pipeline_shadow_trifan{};
+	// debug pipelines
+	VulkanPipeline pipeline_debug_point{};
+	VulkanPipeline pipeline_debug_line{};
+	VulkanPipeline pipeline_debug_linestrip{};
+	VulkanPipeline pipeline_debug_tri{};
+	VulkanPipeline pipeline_debug_tristrip{};
+	VulkanPipeline pipeline_debug_trifan{};
+	// GUI pipelines
+	VulkanPipeline pipeline_gui_point{};
+	VulkanPipeline pipeline_gui_line{};
+	VulkanPipeline pipeline_gui_linestrip{};
+	VulkanPipeline pipeline_gui_tri{};
+	VulkanPipeline pipeline_gui_tristrip{};
+	VulkanPipeline pipeline_gui_trifan{};
+protected:
+	// render pass
+	VkRenderPass renderPass{};
+protected:
+	// create functions
+	void createSwapchain();
+	void createImages();
+	void createFramebuffers();
+	void createCommandBuffers();
+	void createSemaphores();
+	void createPipelines();
+	void createRenderPass();
 
-	// pipelines
-	VulkanPipeline pipeline_gui{};
-	VulkanPipeline pipeline_line{};
-	VulkanPipeline pipeline_obj{};
-	VulkanPipeline pipeline_obj_wf{};
-
-	// images and samplers
-	VulkanMaterial* materialDefault{};
-	VulkanSampler   samplerDefault{};
-	VulkanImage     imageDefault{};
+	// destroy functions
+	void destroySwapchain();
+	void destroyImages();
+	void destroyFramebuffers();
+	void destroyCommandBuffers();
+	void destroySemaphores();
+	void destroyPipelines();
+	void destroyRenderPass();
 public:
-	VulkanRender(
-		GLFWwindow*                window,
-		std::vector<const char *>& enabledInstanceLayerNames,
-		std::vector<const char *>& enabledInstanceExtensionNames,
-		std::vector<const char *>& enabledDeviceExtensionNames,
-		VkPhysicalDeviceFeatures&  physicalDeviceFeatures);
-	virtual ~VulkanRender();
+	// constructor and destructor
+	VulkanRenderer_default(
+		VulkanContext& context, 
+		VulkanSurface& surface) :
+		VulkanRenderer(context, surface) {}
+	virtual ~VulkanRenderer_default() {}
+
+	// reinitialize
+	void reinitialize() {};
+
+	// draw functions
+	void beginFrame() {};
+	void drawScene(VulkanScene* scene) {};
+	void endFrame() {};
 };

@@ -16,8 +16,13 @@ public:
 		surface(surface) {};
 	virtual ~VulkanRenderer() {}
 
-	// draw scene
+	// reinitialize
+	virtual void reinitialize() = 0;
+
+	// draw functions
+	virtual void beginFrame() = 0;
 	virtual void drawScene(VulkanScene* scene) = 0;
+	virtual void endFrame() = 0;
 };
 
 // VulkanRenderer_default
@@ -26,20 +31,25 @@ protected:
 	// swapchain
 	VulkanSwapchain swapchain{};
 protected:
+	// frame count
+	uint32_t framesCount{};
 	// present depth-stencil attachments
 	std::vector<VkImage>       colorAttachementImages{};
 	std::vector<VkImageView>   colorAttachementImageViews{};
-	std::vector<VmaAllocation> colorAttachementAllocations{};
 	// present depth-stencil attachments
 	std::vector<VkImage>       depthStencilAttachementImages{};
 	std::vector<VkImageView>   depthStencilAttachementImageViews{};
 	std::vector<VmaAllocation> depthStencilAttachementAllocations{};
 	// frame buffers and command buffers
-	std::vector<VkFramebuffer>   frameBuffers{};
-	std::vector<VkCommandBuffer> commandBuffers{};
+	std::vector<VkFramebuffer> framebuffers{};
+	// render pass
+	VkRenderPass renderPass{};
+protected:
+	// command buffers
+	std::vector<VulkanCommandBuffer> commandBuffers{};
 	// render and present semaphores
-	std::vector<VkSemaphore> renderSemaphores{};
-	std::vector<VkSemaphore> presentSemaphores{};
+	std::vector<VulkanSemaphore> renderSemaphores{};
+	std::vector<VulkanSemaphore> presentSemaphores{};
 protected:
 	// shaders
 	VulkanShader shader_obj{};
@@ -53,17 +63,10 @@ protected:
 	VulkanPipeline pipeline_obj_tri{};
 	VulkanPipeline pipeline_obj_tristrip{};
 	VulkanPipeline pipeline_obj_trifan{};
-	// objects pipelines
+	// objects pipelines (wireframe)
 	VulkanPipeline pipeline_obj_tri_wf{};
 	VulkanPipeline pipeline_obj_tristrip_wf{};
 	VulkanPipeline pipeline_obj_trifan_wf{};
-	// shadow pipelines
-	VulkanPipeline pipeline_shadow_point{};
-	VulkanPipeline pipeline_shadow_line{};
-	VulkanPipeline pipeline_shadow_linestrip{};
-	VulkanPipeline pipeline_shadow_tri{};
-	VulkanPipeline pipeline_shadow_tristrip{};
-	VulkanPipeline pipeline_shadow_trifan{};
 	// debug pipelines
 	VulkanPipeline pipeline_debug_point{};
 	VulkanPipeline pipeline_debug_line{};
@@ -79,39 +82,35 @@ protected:
 	VulkanPipeline pipeline_gui_tristrip{};
 	VulkanPipeline pipeline_gui_trifan{};
 protected:
-	// render pass
-	VkRenderPass renderPass{};
-protected:
 	// create functions
 	void createSwapchain();
 	void createImages();
 	void createFramebuffers();
+	void createRenderPass();
 	void createCommandBuffers();
 	void createSemaphores();
+	void createShaders();
 	void createPipelines();
-	void createRenderPass();
 
 	// destroy functions
 	void destroySwapchain();
 	void destroyImages();
 	void destroyFramebuffers();
+	void destroyRenderPass();
 	void destroyCommandBuffers();
 	void destroySemaphores();
+	void destroyShaders();
 	void destroyPipelines();
-	void destroyRenderPass();
 public:
 	// constructor and destructor
-	VulkanRenderer_default(
-		VulkanContext& context, 
-		VulkanSurface& surface) :
-		VulkanRenderer(context, surface) {}
-	virtual ~VulkanRenderer_default() {}
+	VulkanRenderer_default(VulkanContext& context, VulkanSurface& surface);
+	virtual ~VulkanRenderer_default();
 
 	// reinitialize
-	void reinitialize() {};
+	void reinitialize() override;
 
 	// draw functions
-	void beginFrame() {};
-	void drawScene(VulkanScene* scene) {};
-	void endFrame() {};
+	void beginFrame() override {};
+	void drawScene(VulkanScene* scene) override {};
+	void endFrame() override {};
 };

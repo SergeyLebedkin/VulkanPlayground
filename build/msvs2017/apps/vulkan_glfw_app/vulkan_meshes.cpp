@@ -14,10 +14,10 @@ void VulkanMesh_material::draw(VulkanCommandBuffer& commandBuffer)
 // VulkanMesh_gui::~VulkanMesh_gui
 VulkanMesh_gui::VulkanMesh_gui(
 	VulkanContext&                      context,
-	VulkanMaterial*                     material,
 	VkPrimitiveTopology                 primitiveTopology,
+	VulkanMaterial*                     material,
 	std::vector<VertexStruct_P4_C4_T2>& verts) :
-	VulkanMesh_material(context, material), primitiveTopology(primitiveTopology)
+	VulkanMesh_material(context, primitiveTopology, material)
 {
 	// create buffers
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(verts), &bufferVerteces);
@@ -52,9 +52,10 @@ void VulkanMesh_gui::draw(VulkanCommandBuffer& commandBuffer)
 // VulkanMesh_indexed::VulkanMesh_indexed
 VulkanMesh_indexed::VulkanMesh_indexed(
 	VulkanContext&         context,
+	VkPrimitiveTopology    primitiveTopology,
 	VulkanMaterial*        material,
 	std::vector<uint32_t>& indexes) :
-	VulkanMesh_material(context, material)
+	VulkanMesh_material(context, primitiveTopology, material)
 {
 	// create buffers
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(indexes), &bufferIndexes);
@@ -85,14 +86,13 @@ void VulkanMesh_indexed::draw(VulkanCommandBuffer & commandBuffer)
 // VulkanMesh_indexed_obj::VulkanMesh_indexed_obj
 VulkanMesh_indexed_obj::VulkanMesh_indexed_obj(
 	VulkanContext&          context,
-	VulkanMaterial*         material,
 	VkPrimitiveTopology     primitiveTopology,
+	VulkanMaterial*         material,
 	std::vector<uint32_t>&  indexes,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec2>& tex,
 	std::vector<glm::vec3>& nrm) :
-	VulkanMesh_indexed(context, material, indexes), 
-	primitiveTopology(primitiveTopology)
+	VulkanMesh_indexed(context, primitiveTopology, material, indexes)
 {
 	// create buffers
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
@@ -133,13 +133,12 @@ void VulkanMesh_indexed_obj::draw(VulkanCommandBuffer& commandBuffer)
 // VulkanMesh_obj::VulkanMesh_obj
 VulkanMesh_obj::VulkanMesh_obj(
 	VulkanContext&          context,
-	VulkanMaterial*         material,
 	VkPrimitiveTopology     primitiveTopology,
+	VulkanMaterial*         material,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec2>& tex,
 	std::vector<glm::vec3>& nrm) :
-	VulkanMesh_material(context, material),
-	primitiveTopology(primitiveTopology)
+	VulkanMesh_material(context, primitiveTopology, material)
 {
 	// create buffers
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
@@ -183,7 +182,7 @@ VulkanMesh_debug::VulkanMesh_debug(
 	VkPrimitiveTopology     primitiveTopology,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec4>& col) :
-	VulkanMesh(context), primitiveTopology(primitiveTopology)
+	VulkanMesh(context, primitiveTopology)
 {
 	// create buffers
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);

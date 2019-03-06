@@ -44,13 +44,13 @@ int main(int argc, char ** argv)
 	// create assets manages
 	VulkanAssetManager* assetsManager = new VulkanAssetManager(*context);
 	//assetsManager->loadFromFileObj("models/train/train.obj", "models/train");
-	//assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
-	assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
+	assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
+	//assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
 
 	// get loaded models
 	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/train/train.obj");
-	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/rock/rock.obj");
-	VulkanModel* model = assetsManager->createModelByMeshGroupName("models/tea/tea.obj");
+	VulkanModel* model = assetsManager->createModelByMeshGroupName("models/rock/rock.obj");
+	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/tea/tea.obj");
 
 	// create scene
 	VulkanScene* scene = new VulkanScene(*context);

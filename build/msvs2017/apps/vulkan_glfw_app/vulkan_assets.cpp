@@ -8,6 +8,9 @@
 VulkanAssetManager::VulkanAssetManager(VulkanContext& context)
 	: context(context)
 {
+	// create default material
+	defaultMaterial = new VulkanMaterial(context);
+	defaultMaterial->setImage(context.defaultImage, context.defaultSampler, 0);
 };
 
 // VulkanAssetManager::~VulkanAssetManager
@@ -16,23 +19,23 @@ VulkanAssetManager::~VulkanAssetManager()
 	// destroy mesh groups
 	for (auto mesh_group : meshGroups)
 		delete mesh_group;
+	meshGroups.clear();
 	// destroy meshes
 	for (auto mesh_item : meshItems) {
 		delete mesh_item->mesh;
 		delete mesh_item->meshDebug;
 	};
+	meshItems.clear();
 	// destroy materials
 	for (auto material_item : materialItems)
 		delete material_item->material;
+	materialItems.clear();
 	// destroy images
 	for (auto image_item : imageItems)
 		vulkanImageDestroy(context.device, *image_item->image);
-
-	// clear maps
-	meshGroups.clear();
-	meshItems.clear();
-	materialItems.clear();
 	imageItems.clear();
+	// clear default material
+	delete defaultMaterial;
 };
 
 // VulkanAssetManager::getImageItemByName
@@ -131,17 +134,18 @@ void VulkanAssetManager::addMeterialFromObj(
 	// create material
 	VulkanMaterial* material = new VulkanMaterial(context);
 	addMaterial(material_obj.name, material);
+	VulkanImage* imageDeffuse = &context.defaultImage;
 	// load diffuse image
 	if (material_obj.diffuse_texname.size() > 0) {
 		// load image from file
 		std::string imageDiffuseFilePath = basePath + material_obj.diffuse_texname;
 		addImageFromfile(imageDiffuseFilePath);
 		// get loaded image
-		VulkanImage* imageDeffuse = getImageByName(imageDiffuseFilePath);
-		//if (!imageDeffuse) imageDeffuse = &renderer->imageDefault;
-		// set diffuse image
-		//material->setImage(*imageDeffuse, renderer->samplerDefault, 0);
+		VulkanImage* image = getImageByName(imageDiffuseFilePath);
+		if (image) imageDeffuse = image;
 	}
+	// set diffuse image
+	material->setImage(*imageDeffuse, context.defaultSampler, 0);
 }
 
 // VulkanAssetManager::addMesh
@@ -423,12 +427,12 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 
 		// get image from material
 		VulkanMaterial* material = getMaterialByName(materialName);
-		//if (!material) material = renderer->materialDefault;
+		if (!material) material = defaultMaterial;
 
 		// create mesh
 		VulkanMesh* mesh = new VulkanMesh_obj(
-			context, material, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-			vectorPos, vectorTex, vectorNrm);
+			context, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+			material, vectorPos, vectorTex, vectorNrm);
 
 		// create debug mesh
 		VulkanMesh_debug* meshDebug = new VulkanMesh_debug(

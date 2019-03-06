@@ -404,6 +404,9 @@ void VulkanRenderer_default::drawScene(VulkanScene* scene)
 	commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
 	VKT_CHECK(vkBeginCommandBuffer(commandBuffers[frameIndex].commandBuffer, &commandBufferBeginInfo));
 
+	// scene before render
+	beforeRenderPass(commandBuffers[frameIndex], scene);
+
 	// VkClearValue
 	VkClearValue clearColors[2];
 	clearColors[0].color = { 0.0f, 0.125f, 0.3f, 1.0f };
@@ -442,8 +445,14 @@ void VulkanRenderer_default::drawScene(VulkanScene* scene)
 	// set line width
 	vkCmdSetLineWidth(commandBuffers[frameIndex].commandBuffer, 1.0f);
 
+	// inside render pass
+	insideRenderPass(commandBuffers[frameIndex], scene);
+
 	// end render pass
 	vkCmdEndRenderPass(commandBuffers[frameIndex].commandBuffer);
+
+	// after render pass
+	afterRenderPass(commandBuffers[frameIndex], scene);
 
 	// end command buffer
 	VKT_CHECK(vkEndCommandBuffer(commandBuffers[frameIndex].commandBuffer));
@@ -475,4 +484,60 @@ void VulkanRenderer_default::drawScene(VulkanScene* scene)
 
 	// update frame index
 	frameIndex = (frameIndex + 1) % framesCount;
-};
+}
+
+// VulkanRenderer_default::beforeRenderPass
+void VulkanRenderer_default::beforeRenderPass(
+	VulkanCommandBuffer& commandBuffer,
+	VulkanScene*         scene) 
+{
+	// scene before render pass
+	scene->beforeRender(commandBuffer);
+}
+
+// VulkanRenderer_default::insideRenderPass
+void VulkanRenderer_default::insideRenderPass(
+	VulkanCommandBuffer& commandBuffer,
+	VulkanScene*         scene)
+{
+	// bind scene data to shader
+	scene->bind(commandBuffers[frameIndex]);
+	// draw models
+	for (auto& model : scene->models) {
+		// bind model data to shader
+		model->bind(commandBuffers[frameIndex]);
+		// draw meshes
+		if (model->visible) {
+			for (auto& mesh : model->meshes) {
+				// bind pipeline
+				assert(mesh->primitiveTopology == VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
+				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer,
+					VK_PIPELINE_BIND_POINT_GRAPHICS,
+					pipeline_obj[mesh->primitiveTopology].pipeline);
+				// draw mesh
+				mesh->draw(commandBuffers[frameIndex]);
+			}
+		}
+		// draw debug meshes
+		if (model->visibleDebug) {
+			for (auto& mesh : model->meshesDebug) {
+				// bind pipeline
+				assert(mesh->primitiveTopology == VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
+				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer,
+					VK_PIPELINE_BIND_POINT_GRAPHICS,
+					pipeline_debug[mesh->primitiveTopology].pipeline);
+				// draw mesh
+				mesh->draw(commandBuffers[frameIndex]);
+			}
+		}
+	}
+}
+
+// VulkanRenderer_default::afterRenderPass
+void VulkanRenderer_default::afterRenderPass(
+	VulkanCommandBuffer& commandBuffer,
+	VulkanScene*         scene)
+{
+	// scene after render pass
+	scene->afterRender(commandBuffer);
+}

@@ -57,11 +57,14 @@ protected:
 	std::vector<VulkanMeshItem*>     meshItems{};
 	// mesh groups
 	std::vector<VulkanMeshGroup*> meshGroups{};
-private:
+protected:
 	// get items functions
 	VulkanImageItem*    getImageItemByName(const std::string name);
 	VulkanMaterialItem* getMaterialItemByName(const std::string name);
 	VulkanMeshItem*     getMeshItemByName(const std::string name);
+public:
+	// default material
+	VulkanMaterial* defaultMaterial{};
 public:
 	// constructor and destructor
 	VulkanAssetManager(VulkanContext& context);

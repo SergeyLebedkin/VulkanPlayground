@@ -15,6 +15,11 @@ public:
 	// pipeline layout
 	VulkanPipelineLayout pipelineLayout;
 public:
+	VulkanImage   defaultImage;
+	VulkanSampler defaultSampler;
+private:
+	void createDefaultImage();
+public:
 	// constructor and destructor
 	VulkanContext(
 		std::vector<const char *>& enabledInstanceLayerNames,

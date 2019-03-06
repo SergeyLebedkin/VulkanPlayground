@@ -1,5 +1,6 @@
 #include "vulkan_context.hpp"
 #include "vulkan_descriptors.hpp"
+#include "vulkan_loaders.hpp"
 
 // VulkanContext::VulkanContext
 VulkanContext::VulkanContext(
@@ -26,11 +27,19 @@ VulkanContext::VulkanContext(
 
 	// create pipeline layout
 	vulkanPipelineLayoutCreate(device, VKT_ARRAY_ELEMENTS_COUNT(descriptorSetLayouts), descriptorSetLayouts, &pipelineLayout);
+
+	// create default sampler and material
+	vulkanSamplerCreate(device, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE, &defaultSampler);
+	createDefaultImage();
 }
 
 // VulkanContext::~VulkanContext
 VulkanContext::~VulkanContext()
 {
+	// destroy default material and sampler
+	vulkanImageDestroy(device, defaultImage);
+	vulkanSamplerDestroy(device, defaultSampler);
+
 	// destroy pipeline layouts
 	vulkanPipelineLayoutDestroy(device, pipelineLayout);
 
@@ -42,4 +51,10 @@ VulkanContext::~VulkanContext()
 	// destroy device and instance
 	vulkanDeviceDestroy(device);
 	vulkanInstanceDestroy(instance);
+}
+
+// createDefaultImage
+void VulkanContext::createDefaultImage()
+{
+	createImageProcedural(device, 1024, 1024, defaultImage);
 }

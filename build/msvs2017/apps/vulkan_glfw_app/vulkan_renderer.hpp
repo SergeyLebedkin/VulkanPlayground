@@ -103,4 +103,9 @@ public:
 
 	// draw functions
 	void drawScene(VulkanScene* scene) override;
+protected:
+	// render pass functions
+	void beforeRenderPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene);
+	void insideRenderPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene);
+	void afterRenderPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene);
 };

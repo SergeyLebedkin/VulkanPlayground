@@ -55,13 +55,7 @@ typedef struct VulkanSwapchain {
 	VkPresentModeKHR           presentMode;
 	VkSurfaceCapabilitiesKHR   surfaceCapabilities;
 	VkSwapchainKHR             swapchain;
-	VkRenderPass               renderPass;
-	VkImage                    imageDS;
-	VmaAllocation              allocationDS;
-	VkImageView                imageViewDS;
 	std::vector<VkImage>       images;
-	std::vector<VkImageView>   imageViews;
-	std::vector<VkFramebuffer> framebuffers;
 } VulkanSwapchain;
 
 typedef struct VulkanSampler {
@@ -115,7 +109,9 @@ typedef struct VulkanPipelineLayout {
 } VulkanPipelineLayout;
 
 typedef struct VulkanPipeline {
-	VkPipeline pipeline;
+	VkPipeline          pipeline;
+	VkPolygonMode       polygonMode;
+	VkPrimitiveTopology primitiveTopology;
 } VulkanPipeline;
 
 typedef struct VulkanDescriptorSet {

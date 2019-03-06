@@ -280,8 +280,8 @@ void vulkanDeviceDestroy(
 
 // vulkanSwapchainCreate
 void vulkanSwapchainCreate(
-	VulkanDevice& device,
-	VulkanSurface& surface,
+	VulkanDevice&    device,
+	VulkanSurface&   surface,
 	VulkanSwapchain* swapchain)
 {
 	// check handles
@@ -321,172 +321,11 @@ void vulkanSwapchainCreate(
 	VKT_CHECK(vkCreateSwapchainKHR(device.device, &swapchainCreateInfoKHR, VK_NULL_HANDLE, &swapchain->swapchain));
 	assert(swapchain->swapchain);
 
-	// VkAttachmentDescription - color
-	std::array<VkAttachmentDescription, 2> attachmentDescriptions;
-	// color attachment
-	attachmentDescriptions[0].flags = 0;
-	attachmentDescriptions[0].format = swapchain->surfaceFormat.format;
-	attachmentDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	// depth-stencil attachment
-	attachmentDescriptions[1].flags = 0;
-	attachmentDescriptions[1].format = VK_FORMAT_D24_UNORM_S8_UINT;
-	attachmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	// VkAttachmentReference - color
-	std::array<VkAttachmentReference, 1> colorAttachmentReferences;
-	colorAttachmentReferences[0].attachment = 0;
-	colorAttachmentReferences[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	// VkAttachmentReference - depth-stencil
-	VkAttachmentReference depthStencilAttachmentReference{};
-	depthStencilAttachmentReference.attachment = 1;
-	depthStencilAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	// VkSubpassDescription - subpassDescriptions
-	std::array<VkSubpassDescription, 1> subpassDescriptions;
-	subpassDescriptions[0].flags = 0;
-	subpassDescriptions[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpassDescriptions[0].inputAttachmentCount = 0;
-	subpassDescriptions[0].pInputAttachments = VK_NULL_HANDLE;
-	subpassDescriptions[0].colorAttachmentCount = (uint32_t)colorAttachmentReferences.size();
-	subpassDescriptions[0].pColorAttachments = colorAttachmentReferences.data();
-	subpassDescriptions[0].pResolveAttachments = VK_NULL_HANDLE;
-	subpassDescriptions[0].pDepthStencilAttachment = &depthStencilAttachmentReference;
-	subpassDescriptions[0].preserveAttachmentCount = 0;
-	subpassDescriptions[0].pPreserveAttachments = VK_NULL_HANDLE;
-
-	// VkRenderPassCreateInfo
-	VkRenderPassCreateInfo renderPassCreateInfo{};
-	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassCreateInfo.attachmentCount = (uint32_t)attachmentDescriptions.size();
-	renderPassCreateInfo.pAttachments = attachmentDescriptions.data();
-	renderPassCreateInfo.subpassCount = (uint32_t)subpassDescriptions.size();
-	renderPassCreateInfo.pSubpasses = subpassDescriptions.data();
-
-	// vkCreateRenderPass
-	VKT_CHECK(vkCreateRenderPass(device.device, &renderPassCreateInfo, VK_NULL_HANDLE, &swapchain->renderPass));
-
-	// VkImageCreateInfo - depth and stencil
-	VkImageCreateInfo imageCreateInfoDS{};
-	imageCreateInfoDS.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	imageCreateInfoDS.pNext = VK_NULL_HANDLE;
-	imageCreateInfoDS.flags = 0;
-	imageCreateInfoDS.imageType = VK_IMAGE_TYPE_2D;
-	imageCreateInfoDS.format = VK_FORMAT_D24_UNORM_S8_UINT; // must be the same as imageViewCreateInfoDS.format (see below)
-	imageCreateInfoDS.extent.width = swapchain->surfaceCapabilities.currentExtent.width;
-	imageCreateInfoDS.extent.height = swapchain->surfaceCapabilities.currentExtent.height;
-	imageCreateInfoDS.extent.depth = 1;
-	imageCreateInfoDS.mipLevels = 1;
-	imageCreateInfoDS.arrayLayers = 1;
-	imageCreateInfoDS.samples = VK_SAMPLE_COUNT_1_BIT;
-	imageCreateInfoDS.tiling = VK_IMAGE_TILING_OPTIMAL;
-	imageCreateInfoDS.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-	imageCreateInfoDS.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	imageCreateInfoDS.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
-	imageCreateInfoDS.pQueueFamilyIndices = VK_NULL_HANDLE;
-	imageCreateInfoDS.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-	// VmaAllocationCreateInfo
-	VmaAllocationCreateInfo allocCreateInfo{};
-	allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-	allocCreateInfo.flags = 0;
-
-	// vmaCreateImage
-	VKT_CHECK(vmaCreateImage(device.allocator, &imageCreateInfoDS, &allocCreateInfo, &swapchain->imageDS, &swapchain->allocationDS, VK_NULL_HANDLE));
-	assert(swapchain->imageDS);
-	assert(swapchain->allocationDS);
-
-	// VkImageViewCreateInfo
-	VkImageViewCreateInfo imageViewCreateInfoDS{};
-	imageViewCreateInfoDS.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	imageViewCreateInfoDS.pNext = VK_NULL_HANDLE;
-	imageViewCreateInfoDS.flags = 0;
-	imageViewCreateInfoDS.image = swapchain->imageDS;
-	imageViewCreateInfoDS.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	imageViewCreateInfoDS.format = VK_FORMAT_D24_UNORM_S8_UINT; // must be the same as imageCreateInfoDS.format (see upper)
-	imageViewCreateInfoDS.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-	imageViewCreateInfoDS.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-	imageViewCreateInfoDS.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-	imageViewCreateInfoDS.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-	imageViewCreateInfoDS.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-	imageViewCreateInfoDS.subresourceRange.baseMipLevel = 0;
-	imageViewCreateInfoDS.subresourceRange.levelCount = 1;
-	imageViewCreateInfoDS.subresourceRange.baseArrayLayer = 0;
-	imageViewCreateInfoDS.subresourceRange.layerCount = 1;
-	VKT_CHECK(vkCreateImageView(device.device, &imageViewCreateInfoDS, VK_NULL_HANDLE, &swapchain->imageViewDS));
-	assert(swapchain->imageViewDS);
-
 	// swapChainImages
 	uint32_t imageCount = 0;
 	vkGetSwapchainImagesKHR(device.device, swapchain->swapchain, &imageCount, nullptr);
 	swapchain->images.resize(imageCount);
 	vkGetSwapchainImagesKHR(device.device, swapchain->swapchain, &imageCount, swapchain->images.data());
-
-	// create image views
-	swapchain->imageViews.clear();
-	swapchain->imageViews.reserve(imageCount);
-	for (const auto& image : swapchain->images) {
-		// VkImageViewCreateInfo
-		VkImageView imageView = VK_NULL_HANDLE;
-		VkImageViewCreateInfo imageViewCreateInfoDS{};
-		imageViewCreateInfoDS.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		imageViewCreateInfoDS.pNext = VK_NULL_HANDLE;
-		imageViewCreateInfoDS.flags = 0;
-		imageViewCreateInfoDS.image = image;
-		imageViewCreateInfoDS.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfoDS.format = swapchain->surfaceFormat.format;
-		imageViewCreateInfoDS.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfoDS.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfoDS.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfoDS.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		imageViewCreateInfoDS.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageViewCreateInfoDS.subresourceRange.baseMipLevel = 0;
-		imageViewCreateInfoDS.subresourceRange.levelCount = 1;
-		imageViewCreateInfoDS.subresourceRange.baseArrayLayer = 0;
-		imageViewCreateInfoDS.subresourceRange.layerCount = 1;
-		VKT_CHECK(vkCreateImageView(device.device, &imageViewCreateInfoDS, VK_NULL_HANDLE, &imageView));
-		assert(imageView);
-
-		// add image view
-		swapchain->imageViews.push_back(imageView);
-	}
-
-	// create image views
-	swapchain->framebuffers.clear();
-	swapchain->framebuffers.reserve(imageCount);
-	for (const auto& imageView : swapchain->imageViews) {
-		// image views
-		VkImageView imageViews[] = { imageView, swapchain->imageViewDS };
-
-		// VkFramebufferCreateInfo 
-		VkFramebuffer framebuffer = VK_NULL_HANDLE;
-		VkFramebufferCreateInfo framebufferCreateInfo{};
-		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferCreateInfo.pNext = VK_NULL_HANDLE;
-		framebufferCreateInfo.flags = 0;
-		framebufferCreateInfo.renderPass = swapchain->renderPass;
-		framebufferCreateInfo.attachmentCount = VKT_ARRAY_ELEMENTS_COUNT(imageViews);
-		framebufferCreateInfo.pAttachments = imageViews;
-		framebufferCreateInfo.width = swapchain->surfaceCapabilities.currentExtent.width;
-		framebufferCreateInfo.height = swapchain->surfaceCapabilities.currentExtent.height;
-		framebufferCreateInfo.layers = 1;
-		VKT_CHECK(vkCreateFramebuffer(device.device, &framebufferCreateInfo, VK_NULL_HANDLE, &framebuffer));
-
-		// add image view
-		swapchain->framebuffers.push_back(framebuffer);
-	}
 }
 
 // vulkanSwapchainDestroy
@@ -494,23 +333,9 @@ void vulkanSwapchainDestroy(
 	VulkanDevice& device,
 	VulkanSwapchain& swapchain)
 {
-	// destroy handles
-	for (const auto& framebuffer : swapchain.framebuffers)
-		vkDestroyFramebuffer(device.device, framebuffer, VK_NULL_HANDLE);
-	for (const auto& imageView : swapchain.imageViews)
-		vkDestroyImageView(device.device, imageView, VK_NULL_HANDLE);
-	vkDestroyImageView(device.device, swapchain.imageViewDS, VK_NULL_HANDLE);
-	vmaDestroyImage(device.allocator, swapchain.imageDS, swapchain.allocationDS);
-	vkDestroyRenderPass(device.device, swapchain.renderPass, VK_NULL_HANDLE);
 	vkDestroySwapchainKHR(device.device, swapchain.swapchain, VK_NULL_HANDLE);
 	// clear handles
-	swapchain.framebuffers.clear();
-	swapchain.imageViews.clear();
 	swapchain.images.clear();
-	swapchain.imageViewDS = VK_NULL_HANDLE;
-	swapchain.imageDS = VK_NULL_HANDLE;
-	swapchain.allocationDS = VK_NULL_HANDLE;
-	swapchain.renderPass = VK_NULL_HANDLE;
 	swapchain.swapchain = VK_NULL_HANDLE;
 	swapchain.surfaceCapabilities = {};
 	swapchain.presentMode = {};
@@ -1704,6 +1529,9 @@ void vulkanPipelineCreate(
 	graphicsPipelineCreateInfo.basePipelineIndex = 0;
 	VKT_CHECK(vkCreateGraphicsPipelines(device.device, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, VK_NULL_HANDLE, &pipeline->pipeline));
 	assert(pipeline->pipeline);
+	// store parameters
+	pipeline->polygonMode = polygonMode;
+	pipeline->primitiveTopology = primitiveTopology;
 }
 
 // vulkanPipelineDestroy
@@ -1715,6 +1543,8 @@ void vulkanPipelineDestroy(
 	vkDestroyPipeline(device.device, pipeline.pipeline, VK_NULL_HANDLE);
 	// clear handles
 	pipeline.pipeline = VK_NULL_HANDLE;
+	pipeline.polygonMode = VK_POLYGON_MODE_FILL;
+	pipeline.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 }
 
 // vulkanDescriptorSetCreate

@@ -19,7 +19,7 @@ VulkanRenderer_default::VulkanRenderer_default(
 }
 
 // VulkanRenderer_default::~VulkanRenderer_default
-VulkanRenderer_default::~VulkanRenderer_default() 
+VulkanRenderer_default::~VulkanRenderer_default()
 {
 	// destroy handles
 	destroyPipelines();

@@ -57,7 +57,7 @@ const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P3_C4[]
 
 // VkDescriptorSetLayoutBinding - Material set
 const VkDescriptorSetLayoutBinding descriptorSetLayoutBindings_material[]{
-{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // deffuse texture
+{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_NULL_HANDLE }, // diffuse texture
 };
 
 // VkDescriptorSetLayoutBinding - Model set

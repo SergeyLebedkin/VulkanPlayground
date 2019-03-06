@@ -78,7 +78,6 @@ int main(int argc, char ** argv)
 		glfwPollEvents();
 	}
 
-
 	// destroy handles
 	delete scene;
 	delete model;

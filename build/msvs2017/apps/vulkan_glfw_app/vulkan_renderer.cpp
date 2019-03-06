@@ -233,13 +233,13 @@ void VulkanRenderer_default::createShaders() {
 	vulkanShaderCreate(context.device, "shaders/obj.vert.spv", "shaders/obj.frag.spv", &shader_obj);
 	vulkanShaderCreate(context.device, "shaders/debug.vert.spv", "shaders/debug.frag.spv", &shader_debug);
 	vulkanShaderCreate(context.device, "shaders/shadow.vert.spv", "shaders/shadow.frag.spv", &shader_shadow);
-	vulkanShaderCreate(context.device, "shaders/gui.vert.spv", "shaders/obj.frag.spv", &shader_gui);
+	vulkanShaderCreate(context.device, "shaders/gui.vert.spv", "shaders/gui.frag.spv", &shader_gui);
 }
 
 // VulkanRenderer_default::createPipelines
 void VulkanRenderer_default::createPipelines() {
 	// create objects pipelines
-	for(uint32_t topology = 0; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_obj); topology++)
+	for(uint32_t topology = 1; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_obj); topology++)
 		vulkanPipelineCreate(context.device, shader_obj, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
 			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_T2_N3), vertexBindingDescriptions_P3_T2_N3,
@@ -248,7 +248,7 @@ void VulkanRenderer_default::createPipelines() {
 			&pipeline_obj[topology]);
 
 	// create objects pipelines wire frame
-	for (uint32_t topology = 0; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_obj_wf); topology++)
+	for (uint32_t topology = 1; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_obj_wf); topology++)
 		vulkanPipelineCreate(context.device, shader_obj, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
 			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_T2_N3), vertexBindingDescriptions_P3_T2_N3,
@@ -257,7 +257,7 @@ void VulkanRenderer_default::createPipelines() {
 			&pipeline_obj_wf[topology]);
 
 	// create debug pipelines
-	for (uint32_t topology = 0; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_debug); topology++)
+	for (uint32_t topology = 1; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_debug); topology++)
 		vulkanPipelineCreate(context.device, shader_debug, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
 			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_C4), vertexBindingDescriptions_P3_C4,
@@ -266,7 +266,7 @@ void VulkanRenderer_default::createPipelines() {
 			&pipeline_debug[topology]);
 
 	// create GUI pipelines
-	for (uint32_t topology = 0; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_gui); topology++)
+	for (uint32_t topology = 1; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_gui); topology++)
 		vulkanPipelineCreate(context.device, shader_gui, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
 			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_C4_T2), vertexBindingDescriptions_P4_C4_T2,
@@ -471,6 +471,7 @@ void VulkanRenderer_default::drawScene(VulkanScene* scene)
 	presentInfo.pSwapchains = &swapchain.swapchain;
 	presentInfo.pImageIndices = &imageIndex;
 	VKT_CHECK(vkQueuePresentKHR(context.device.queueGraphics, &presentInfo));
+	VKT_CHECK(vkQueueWaitIdle(context.device.queueGraphics));
 
 	// update frame index
 	frameIndex = (frameIndex + 1) % framesCount;

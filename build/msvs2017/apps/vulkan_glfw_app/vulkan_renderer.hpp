@@ -64,10 +64,10 @@ protected:
 	VulkanShader shader_shadow{};
 	VulkanShader shader_gui{};
 	// objects pipelines
-	VulkanPipeline pipeline_obj[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
-	VulkanPipeline pipeline_obj_wf[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
-	VulkanPipeline pipeline_debug[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
-	VulkanPipeline pipeline_gui[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
+	VulkanPipeline pipeline_obj[VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN + 1]{};
+	VulkanPipeline pipeline_obj_wf[VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN + 1]{};
+	VulkanPipeline pipeline_debug[VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN + 1]{};
+	VulkanPipeline pipeline_gui[VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN + 1]{};
 protected:
 	// create functions
 	void createSwapchain();

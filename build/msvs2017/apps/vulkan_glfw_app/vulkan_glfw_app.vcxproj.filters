@@ -39,13 +39,29 @@
     <ClInclude Include="vulkan_descriptors.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\debug.frag.glsl" />
-    <CustomBuild Include="shaders\debug.vert.glsl" />
-    <CustomBuild Include="shaders\gui.frag.glsl" />
-    <CustomBuild Include="shaders\gui.vert.glsl" />
-    <CustomBuild Include="shaders\obj.frag.glsl" />
-    <CustomBuild Include="shaders\obj.vert.glsl" />
-    <CustomBuild Include="shaders\shadow.frag.glsl" />
-    <CustomBuild Include="shaders\shadow.vert.glsl" />
+    <CustomBuild Include="shaders\debug.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\debug.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\gui.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\gui.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\obj.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\obj.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\shadow.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\shadow.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

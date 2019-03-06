@@ -427,13 +427,13 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 
 		// create mesh
 		VulkanMesh* mesh = new VulkanMesh_obj(
-			context, material, vectorPos, vectorTex, vectorNrm,
-			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+			context, material, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+			vectorPos, vectorTex, vectorNrm);
 
 		// create debug mesh
 		VulkanMesh_debug* meshDebug = new VulkanMesh_debug(
-			context, vectorNrmPos, vectorNrmCol,
-			VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
+			context, VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+			vectorNrmPos, vectorNrmCol);
 
 		// create and add mesh item
 		VulkanMeshItem* mesh_item = new VulkanMeshItem(shape.name, mesh, meshDebug);

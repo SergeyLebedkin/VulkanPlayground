@@ -1,5 +1,4 @@
 #include "vulkan_renderer.hpp"
-#include "vulkan_pipelines.hpp"
 #include "vulkan_loaders.hpp"
 
 // VulkanRenderer_default::VulkanRenderer_default

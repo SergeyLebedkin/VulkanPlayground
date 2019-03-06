@@ -211,7 +211,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
     <ClCompile Include="vulkan_material.cpp" />
     <ClCompile Include="vulkan_meshes.cpp" />
     <ClCompile Include="vulkan_model.cpp" />
-    <ClCompile Include="vulkan_pipelines.cpp" />
+    <ClCompile Include="vulkan_descriptors.cpp" />
     <ClCompile Include="vulkan_renderer.cpp" />
     <ClCompile Include="vulkan_scene.cpp" />
   </ItemGroup>
@@ -240,7 +240,7 @@ xcopy $(ProjectDir)textures\*.* $(OutDir)\textures /S /Y</Command>
     <ClInclude Include="vulkan_material.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />
     <ClInclude Include="vulkan_model.hpp" />
-    <ClInclude Include="vulkan_pipelines.hpp" />
+    <ClInclude Include="vulkan_descriptors.hpp" />
     <ClInclude Include="vulkan_renderer.hpp" />
     <ClInclude Include="vulkan_scene.hpp" />
   </ItemGroup>

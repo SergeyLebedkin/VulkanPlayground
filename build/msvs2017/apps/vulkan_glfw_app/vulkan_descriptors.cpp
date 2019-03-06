@@ -1,4 +1,4 @@
-#include "vulkan_pipelines.hpp"
+#include "vulkan_descriptors.hpp"
 
 // vulkanDescriptorsInit
 void vulkanDescriptorsInit() {

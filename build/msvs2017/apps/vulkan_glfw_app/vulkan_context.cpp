@@ -1,5 +1,5 @@
 #include "vulkan_context.hpp"
-#include "vulkan_pipelines.hpp"
+#include "vulkan_descriptors.hpp"
 
 // VulkanContext::VulkanContext
 VulkanContext::VulkanContext(

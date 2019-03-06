@@ -15,8 +15,8 @@ void VulkanMesh_material::draw(VulkanCommandBuffer& commandBuffer)
 VulkanMesh_gui::VulkanMesh_gui(
 	VulkanContext&                      context,
 	VulkanMaterial*                     material,
-	std::vector<VertexStruct_P4_C4_T2>& verts,
-	VkPrimitiveTopology                 primitiveTopology) :
+	VkPrimitiveTopology                 primitiveTopology,
+	std::vector<VertexStruct_P4_C4_T2>& verts) :
 	VulkanMesh_material(context, material), primitiveTopology(primitiveTopology)
 {
 	// create buffers
@@ -86,12 +86,12 @@ void VulkanMesh_indexed::draw(VulkanCommandBuffer & commandBuffer)
 VulkanMesh_indexed_obj::VulkanMesh_indexed_obj(
 	VulkanContext&          context,
 	VulkanMaterial*         material,
+	VkPrimitiveTopology     primitiveTopology,
 	std::vector<uint32_t>&  indexes,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec2>& tex,
-	std::vector<glm::vec3>& nrm,
-	VkPrimitiveTopology     primitiveTopology) :
-	VulkanMesh_indexed(context, material, indexes),
+	std::vector<glm::vec3>& nrm) :
+	VulkanMesh_indexed(context, material, indexes), 
 	primitiveTopology(primitiveTopology)
 {
 	// create buffers
@@ -134,10 +134,10 @@ void VulkanMesh_indexed_obj::draw(VulkanCommandBuffer& commandBuffer)
 VulkanMesh_obj::VulkanMesh_obj(
 	VulkanContext&          context,
 	VulkanMaterial*         material,
+	VkPrimitiveTopology     primitiveTopology,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec2>& tex,
-	std::vector<glm::vec3>& nrm,
-	VkPrimitiveTopology     primitiveTopology) :
+	std::vector<glm::vec3>& nrm) :
 	VulkanMesh_material(context, material),
 	primitiveTopology(primitiveTopology)
 {
@@ -180,9 +180,9 @@ void VulkanMesh_obj::draw(VulkanCommandBuffer& commandBuffer)
 // VulkanMesh_debug::VulkanMesh_debug
 VulkanMesh_debug::VulkanMesh_debug(
 	VulkanContext&          context,
+	VkPrimitiveTopology     primitiveTopology,
 	std::vector<glm::vec3>& pos,
-	std::vector<glm::vec4>& col,
-	VkPrimitiveTopology     primitiveTopology) :
+	std::vector<glm::vec4>& col) :
 	VulkanMesh(context), primitiveTopology(primitiveTopology)
 {
 	// create buffers

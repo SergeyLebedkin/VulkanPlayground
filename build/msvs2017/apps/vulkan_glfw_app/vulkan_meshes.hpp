@@ -52,8 +52,8 @@ public:
 	VulkanMesh_gui(
 		VulkanContext&                      context,
 		VulkanMaterial*                     material,
-		std::vector<VertexStruct_P4_C4_T2>& verts,
-		VkPrimitiveTopology                 primitiveTopology);
+		VkPrimitiveTopology                 primitiveTopology,
+		std::vector<VertexStruct_P4_C4_T2>& verts);
 	~VulkanMesh_gui();
 
 	// draw
@@ -92,18 +92,17 @@ protected:
 	VulkanBuffer bufferNrm{};
 	uint32_t     vertexCount;
 public:
-	// primitive topology
 	VkPrimitiveTopology primitiveTopology{};
 public:
 	// constructor and destructor
 	VulkanMesh_indexed_obj(
 		VulkanContext&          context,
 		VulkanMaterial*         material,
+		VkPrimitiveTopology     primitiveTopology,
 		std::vector<uint32_t>&  indexes,
 		std::vector<glm::vec3>& pos,
 		std::vector<glm::vec2>& tex,
-		std::vector<glm::vec3>& nrm,
-		VkPrimitiveTopology     primitiveTopology);
+		std::vector<glm::vec3>& nrm);
 	~VulkanMesh_indexed_obj();
 
 	// draw
@@ -130,10 +129,10 @@ public:
 	VulkanMesh_obj(
 		VulkanContext&          context,
 		VulkanMaterial*         material,
+		VkPrimitiveTopology     primitiveTopology,
 		std::vector<glm::vec3>& pos,
 		std::vector<glm::vec2>& tex,
-		std::vector<glm::vec3>& nrm,
-		VkPrimitiveTopology     primitiveTopology);
+		std::vector<glm::vec3>& nrm);
 	~VulkanMesh_obj();
 
 	// draw
@@ -158,9 +157,9 @@ public:
 	// constructor and destructor
 	VulkanMesh_debug(
 		VulkanContext&          context,
+		VkPrimitiveTopology     primitiveTopology,
 		std::vector<glm::vec3>& pos,
-		std::vector<glm::vec4>& col,
-		VkPrimitiveTopology     primitiveTopology);
+		std::vector<glm::vec4>& col);
 	~VulkanMesh_debug();
 
 	// draw

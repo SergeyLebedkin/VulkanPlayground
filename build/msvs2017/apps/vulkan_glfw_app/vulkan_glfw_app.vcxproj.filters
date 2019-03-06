@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="vulkan_glfw_app.cpp" />
-    <ClCompile Include="vulkan_pipelines.cpp" />
     <ClCompile Include="vulkan_loaders.cpp" />
     <ClCompile Include="vulkan_meshes.cpp" />
     <ClCompile Include="time_measure.cpp" />
@@ -12,6 +11,7 @@
     <ClCompile Include="vulkan_material.cpp" />
     <ClCompile Include="vulkan_assets.cpp" />
     <ClCompile Include="vulkan_context.cpp" />
+    <ClCompile Include="vulkan_descriptors.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="textures">
@@ -27,7 +27,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="vulkan_pipelines.hpp" />
     <ClInclude Include="vulkan_loaders.hpp" />
     <ClInclude Include="vulkan_meshes.hpp" />
     <ClInclude Include="time_measure.hpp" />
@@ -37,31 +36,16 @@
     <ClInclude Include="vulkan_material.hpp" />
     <ClInclude Include="vulkan_assets.hpp" />
     <ClInclude Include="vulkan_context.hpp" />
+    <ClInclude Include="vulkan_descriptors.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\debug.frag.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\debug.vert.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\gui.frag.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\gui.vert.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\obj.frag.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\obj.vert.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\shadow.frag.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\shadow.vert.glsl">
-      <Filter>shaders</Filter>
-    </None>
+    <CustomBuild Include="shaders\debug.frag.glsl" />
+    <CustomBuild Include="shaders\debug.vert.glsl" />
+    <CustomBuild Include="shaders\gui.frag.glsl" />
+    <CustomBuild Include="shaders\gui.vert.glsl" />
+    <CustomBuild Include="shaders\obj.frag.glsl" />
+    <CustomBuild Include="shaders\obj.vert.glsl" />
+    <CustomBuild Include="shaders\shadow.frag.glsl" />
+    <CustomBuild Include="shaders\shadow.vert.glsl" />
   </ItemGroup>
 </Project>

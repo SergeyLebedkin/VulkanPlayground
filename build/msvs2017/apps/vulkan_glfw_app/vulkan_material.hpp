@@ -1,5 +1,5 @@
 #pragma once
-#include "vulkan_pipelines.hpp"
+#include "vulkan_descriptors.hpp"
 
 // VulkanContext
 class VulkanContext;

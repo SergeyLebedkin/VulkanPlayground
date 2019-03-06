@@ -375,12 +375,12 @@ void VulkanRenderer_default::reinitialize() {
 }
 
 // VulkanRenderer_default::getViewSize
-float VulkanRenderer_default::getViewHeight(){
+uint32_t VulkanRenderer_default::getViewHeight(){
 	return swapchain.surfaceCapabilities.currentExtent.height;
 }
 
 // VulkanRenderer_default::getViewWidth
-float VulkanRenderer_default::getViewWidth() {
+uint32_t VulkanRenderer_default::getViewWidth() {
 	return swapchain.surfaceCapabilities.currentExtent.width;
 }
 
@@ -391,4 +391,87 @@ float VulkanRenderer_default::getViewAspect() {
 }
 
 // VulkanRenderer_default::drawScene
-void VulkanRenderer_default::drawScene(VulkanScene* scene) {};
+void VulkanRenderer_default::drawScene(VulkanScene* scene) 
+{
+	// acquire next frame index
+	VKT_CHECK(vkAcquireNextImageKHR(context.device.device, swapchain.swapchain, UINT64_MAX, presentSemaphores[frameIndex].semaphore, VK_NULL_HANDLE, &imageIndex));
+
+	// VkCommandBufferBeginInfo
+	VkCommandBufferBeginInfo commandBufferBeginInfo{};
+	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	commandBufferBeginInfo.pNext = VK_NULL_HANDLE;
+	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	commandBufferBeginInfo.pInheritanceInfo = nullptr; // Optional
+	VKT_CHECK(vkBeginCommandBuffer(commandBuffers[frameIndex].commandBuffer, &commandBufferBeginInfo));
+
+	// VkClearValue
+	VkClearValue clearColors[2];
+	clearColors[0].color = { 0.0f, 0.125f, 0.3f, 1.0f };
+	clearColors[1].depthStencil.depth = 1.0f;
+	clearColors[1].depthStencil.stencil = 0;
+
+	// VkRenderPassBeginInfo
+	VkRenderPassBeginInfo renderPassBeginInfo{};
+	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassBeginInfo.pNext = VK_NULL_HANDLE;
+	renderPassBeginInfo.renderPass = renderPass;
+	renderPassBeginInfo.framebuffer = framebuffers[frameIndex];
+	renderPassBeginInfo.renderArea.offset = { 0, 0 };
+	renderPassBeginInfo.renderArea.extent = swapchain.surfaceCapabilities.currentExtent;
+	renderPassBeginInfo.clearValueCount = VKT_ARRAY_ELEMENTS_COUNT(clearColors);
+	renderPassBeginInfo.pClearValues = clearColors;
+	vkCmdBeginRenderPass(commandBuffers[frameIndex].commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	// VkViewport
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = (float)swapchain.surfaceCapabilities.currentExtent.height;
+	viewport.width = (float)swapchain.surfaceCapabilities.currentExtent.width;
+	viewport.height = -(float)swapchain.surfaceCapabilities.currentExtent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(commandBuffers[frameIndex].commandBuffer, 0, 1, &viewport);
+
+	// VkRect2D (scissor)
+	VkRect2D scissor{};
+	scissor.offset.x = 0;
+	scissor.offset.y = 0;
+	scissor.extent = swapchain.surfaceCapabilities.currentExtent;
+	vkCmdSetScissor(commandBuffers[frameIndex].commandBuffer, 0, 1, &scissor);
+	
+	// set line width
+	vkCmdSetLineWidth(commandBuffers[frameIndex].commandBuffer, 1.0f);
+
+	// end render pass
+	vkCmdEndRenderPass(commandBuffers[frameIndex].commandBuffer);
+
+	// end command buffer
+	VKT_CHECK(vkEndCommandBuffer(commandBuffers[frameIndex].commandBuffer));
+
+	// VkSubmitInfo
+	VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.pWaitDstStageMask = &waitDstStageMask;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffers[frameIndex].commandBuffer;
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = &presentSemaphores[frameIndex].semaphore;
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = &renderSemaphores[frameIndex].semaphore;
+	VKT_CHECK(vkQueueSubmit(context.device.queueGraphics, 1, &submitInfo, VK_NULL_HANDLE));
+
+	// VkPresentInfoKHR
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.pNext = VK_NULL_HANDLE;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &renderSemaphores[frameIndex].semaphore;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &swapchain.swapchain;
+	presentInfo.pImageIndices = &imageIndex;
+	VKT_CHECK(vkQueuePresentKHR(context.device.queueGraphics, &presentInfo));
+
+	// update frame index
+	frameIndex = (frameIndex + 1) % framesCount;
+};

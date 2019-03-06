@@ -22,8 +22,8 @@ public:
 	virtual void reinitialize() = 0;
 
 	// getters
-	virtual float getViewHeight() = 0;
-	virtual float getViewWidth() = 0;
+	virtual uint32_t getViewHeight() = 0;
+	virtual uint32_t getViewWidth() = 0;
 	virtual float getViewAspect() = 0;
 
 	// draw functions
@@ -36,8 +36,11 @@ protected:
 	// swapchain
 	VulkanSwapchain swapchain{};
 protected:
-	// frame count
+	// swapchain frames and image indexes
+	uint32_t imageIndex{};
+	uint32_t frameIndex{};
 	uint32_t framesCount{};
+protected:
 	// present depth-stencil attachments
 	std::vector<VkImageView>   colorAttachmentImageViews{};
 	// present depth-stencil attachments
@@ -94,8 +97,8 @@ public:
 	void reinitialize() override;
 
 	// getters
-	float getViewHeight() override;
-	float getViewWidth() override;
+	uint32_t getViewHeight() override;
+	uint32_t getViewWidth() override;
 	float getViewAspect() override;
 
 	// draw functions

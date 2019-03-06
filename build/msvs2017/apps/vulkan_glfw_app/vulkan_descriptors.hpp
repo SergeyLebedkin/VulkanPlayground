@@ -83,5 +83,5 @@ const VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentStates_def
 	}
 };
 
-// vulkanDescriptrsInit
-void vulkanDescriptrsInit();
+// vulkanDescriptorsInit
+void vulkanDescriptorsInit();

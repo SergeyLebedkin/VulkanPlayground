@@ -5,8 +5,8 @@
 #include <algorithm>
 
 // VulkanAssetManager::VulkanAssetManager
-VulkanAssetManager::VulkanAssetManager(VulkanRender* renderer)
-	: renderer(renderer)
+VulkanAssetManager::VulkanAssetManager(VulkanContext& context)
+	: context(context)
 {
 };
 
@@ -26,7 +26,7 @@ VulkanAssetManager::~VulkanAssetManager()
 		delete material_item->material;
 	// destroy images
 	for (auto image_item : imageItems)
-		vulkanImageDestroy(renderer->device, *image_item->image);
+		vulkanImageDestroy(context.device, *image_item->image);
 
 	// clear maps
 	meshGroups.clear();
@@ -37,43 +37,57 @@ VulkanAssetManager::~VulkanAssetManager()
 
 // VulkanAssetManager::getImageItemByName
 VulkanImageItem* VulkanAssetManager::getImageItemByName(const std::string name) {
-	for (auto image_item : imageItems) if (image_item->name == name) return image_item;
+	for (auto image_item : imageItems) 
+		if (image_item->name == name) 
+			return image_item;
 	return nullptr;
 }
 
 // VulkanAssetManager::getMaterialItemByName
 VulkanMaterialItem* VulkanAssetManager::getMaterialItemByName(const std::string name) {
-	for (auto material_item : materialItems) if (material_item->name == name) return material_item;
+	for (auto material_item : materialItems) 
+		if (material_item->name == name) 
+			return material_item;
 	return nullptr;
 }
 
 // VulkanAssetManager::getMeshItemByName
 VulkanMeshItem* VulkanAssetManager::getMeshItemByName(const std::string name) {
-	for (auto mesh_item : meshItems) if (mesh_item->name == name) return mesh_item;
+	for (auto mesh_item : meshItems) 
+		if (mesh_item->name == name) 
+			return mesh_item;
 	return nullptr;
 }
 
 // VulkanAssetManager::isImageExist
 bool VulkanAssetManager::isImageExist(const std::string name) {
-	for (auto image_item : imageItems) if (image_item->name == name) return true;
+	for (auto image_item : imageItems) 
+		if (image_item->name == name) 
+			return true;
 	return false;
 }
 
 // VulkanAssetManager::isExist_Material
 bool VulkanAssetManager::isMaterialExist(const std::string name) {
-	for (auto material_item : materialItems) if (material_item->name == name) return true;
+	for (auto material_item : materialItems) 
+		if (material_item->name == name) 
+			return true;
 	return false;
 }
 
 // VulkanAssetManager::isExist_ModelAsset
 bool VulkanAssetManager::isMeshExist(const std::string name) {
-	for (auto mesh_item : meshItems) if (mesh_item->name == name) return true;
+	for (auto mesh_item : meshItems) 
+		if (mesh_item->name == name) 
+			return true;
 	return false;
 }
 
 // VulkanAssetManager::isMeshGroupExist
 bool VulkanAssetManager::isMeshGroupExist(const std::string name) {
-	for (auto mesh_group : meshGroups) if (mesh_group->name == name) return true;
+	for (auto mesh_group : meshGroups) 
+		if (mesh_group->name == name) 
+			return true;
 	return false;
 }
 
@@ -93,7 +107,7 @@ void VulkanAssetManager::addImageFromfile(const std::string fileName) {
 	// add if not exist
 	if (!isImageExist(fileName)) {
 		VulkanImage* image = new VulkanImage;
-		loadImageFromFile(renderer->device, *image, fileName);
+		loadImageFromFile(context.device, *image, fileName);
 		imageItems.push_back(new VulkanImageItem(fileName, image));
 	}
 }
@@ -115,10 +129,7 @@ void VulkanAssetManager::addMeterialFromObj(
 	// check material name
 	assert(material_obj.name.size() > 0);
 	// create material
-	VulkanMaterial* material = new VulkanMaterial(
-		renderer->device,
-		renderer->pipelineLayout,
-		renderer->descriptorSetLayout_material);
+	VulkanMaterial* material = new VulkanMaterial(context);
 	addMaterial(material_obj.name, material);
 	// load diffuse image
 	if (material_obj.diffuse_texname.size() > 0) {
@@ -127,9 +138,9 @@ void VulkanAssetManager::addMeterialFromObj(
 		addImageFromfile(imageDiffuseFilePath);
 		// get loaded image
 		VulkanImage* imageDeffuse = getImageByName(imageDiffuseFilePath);
-		if (!imageDeffuse) imageDeffuse = &renderer->imageDefault;
+		//if (!imageDeffuse) imageDeffuse = &renderer->imageDefault;
 		// set diffuse image
-		material->setImage(*imageDeffuse, renderer->samplerDefault, 0);
+		//material->setImage(*imageDeffuse, renderer->samplerDefault, 0);
 	}
 }
 
@@ -163,25 +174,33 @@ void VulkanAssetManager::addMeshGroup(const std::string name, const std::vector<
 
 // VulkanAssetManager::getImageByName
 VulkanImage* VulkanAssetManager::getImageByName(const std::string name) {
-	for (auto image_item : imageItems) if (image_item->name == name) return image_item->image;
+	for (auto image_item : imageItems) 
+		if (image_item->name == name) 
+			return image_item->image;
 	return false;
 }
 
 // VulkanAssetManager::getMaterialByName
 VulkanMaterial* VulkanAssetManager::getMaterialByName(const std::string name) {
-	for (auto material_item : materialItems) if (material_item->name == name) return material_item->material;
+	for (auto material_item : materialItems) 
+		if (material_item->name == name) 
+			return material_item->material;
 	return false;
 }
 
 // VulkanAssetManager::getMeshByName
 VulkanMesh* VulkanAssetManager::getMeshByName(const std::string name) {
-	for (auto mesh_item : meshItems) if (mesh_item->name == name) return mesh_item->mesh;
+	for (auto mesh_item : meshItems) 
+		if (mesh_item->name == name) 
+			return mesh_item->mesh;
 	return false;
 }
 
 // VulkanAssetManager::getMeshGroupByName
 VulkanMeshGroup* VulkanAssetManager::getMeshGroupByName(const std::string name) {
-	for (auto mesh_group : meshGroups) if (mesh_group->name == name) return mesh_group;
+	for (auto mesh_group : meshGroups) 
+		if (mesh_group->name == name) 
+			return mesh_group;
 	return false;
 }
 
@@ -220,16 +239,15 @@ std::vector<std::string> VulkanAssetManager::getMeshGroupNames() {
 // VulkanAssetManager::createModelByMeshNames
 VulkanModel* VulkanAssetManager::createModelByMeshNames(const std::vector<std::string> names) {
 	// create model
-	VulkanModel* model = new VulkanModel(
-		renderer->device,
-		renderer->pipelineLayout,
-		renderer->descriptorSetLayout_model);
+	VulkanModel* model = new VulkanModel(context);
 	// add meshes
 	for (auto& name : names) {
 		for (auto& mesh_item : meshItems) {
 			if (mesh_item->name == name) {
-				if (mesh_item->mesh) model->meshes.push_back(mesh_item->mesh);
-				if (mesh_item->meshDebug) model->meshesDebug.push_back(mesh_item->meshDebug);
+				if (mesh_item->mesh) 
+					model->meshes.push_back(mesh_item->mesh);
+				if (mesh_item->meshDebug) 
+					model->meshesDebug.push_back(mesh_item->meshDebug);
 			}
 		}
 	}
@@ -242,14 +260,13 @@ VulkanModel* VulkanAssetManager::createModelByMeshGroupName(const std::string na
 	VulkanMeshGroup* mesh_group = getMeshGroupByName(name);
 	if (mesh_group) {
 		// create model
-		VulkanModel* model = new VulkanModel(
-			renderer->device,
-			renderer->pipelineLayout,
-			renderer->descriptorSetLayout_model);
+		VulkanModel* model = new VulkanModel(context);
 		// add meshes to model
 		for (auto& mesh_item : mesh_group->meshes) {
-			if (mesh_item->mesh) model->meshes.push_back(mesh_item->mesh);
-			if (mesh_item->meshDebug) model->meshesDebug.push_back(mesh_item->meshDebug);
+			if (mesh_item->mesh) 
+				model->meshes.push_back(mesh_item->mesh);
+			if (mesh_item->meshDebug) 
+				model->meshesDebug.push_back(mesh_item->meshDebug);
 		}
 		return model;
 	}
@@ -406,21 +423,19 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 
 		// get image from material
 		VulkanMaterial* material = getMaterialByName(materialName);
-		if (!material) material = renderer->materialDefault;
+		//if (!material) material = renderer->materialDefault;
 
 		// create mesh
 		VulkanMesh* mesh = new VulkanMesh_obj(
-			renderer->device,
-			renderer->pipeline_obj,
+			context,
 			material,
 			vectorPos,
 			vectorTex,
 			vectorNrm);
 
 		// create debug mesh
-		VulkanMesh* meshDebug = new VulkanMesh_lines(
-			renderer->device,
-			renderer->pipeline_line,
+		VulkanMesh_debug* meshDebug = new VulkanMesh_debug(
+			context,
 			vectorNrmPos,
 			vectorNrmCol);
 

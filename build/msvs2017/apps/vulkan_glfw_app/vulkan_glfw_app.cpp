@@ -4,10 +4,11 @@
 #include "vulkan_scene.hpp"
 #include "time_measure.hpp"
 #include <iostream>
+#include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 // main
-int main(void)
+int main(int argc, char ** argv)
 {
 	// init GLFW
 	glfwInit();
@@ -28,126 +29,34 @@ int main(void)
 
 	// create vulkan context
 	VulkanContext* context = new VulkanContext(
-		enabledInstanceLayerNames, enabledInstanceExtensionNames,
-		enabledDeviceExtensionNames, physicalDeviceFeatures);
+		enabledInstanceLayerNames, 
+		enabledInstanceExtensionNames,
+		enabledDeviceExtensionNames, 
+		physicalDeviceFeatures);
 
 	// create window surface
 	VulkanSurface* surface = new VulkanSurface();
 	glfwCreateWindowSurface(context->instance.instance, window, NULL, &surface->surface);
 
 	// create vulkan renderer
-	VulkanRender* renderer = new VulkanRender(window,
-		enabledInstanceLayerNames, enabledInstanceExtensionNames,
-		enabledDeviceExtensionNames, physicalDeviceFeatures);
+	VulkanRenderer* renderer = new VulkanRenderer_default(*context, *surface);
 
 	// create assets manages
-	VulkanAssetManager* assetsManager = new VulkanAssetManager(renderer);
+	VulkanAssetManager* assetsManager = new VulkanAssetManager(*context);
 	//assetsManager->loadFromFileObj("models/train/train.obj", "models/train");
 	//assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
 	assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
 
 	// get loaded models
-	//VulkanModel* modelTrain = assetsManager->createModelByMeshNames(modelMeshes_train);
-	//VulkanModel* modelRock = assetsManager->createModelByMeshGroupName("models/rock/rock.obj");
 	//VulkanModel* modelRock = assetsManager->createModelByMeshGroupName("models/train/train.obj");
-	VulkanModel* modelRock = assetsManager->createModelByMeshGroupName("models/tea/tea.obj");
-	
-	// create scene
-	float viewWidth = (float)renderer->swapchain.surfaceCapabilities.currentExtent.width;
-	float viewHeight = (float)renderer->swapchain.surfaceCapabilities.currentExtent.height;
+	//VulkanModel* modelRock = assetsManager->createModelByMeshGroupName("models/rock/rock.obj");
+	VulkanModel* model = assetsManager->createModelByMeshGroupName("models/tea/tea.obj");
 
-	// create scene
-	VulkanScene* scene = new VulkanScene(renderer->device, renderer->pipelineLayout, renderer->descriptorSetLayout_scene);
-	scene->matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	scene->matProj = glm::perspective(glm::radians(45.0f), viewWidth / viewHeight, 0.1f, 10.f);
-	//scene->models.push_back(modelTrain);
-	scene->models.push_back(modelRock);
-	//scene->models.push_back(modelTea);
 
-	// create time stamp
-	TimeStamp timeStamp;
-	timeStampReset(timeStamp);
-
-	// main loop
-	while (!glfwWindowShouldClose(window))
-	{
-		timeStampTick(timeStamp);
-		timeStampPrint(std::cout, timeStamp, 1.0f);
-
-		// rotate model
-		modelRock->matModel = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), timeStamp.accumTime, glm::vec3(0.0f, 1.0f, 0.0f));
-
-		// begin frame
-		uint32_t frameIndex = 0;
-		vulkanSwapchainBeginFrame(renderer->device, renderer->swapchain, renderer->presentSemaphore, &frameIndex);
-		vulkanCommandBufferBegin(renderer->device, renderer->commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-		
-		// VkClearValue
-		VkClearValue clearColors[2];
-		clearColors[0].color = { 0.0f, 0.125f, 0.3f, 1.0f };
-		clearColors[1].depthStencil.depth = 1.0f;
-		clearColors[1].depthStencil.stencil = 0;
-
-		// VkRenderPassBeginInfo
-		VkRenderPassBeginInfo renderPassBeginInfo{};
-		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassBeginInfo.pNext = VK_NULL_HANDLE;
-		renderPassBeginInfo.renderPass = renderer->swapchain.renderPass;
-		renderPassBeginInfo.framebuffer = renderer->swapchain.framebuffers[frameIndex];
-		renderPassBeginInfo.renderArea.offset = { 0, 0 };
-		renderPassBeginInfo.renderArea.extent = { (uint32_t)viewWidth, (uint32_t)viewHeight };
-		renderPassBeginInfo.clearValueCount = 2;
-		renderPassBeginInfo.pClearValues = clearColors;
-
-		// VkViewport - viewport
-		VkViewport viewport{};
-		viewport.x = 0.0f; 
-		viewport.y = viewHeight;
-		viewport.width = viewWidth;
-		viewport.height = -viewHeight;
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-
-		// VkRect2D - scissor
-		VkRect2D scissor{};
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
-		scissor.extent.width = (uint32_t)viewWidth;
-		scissor.extent.height = (uint32_t)viewHeight;
-
-		scene->beforeRender(renderer->commandBuffer);
-
-		// GO RENDER
-		vkCmdBeginRenderPass(renderer->commandBuffer.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		// set parameters
-		vkCmdSetViewport(renderer->commandBuffer.commandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(renderer->commandBuffer.commandBuffer, 0, 1, &scissor);
-		vkCmdSetLineWidth(renderer->commandBuffer.commandBuffer, 1.0f);
-
-		// DRAW
-		scene->render(renderer->commandBuffer);
-
-		// END RENDER
-		vkCmdEndRenderPass(renderer->commandBuffer.commandBuffer);
-
-		scene->afterRender(renderer->commandBuffer);
-
-		// vkEndCommandBuffer
-		VKT_CHECK(vkEndCommandBuffer(renderer->commandBuffer.commandBuffer));
-		
-		// and frame
-		vulkanQueueSubmit(renderer->device, renderer->commandBuffer, &renderer->presentSemaphore, &renderer->renderSemaphore);
-		vulkanSwapchainEndFrame(renderer->device, renderer->swapchain, renderer->renderSemaphore, frameIndex);
-		glfwPollEvents();
-	}
-
-	delete scene;
-	//delete modelTrain;
-	delete modelRock;
-
+	delete model;
 	delete assetsManager;
 	delete renderer;
+	delete context;
 
 	// destroy GLFW
 	glfwDestroyWindow(window);

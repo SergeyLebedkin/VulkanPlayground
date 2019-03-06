@@ -1,35 +1,37 @@
 #pragma once
 #include "vulkan_material.hpp"
-#include <glm/mat4x4.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 #include <array>
 
 // VulkanMesh
-class VulkanMesh
-{
+class VulkanMesh {
 protected:
-	VulkanDevice&   device;
-	VulkanPipeline& pipeline;
+	// context
+	VulkanContext& context;
 public:
-	VulkanMesh(
-		VulkanDevice&   device,
-		VulkanPipeline& pipeline
-	) : device(device), pipeline(pipeline) {};
+	// constructor and destructor
+	VulkanMesh(VulkanContext& context) : context(context) {};
 	virtual ~VulkanMesh() {};
-	virtual void draw(VulkanCommandBuffer& commandBuffer);
+
+	// draw
+	virtual void draw(VulkanCommandBuffer& commandBuffer) = 0;
 };
 
 // VulkanMesh_material
-class VulkanMesh_material : public VulkanMesh
-{
+class VulkanMesh_material : public VulkanMesh {
 protected:
 	// material
 	VulkanMaterial* material{};
 public:
+	// constructor and destructor
 	VulkanMesh_material(
-		VulkanDevice&   device,
-		VulkanPipeline& pipeline,
+		VulkanContext&  context,
 		VulkanMaterial* material) :
-		VulkanMesh(device, pipeline), material(material) {};
+		VulkanMesh(context), material(material) {};
+
+	// draw
 	void draw(VulkanCommandBuffer& commandBuffer) override;
 };
 
@@ -42,15 +44,19 @@ protected:
 protected:
 	// buffers
 	VulkanBuffer bufferVerteces{};
-	uint32_t     vertexCount;
+	uint32_t     vertexCount{};
 public:
-	// constructor
+	VkPrimitiveTopology primitiveTopology{};
+public:
+	// constructor and destructor
 	VulkanMesh_gui(
-		VulkanDevice&                       device,
-		VulkanPipeline&                     pipeline,
+		VulkanContext&                      context,
 		VulkanMaterial*                     material,
+		VkPrimitiveTopology                 primitiveTopology,
 		std::vector<VertexStruct_P4_C4_T2>& verts);
 	~VulkanMesh_gui();
+
+	// draw
 	void draw(VulkanCommandBuffer& commandBuffer) override;
 };
 
@@ -62,13 +68,14 @@ protected:
 	VulkanBuffer bufferIndexes{};
 	uint32_t     indexCount;
 public:
-	// constructor
+	// constructor and destructor
 	VulkanMesh_indexed(
-		VulkanDevice&          device,
-		VulkanPipeline&        pipeline,
+		VulkanContext&         context,
 		VulkanMaterial*        material,
 		std::vector<uint32_t>& indexes);
 	~VulkanMesh_indexed();
+
+	// draw
 	void draw(VulkanCommandBuffer& commandBuffer) override;
 };
 
@@ -85,16 +92,17 @@ protected:
 	VulkanBuffer bufferNrm{};
 	uint32_t     vertexCount;
 public:
-	// constructor
+	// constructor and destructor
 	VulkanMesh_indexed_obj(
-		VulkanDevice&           device,
-		VulkanPipeline&         pipeline,
+		VulkanContext&          context,
 		VulkanMaterial*         material,
 		std::vector<uint32_t>&  indexes,
 		std::vector<glm::vec3>& pos,
 		std::vector<glm::vec2>& tex,
 		std::vector<glm::vec3>& nrm);
 	~VulkanMesh_indexed_obj();
+
+	// draw
 	void draw(VulkanCommandBuffer& commandBuffer) override;
 };
 
@@ -111,20 +119,21 @@ protected:
 	VulkanBuffer bufferNrm{};
 	uint32_t     vertexCount;
 public:
-	// constructor
+	// constructor and destructor
 	VulkanMesh_obj(
-		VulkanDevice&           device,
-		VulkanPipeline&         pipeline,
+		VulkanContext&          context,
 		VulkanMaterial*         material,
 		std::vector<glm::vec3>& pos,
 		std::vector<glm::vec2>& tex,
 		std::vector<glm::vec3>& nrm);
 	~VulkanMesh_obj();
+
+	// draw
 	void draw(VulkanCommandBuffer& commandBuffer) override;
 };
 
-// VulkanMesh_lines
-struct VulkanMesh_lines : public VulkanMesh
+// VulkanMesh_debug
+struct VulkanMesh_debug : public VulkanMesh
 {
 protected:
 	std::array<VkBuffer, 2>     bufferHandles;
@@ -135,12 +144,13 @@ protected:
 	VulkanBuffer bufferCol{};
 	uint32_t     vertexCount;
 public:
-	// constructor
-	VulkanMesh_lines(
-		VulkanDevice&           device,
-		VulkanPipeline&         pipeline,
+	// constructor and destructor
+	VulkanMesh_debug(
+		VulkanContext&          context,
 		std::vector<glm::vec3>& pos,
 		std::vector<glm::vec4>& col);
-	~VulkanMesh_lines();
+	~VulkanMesh_debug();
+
+	// draw
 	void draw(VulkanCommandBuffer& commandBuffer) override;
 };

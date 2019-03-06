@@ -1,13 +1,13 @@
 #pragma once
 
 #include "vulkan_meshes.hpp"
+#include <glm/mat4x4.hpp>
 #include <vector>
 
 // VulkanModel
 class VulkanModel {
 protected:
-	VulkanDevice&         device;
-	VulkanPipelineLayout& pipelineLayout;
+	VulkanContext& context;
 protected:
 	VulkanBuffer        bufferModelMatrix;
 	VulkanDescriptorSet descriptorSet;
@@ -18,12 +18,14 @@ public:
 	VkBool32                 visible{};
 	VkBool32                 visibleDebug{};
 public:
-	VulkanModel(
-		VulkanDevice&              device,
-		VulkanPipelineLayout&      pipelineLayout,
-		VulkanDescriptorSetLayout& descriptorSetLayout);
+	// constructor and destructor
+	VulkanModel(VulkanContext& context);
 	virtual ~VulkanModel();
+
+	// bind
+	virtual void bind(VulkanCommandBuffer& commandBuffer);
+
+	// render
 	virtual void beforeRender(VulkanCommandBuffer& commandBuffer);
-	virtual void render(VulkanCommandBuffer& commandBuffer);
 	virtual void afterRender(VulkanCommandBuffer& commandBuffer);
 };

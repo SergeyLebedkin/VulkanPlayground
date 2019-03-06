@@ -6,8 +6,7 @@
 // VulkanScene
 class VulkanScene {
 protected:
-	VulkanDevice&         device;
-	VulkanPipelineLayout& pipelineLayout;
+	VulkanContext& context;
 protected:
 	VulkanBuffer        bufferViewProjMatrices;
 	VulkanDescriptorSet descriptorSet{};
@@ -16,12 +15,14 @@ public:
 	glm::mat4                 matView;
 	glm::mat4                 matProj;
 public:
-	VulkanScene(
-		VulkanDevice&              device,
-		VulkanPipelineLayout&      pipelineLayout,
-		VulkanDescriptorSetLayout& descriptorSetLayout);
+	// constructor and destructor
+	VulkanScene(VulkanContext& context);
 	virtual ~VulkanScene();
+
+	// bind
+	virtual void bind(VulkanCommandBuffer& commandBuffer);
+
+	// render
 	virtual void beforeRender(VulkanCommandBuffer& commandBuffer);
-	virtual void render(VulkanCommandBuffer& commandBuffer);
 	virtual void afterRender(VulkanCommandBuffer& commandBuffer);
 };

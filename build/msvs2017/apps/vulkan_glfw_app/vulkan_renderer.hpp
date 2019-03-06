@@ -1,3 +1,5 @@
+#pragma once
+
 #include "vulkan_context.hpp"
 #include "vulkan_scene.hpp"
 
@@ -20,9 +22,7 @@ public:
 	virtual void reinitialize() = 0;
 
 	// draw functions
-	virtual void beginFrame() = 0;
 	virtual void drawScene(VulkanScene* scene) = 0;
-	virtual void endFrame() = 0;
 };
 
 // VulkanRenderer_default
@@ -57,30 +57,10 @@ protected:
 	VulkanShader shader_shadow{};
 	VulkanShader shader_gui{};
 	// objects pipelines
-	VulkanPipeline pipeline_obj_point{};
-	VulkanPipeline pipeline_obj_line{};
-	VulkanPipeline pipeline_obj_linestrip{};
-	VulkanPipeline pipeline_obj_tri{};
-	VulkanPipeline pipeline_obj_tristrip{};
-	VulkanPipeline pipeline_obj_trifan{};
-	// objects pipelines (wireframe)
-	VulkanPipeline pipeline_obj_tri_wf{};
-	VulkanPipeline pipeline_obj_tristrip_wf{};
-	VulkanPipeline pipeline_obj_trifan_wf{};
-	// debug pipelines
-	VulkanPipeline pipeline_debug_point{};
-	VulkanPipeline pipeline_debug_line{};
-	VulkanPipeline pipeline_debug_linestrip{};
-	VulkanPipeline pipeline_debug_tri{};
-	VulkanPipeline pipeline_debug_tristrip{};
-	VulkanPipeline pipeline_debug_trifan{};
-	// GUI pipelines
-	VulkanPipeline pipeline_gui_point{};
-	VulkanPipeline pipeline_gui_line{};
-	VulkanPipeline pipeline_gui_linestrip{};
-	VulkanPipeline pipeline_gui_tri{};
-	VulkanPipeline pipeline_gui_tristrip{};
-	VulkanPipeline pipeline_gui_trifan{};
+	VulkanPipeline pipeline_obj[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
+	VulkanPipeline pipeline_obj_wf[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
+	VulkanPipeline pipeline_debug[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
+	VulkanPipeline pipeline_gui[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
 protected:
 	// create functions
 	void createSwapchain();
@@ -110,7 +90,5 @@ public:
 	void reinitialize() override;
 
 	// draw functions
-	void beginFrame() override {};
-	void drawScene(VulkanScene* scene) override {};
-	void endFrame() override {};
+	void drawScene(VulkanScene* scene) override;
 };

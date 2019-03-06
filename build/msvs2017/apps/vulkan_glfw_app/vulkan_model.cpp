@@ -1,28 +1,25 @@
 #include "vulkan_model.hpp"
+#include "vulkan_context.hpp"
 
 // VulkanModel::VulkanModel
-VulkanModel::VulkanModel(
-	VulkanDevice&              device,
-	VulkanPipelineLayout&      pipelineLayout,
-	VulkanDescriptorSetLayout& descriptorSetLayout) :
-	device(device), pipelineLayout(pipelineLayout),
-	visible(VK_TRUE), visibleDebug(VK_FALSE), matModel(glm::mat4(1.0f))
+VulkanModel::VulkanModel(VulkanContext& context) :
+	context(context), visible(VK_TRUE), visibleDebug(VK_FALSE), matModel(glm::mat4(1.0f))
 {
 	// create model matrix buffer
-	vulkanBufferCreate(device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4), &bufferModelMatrix);
+	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4), &bufferModelMatrix);
 	// create descriptor set
-	vulkanDescriptorSetCreate(device, descriptorSetLayout, &descriptorSet);
+	vulkanDescriptorSetCreate(context.device, context.descriptorSetLayout_model, &descriptorSet);
 	// update descriptor set
-	vulkanDescriptorSetUpdateBufferUniform(device, descriptorSet, bufferModelMatrix, 0);
+	vulkanDescriptorSetUpdateBufferUniform(context.device, descriptorSet, bufferModelMatrix, 0);
 }
 
 // VulkanModel::~VulkanModel
 VulkanModel::~VulkanModel()
 {
 	// destroy descriptor set
-	vulkanDescriptorSetDestroy(device, descriptorSet);
+	vulkanDescriptorSetDestroy(context.device, descriptorSet);
 	// destroy model matrix buffer
-	vulkanBufferDestroy(device, bufferModelMatrix);
+	vulkanBufferDestroy(context.device, bufferModelMatrix);
 }
 
 // VulkanModel::beforeRender
@@ -33,19 +30,14 @@ void VulkanModel::beforeRender(VulkanCommandBuffer& commandBuffer)
 }
 
 // VulkanModel::draw
-void VulkanModel::render(VulkanCommandBuffer& commandBuffer)
+void VulkanModel::bind(VulkanCommandBuffer& commandBuffer)
 {
 	// bind descriptor set
-	vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout.pipelineLayout, 1, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
-
-	// draw meshes
-	if (visible) for (auto& mesh : meshes) mesh->draw(commandBuffer);
-
-	// draw draw debug
-	if (visibleDebug) for (auto& mesh : meshesDebug) mesh->draw(commandBuffer);
+	vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, context.pipelineLayout.pipelineLayout, 1, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
 }
 
 // VulkanModel::afterRender
 void VulkanModel::afterRender(VulkanCommandBuffer& commandBuffer)
 {
+	// nothing
 }

@@ -1,19 +1,17 @@
 #pragma once
-#include "vulkan_model.hpp"
+#include "vulkan_renderer.hpp"
 #include <tiny_obj_loader.h>
 #include <memory>
 
-// VulkanRender
-class VulkanRender;
+// VulkanContext
+class VulkanContext;
 
 // VulkanImageItem
 struct VulkanImageItem {
 	std::string  name{};
 	VulkanImage* image{};
-	VulkanImageItem(
-		std::string  name,
-		VulkanImage* image) :
-		name(name), 
+	VulkanImageItem(std::string  name,VulkanImage* image) :
+		name(name),
 		image(image) {}
 };
 
@@ -21,22 +19,20 @@ struct VulkanImageItem {
 struct VulkanMaterialItem {
 	std::string     name{};
 	VulkanMaterial* material{};
-	VulkanMaterialItem(
-		std::string     name,
-		VulkanMaterial* material) :
-		name(name), 
+	VulkanMaterialItem(std::string name, VulkanMaterial* material) :
+		name(name),
 		material(material) {}
 };
 
 // VulkanMeshItem
 struct VulkanMeshItem {
-	std::string name{};
-	VulkanMesh* mesh{};
-	VulkanMesh* meshDebug{};
+	std::string       name{};
+	VulkanMesh*       mesh{};
+	VulkanMesh_debug* meshDebug{};
 	VulkanMeshItem(
-		std::string name,
-		VulkanMesh* mesh,
-		VulkanMesh* meshDebug) :
+		std::string       name,
+		VulkanMesh*       mesh,
+		VulkanMesh_debug* meshDebug) :
 		name(name),
 		mesh(mesh),
 		meshDebug(meshDebug) {}
@@ -47,15 +43,13 @@ struct VulkanMeshGroup {
 	std::string name{};
 	std::vector<VulkanMeshItem*> meshes{};
 	std::vector<std::string>     childs{};
-	VulkanMeshGroup(
-		std::string name) :
-		name(name) {};
+	VulkanMeshGroup(std::string name) :	name(name) {};
 };
 
 // VulkanAssetManager
 class VulkanAssetManager {
 protected:
-	VulkanRender* renderer{};
+	VulkanContext& context;
 protected:
 	// base items
 	std::vector<VulkanImageItem*>    imageItems{};
@@ -70,7 +64,7 @@ private:
 	VulkanMeshItem*     getMeshItemByName(const std::string name);
 public:
 	// constructor and destructor
-	VulkanAssetManager(VulkanRender* renderer);
+	VulkanAssetManager(VulkanContext& context);
 	~VulkanAssetManager();
 
 	// is exists functions
@@ -102,9 +96,6 @@ public:
 	// model functions
 	VulkanModel* createModelByMeshNames(const std::vector<std::string> names);
 	VulkanModel* createModelByMeshGroupName(const std::string name);
-
-	// load obj mesh and material utilities
-	
 
 	// load obj file
 	std::vector<std::string> loadFromFileObj(const std::string fileName, const std::string basePath);

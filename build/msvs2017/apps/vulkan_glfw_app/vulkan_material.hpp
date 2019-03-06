@@ -1,19 +1,25 @@
 #pragma once
 #include "vulkan_pipelines.hpp"
+
+// VulkanContext
+class VulkanContext;
       
 // VulkanMaterial
 class VulkanMaterial {
 protected:
-	VulkanDevice&         device;
-	VulkanPipelineLayout& pipelineLayout;
+	// context
+	VulkanContext& context;
 protected:
+	// descriptor set
 	VulkanDescriptorSet descriptorSet{};
 public:
-	VulkanMaterial(
-		VulkanDevice&              device,
-		VulkanPipelineLayout&      pipelineLayout,
-		VulkanDescriptorSetLayout& descriptorSetLayout);
+	// constructor and destructor
+	VulkanMaterial(VulkanContext& context);
 	virtual ~VulkanMaterial();
+
+	// bind material
 	virtual void bind(VulkanCommandBuffer& commandBuffer);
+
+	// set image
 	void setImage(VulkanImage& image, VulkanSampler& sampler, uint32_t binding);
 };

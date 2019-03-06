@@ -10,8 +10,8 @@ VulkanRenderer_default::VulkanRenderer_default(
 	// create swapchain
 	createSwapchain();
 	createImages();
-	createFramebuffers();
 	createRenderPass();
+	createFramebuffers();
 	createCommandBuffers();
 	createSemaphores();
 	createShaders();
@@ -26,8 +26,8 @@ VulkanRenderer_default::~VulkanRenderer_default()
 	destroyShaders();
 	destroySemaphores();
 	destroyCommandBuffers();
-	destroyRenderPass();
 	destroyFramebuffers();
+	destroyRenderPass();
 	destroyImages();
 	destroySwapchain();
 }
@@ -36,16 +36,176 @@ VulkanRenderer_default::~VulkanRenderer_default()
 void VulkanRenderer_default::createSwapchain() {
 	// create swapchain
 	vulkanSwapchainCreate(context.device, surface, &swapchain);
+	// get frames count
+	framesCount = (uint32_t)swapchain.images.size();
 }
 
 // VulkanRenderer_default::createImages
-void VulkanRenderer_default::createImages() {}
+void VulkanRenderer_default::createImages() {
+	// create color attachment image views
+	colorAttachmentImageViews.resize(framesCount);
+	for (uint32_t i = 0; i < framesCount; i++) {
+		// VkImageViewCreateInfo
+		VkImageViewCreateInfo imageViewCreateInfo{};
+		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		imageViewCreateInfo.pNext = VK_NULL_HANDLE;
+		imageViewCreateInfo.flags = 0;
+		imageViewCreateInfo.image = swapchain.images[i];
+		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.format = swapchain.surfaceFormat.format;
+		imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		imageViewCreateInfo.subresourceRange.levelCount = 1;
+		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		imageViewCreateInfo.subresourceRange.layerCount = 1;
+		VKT_CHECK(vkCreateImageView(context.device.device, &imageViewCreateInfo, VK_NULL_HANDLE, &colorAttachmentImageViews[i]));
+		assert(colorAttachmentImageViews[i]);
+	}
+	// create depth-stencil attachment images
+	depthStencilAttachmentImages.resize(framesCount);
+	depthStencilAttachmentAllocations.resize(framesCount);
+	for (uint32_t i = 0; i < framesCount; i++) {
+		// VkImageCreateInfo - depth and stencil
+		VkImageCreateInfo imageCreateInfo{};
+		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCreateInfo.pNext = VK_NULL_HANDLE;
+		imageCreateInfo.flags = 0;
+		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageCreateInfo.format = VK_FORMAT_D24_UNORM_S8_UINT; // must be the same as imageViewCreateInfo.format (see below)
+		imageCreateInfo.extent.width = swapchain.surfaceCapabilities.currentExtent.width;
+		imageCreateInfo.extent.height = swapchain.surfaceCapabilities.currentExtent.height;
+		imageCreateInfo.extent.depth = 1;
+		imageCreateInfo.mipLevels = 1;
+		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		imageCreateInfo.queueFamilyIndexCount = VK_QUEUE_FAMILY_IGNORED;
+		imageCreateInfo.pQueueFamilyIndices = VK_NULL_HANDLE;
+		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-// VulkanRenderer_default::createFramebuffers
-void VulkanRenderer_default::createFramebuffers() {}
+		// VmaAllocationCreateInfo
+		VmaAllocationCreateInfo allocCreateInfo{};
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		allocCreateInfo.flags = 0;
+
+		// vmaCreateImage
+		VKT_CHECK(vmaCreateImage(context.device.allocator, &imageCreateInfo, &allocCreateInfo, &depthStencilAttachmentImages[i], &depthStencilAttachmentAllocations[i], VK_NULL_HANDLE));
+		assert(depthStencilAttachmentImages[i]);
+		assert(depthStencilAttachmentAllocations[i]);
+	}
+	// create depth-stencil attachment image views
+	depthStencilAttachmentImageViews.resize(framesCount);
+	for (uint32_t i = 0; i < framesCount; i++) {
+		// VkImageViewCreateInfo
+		VkImageViewCreateInfo imageViewCreateInfo{};
+		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		imageViewCreateInfo.pNext = VK_NULL_HANDLE;
+		imageViewCreateInfo.flags = 0;
+		imageViewCreateInfo.image = depthStencilAttachmentImages[i];
+		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.format = VK_FORMAT_D24_UNORM_S8_UINT; // must be the same as imageCreateInfo.format (see upper)
+		imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		imageViewCreateInfo.subresourceRange.levelCount = 1;
+		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		imageViewCreateInfo.subresourceRange.layerCount = 1;
+		VKT_CHECK(vkCreateImageView(context.device.device, &imageViewCreateInfo, VK_NULL_HANDLE, &depthStencilAttachmentImageViews[i]));
+		assert(depthStencilAttachmentImageViews[i]);
+	}
+}
 
 // VulkanRenderer_default::createRenderPass
-void VulkanRenderer_default::createRenderPass() {}
+void VulkanRenderer_default::createRenderPass() {
+	// VkAttachmentDescription - color
+	std::array<VkAttachmentDescription, 2> attachmentDescriptions;
+	// color attachment
+	attachmentDescriptions[0].flags = 0;
+	attachmentDescriptions[0].format = swapchain.surfaceFormat.format;
+	attachmentDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	// depth-stencil attachment
+	attachmentDescriptions[1].flags = 0;
+	attachmentDescriptions[1].format = VK_FORMAT_D24_UNORM_S8_UINT;
+	attachmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	// VkAttachmentReference - color
+	std::array<VkAttachmentReference, 1> colorAttachmentReferences;
+	colorAttachmentReferences[0].attachment = 0;
+	colorAttachmentReferences[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	// VkAttachmentReference - depth-stencil
+	VkAttachmentReference depthStencilAttachmentReference{};
+	depthStencilAttachmentReference.attachment = 1;
+	depthStencilAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	// VkSubpassDescription - subpassDescriptions
+	std::array<VkSubpassDescription, 1> subpassDescriptions;
+	subpassDescriptions[0].flags = 0;
+	subpassDescriptions[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassDescriptions[0].inputAttachmentCount = 0;
+	subpassDescriptions[0].pInputAttachments = VK_NULL_HANDLE;
+	subpassDescriptions[0].colorAttachmentCount = (uint32_t)colorAttachmentReferences.size();
+	subpassDescriptions[0].pColorAttachments = colorAttachmentReferences.data();
+	subpassDescriptions[0].pResolveAttachments = VK_NULL_HANDLE;
+	subpassDescriptions[0].pDepthStencilAttachment = &depthStencilAttachmentReference;
+	subpassDescriptions[0].preserveAttachmentCount = 0;
+	subpassDescriptions[0].pPreserveAttachments = VK_NULL_HANDLE;
+
+	// VkRenderPassCreateInfo
+	VkRenderPassCreateInfo renderPassCreateInfo{};
+	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassCreateInfo.attachmentCount = (uint32_t)attachmentDescriptions.size();
+	renderPassCreateInfo.pAttachments = attachmentDescriptions.data();
+	renderPassCreateInfo.subpassCount = (uint32_t)subpassDescriptions.size();
+	renderPassCreateInfo.pSubpasses = subpassDescriptions.data();
+	VKT_CHECK(vkCreateRenderPass(context.device.device, &renderPassCreateInfo, VK_NULL_HANDLE, &renderPass));
+	assert(renderPass);
+}
+
+// VulkanRenderer_default::createFramebuffers
+void VulkanRenderer_default::createFramebuffers() {
+	// create image views
+	framebuffers.resize(framesCount);
+	for (uint32_t i = 0; i < framesCount; i++) {
+		// image views
+		VkImageView imageViews[] = { colorAttachmentImageViews[i], depthStencilAttachmentImageViews[i] };
+	
+		// VkFramebufferCreateInfo
+		VkFramebufferCreateInfo framebufferCreateInfo{};
+		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferCreateInfo.pNext = VK_NULL_HANDLE;
+		framebufferCreateInfo.flags = 0;
+		framebufferCreateInfo.renderPass = renderPass;
+		framebufferCreateInfo.attachmentCount = VKT_ARRAY_ELEMENTS_COUNT(imageViews);
+		framebufferCreateInfo.pAttachments = imageViews;
+		framebufferCreateInfo.width = swapchain.surfaceCapabilities.currentExtent.width;
+		framebufferCreateInfo.height = swapchain.surfaceCapabilities.currentExtent.height;
+		framebufferCreateInfo.layers = 1;
+		VKT_CHECK(vkCreateFramebuffer(context.device.device, &framebufferCreateInfo, VK_NULL_HANDLE, &framebuffers[i]));
+		assert(framebuffers[i]);
+	}
+}
 
 // VulkanRenderer_default::createCommandBuffers
 void VulkanRenderer_default::createCommandBuffers() {
@@ -119,23 +279,32 @@ void VulkanRenderer_default::createPipelines() {
 void VulkanRenderer_default::destroySwapchain() {
 	// destroy swapchain
 	vulkanSwapchainDestroy(context.device, swapchain);
+	// clear frames count
+	framesCount = 0;
 }
 
 // VulkanRenderer_default::destroyImages
 void VulkanRenderer_default::destroyImages() {
 	// destroy images
-	for (uint32_t i = 0; i < colorAttachementImageViews.size(); i++) {
+	for (uint32_t i = 0; i < colorAttachmentImageViews.size(); i++) {
 		// destroy color attachment image views
-		vkDestroyImageView(context.device.device, colorAttachementImageViews[i], VK_NULL_HANDLE);
-		colorAttachementImageViews[i] = VK_NULL_HANDLE;
+		vkDestroyImageView(context.device.device, colorAttachmentImageViews[i], VK_NULL_HANDLE);
+		colorAttachmentImageViews[i] = VK_NULL_HANDLE;
 		// destroy depth-stencil attachment image views
-		vkDestroyImageView(context.device.device, depthStencilAttachementImageViews[i], VK_NULL_HANDLE);
-		depthStencilAttachementImageViews[i] = VK_NULL_HANDLE;
+		vkDestroyImageView(context.device.device, depthStencilAttachmentImageViews[i], VK_NULL_HANDLE);
+		depthStencilAttachmentImageViews[i] = VK_NULL_HANDLE;
 		// destroy depth-stencil attachment images
-		vmaDestroyImage(context.device.allocator, depthStencilAttachementImages[i], depthStencilAttachementAllocations[i]);
-		depthStencilAttachementImages[i] = VK_NULL_HANDLE;
-		depthStencilAttachementAllocations[i] = {};
+		vmaDestroyImage(context.device.allocator, depthStencilAttachmentImages[i], depthStencilAttachmentAllocations[i]);
+		depthStencilAttachmentImages[i] = VK_NULL_HANDLE;
+		depthStencilAttachmentAllocations[i] = {};
 	}
+}
+
+// VulkanRenderer_default::destroyRenderPass
+void VulkanRenderer_default::destroyRenderPass() {
+	// destroy render pass
+	vkDestroyRenderPass(context.device.device, renderPass, VK_NULL_HANDLE);
+	renderPass = VK_NULL_HANDLE;
 }
 
 // VulkanRenderer_default::destroyFramebuffers
@@ -145,13 +314,6 @@ void VulkanRenderer_default::destroyFramebuffers() {
 		vkDestroyFramebuffer(context.device.device, framebuffer, VK_NULL_HANDLE);
 		framebuffer = VK_NULL_HANDLE;
 	}
-}
-
-// VulkanRenderer_default::destroyRenderPass
-void VulkanRenderer_default::destroyRenderPass() {
-	// destroy render pass
-	vkDestroyRenderPass(context.device.device, renderPass, VK_NULL_HANDLE);
-	renderPass = VK_NULL_HANDLE;
 }
 
 // VulkanRenderer_default::destroyCommandBuffers
@@ -210,6 +372,22 @@ void VulkanRenderer_default::reinitialize() {
 	createFramebuffers();
 	createRenderPass();
 	createPipelines();
+}
+
+// VulkanRenderer_default::getViewSize
+float VulkanRenderer_default::getViewHeight(){
+	return swapchain.surfaceCapabilities.currentExtent.height;
+}
+
+// VulkanRenderer_default::getViewWidth
+float VulkanRenderer_default::getViewWidth() {
+	return swapchain.surfaceCapabilities.currentExtent.width;
+}
+
+// VulkanRenderer_default::getViewAspect
+float VulkanRenderer_default::getViewAspect() {
+	return float(swapchain.surfaceCapabilities.currentExtent.width) / 
+		float(swapchain.surfaceCapabilities.currentExtent.height);
 }
 
 // VulkanRenderer_default::drawScene

@@ -21,6 +21,11 @@ public:
 	// reinitialize
 	virtual void reinitialize() = 0;
 
+	// getters
+	virtual float getViewHeight() = 0;
+	virtual float getViewWidth() = 0;
+	virtual float getViewAspect() = 0;
+
 	// draw functions
 	virtual void drawScene(VulkanScene* scene) = 0;
 };
@@ -34,12 +39,11 @@ protected:
 	// frame count
 	uint32_t framesCount{};
 	// present depth-stencil attachments
-	std::vector<VkImage>       colorAttachementImages{};
-	std::vector<VkImageView>   colorAttachementImageViews{};
+	std::vector<VkImageView>   colorAttachmentImageViews{};
 	// present depth-stencil attachments
-	std::vector<VkImage>       depthStencilAttachementImages{};
-	std::vector<VkImageView>   depthStencilAttachementImageViews{};
-	std::vector<VmaAllocation> depthStencilAttachementAllocations{};
+	std::vector<VkImage>       depthStencilAttachmentImages{};
+	std::vector<VkImageView>   depthStencilAttachmentImageViews{};
+	std::vector<VmaAllocation> depthStencilAttachmentAllocations{};
 	// frame buffers and command buffers
 	std::vector<VkFramebuffer> framebuffers{};
 	// render pass
@@ -65,8 +69,8 @@ protected:
 	// create functions
 	void createSwapchain();
 	void createImages();
-	void createFramebuffers();
 	void createRenderPass();
+	void createFramebuffers();
 	void createCommandBuffers();
 	void createSemaphores();
 	void createShaders();
@@ -75,8 +79,8 @@ protected:
 	// destroy functions
 	void destroySwapchain();
 	void destroyImages();
-	void destroyFramebuffers();
 	void destroyRenderPass();
+	void destroyFramebuffers();
 	void destroyCommandBuffers();
 	void destroySemaphores();
 	void destroyShaders();
@@ -88,6 +92,11 @@ public:
 
 	// reinitialize
 	void reinitialize() override;
+
+	// getters
+	float getViewHeight() override;
+	float getViewWidth() override;
+	float getViewAspect() override;
 
 	// draw functions
 	void drawScene(VulkanScene* scene) override;

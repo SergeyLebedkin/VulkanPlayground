@@ -15,8 +15,8 @@ void VulkanMesh_material::draw(VulkanCommandBuffer& commandBuffer)
 VulkanMesh_gui::VulkanMesh_gui(
 	VulkanContext&                      context,
 	VulkanMaterial*                     material,
-	VkPrimitiveTopology                 primitiveTopology,
-	std::vector<VertexStruct_P4_C4_T2>& verts) :
+	std::vector<VertexStruct_P4_C4_T2>& verts,
+	VkPrimitiveTopology                 primitiveTopology) :
 	VulkanMesh_material(context, material), primitiveTopology(primitiveTopology)
 {
 	// create buffers
@@ -89,8 +89,10 @@ VulkanMesh_indexed_obj::VulkanMesh_indexed_obj(
 	std::vector<uint32_t>&  indexes,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec2>& tex,
-	std::vector<glm::vec3>& nrm) :
-	VulkanMesh_indexed(context, material, indexes)
+	std::vector<glm::vec3>& nrm,
+	VkPrimitiveTopology     primitiveTopology) :
+	VulkanMesh_indexed(context, material, indexes),
+	primitiveTopology(primitiveTopology)
 {
 	// create buffers
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
@@ -134,8 +136,10 @@ VulkanMesh_obj::VulkanMesh_obj(
 	VulkanMaterial*         material,
 	std::vector<glm::vec3>& pos,
 	std::vector<glm::vec2>& tex,
-	std::vector<glm::vec3>& nrm) :
-	VulkanMesh_material(context, material)
+	std::vector<glm::vec3>& nrm,
+	VkPrimitiveTopology     primitiveTopology) :
+	VulkanMesh_material(context, material),
+	primitiveTopology(primitiveTopology)
 {
 	// create buffers
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
@@ -177,8 +181,9 @@ void VulkanMesh_obj::draw(VulkanCommandBuffer& commandBuffer)
 VulkanMesh_debug::VulkanMesh_debug(
 	VulkanContext&          context,
 	std::vector<glm::vec3>& pos,
-	std::vector<glm::vec4>& col) :
-	VulkanMesh(context)
+	std::vector<glm::vec4>& col,
+	VkPrimitiveTopology     primitiveTopology) :
+	VulkanMesh(context), primitiveTopology(primitiveTopology)
 {
 	// create buffers
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);

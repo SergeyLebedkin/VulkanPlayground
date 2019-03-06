@@ -7,16 +7,20 @@
 // VulkanModel
 class VulkanModel {
 protected:
+	// context
 	VulkanContext& context;
 protected:
 	VulkanBuffer        bufferModelMatrix;
 	VulkanDescriptorSet descriptorSet;
 public:
-	std::vector<VulkanMesh*> meshes{};
-	std::vector<VulkanMesh*> meshesDebug{};
-	glm::mat4                matModel;
-	VkBool32                 visible{};
-	VkBool32                 visibleDebug{};
+	// meshes
+	std::vector<VulkanMesh*>       meshes{};
+	std::vector<VulkanMesh_debug*> meshesDebug{};
+public:
+	VkBool32 visible{};
+	VkBool32 visibleDebug{};
+public:
+	glm::mat4 matModel;
 public:
 	// constructor and destructor
 	VulkanModel(VulkanContext& context);

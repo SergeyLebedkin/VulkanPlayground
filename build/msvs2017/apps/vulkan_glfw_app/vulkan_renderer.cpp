@@ -239,7 +239,7 @@ void VulkanRenderer_default::createShaders() {
 // VulkanRenderer_default::createPipelines
 void VulkanRenderer_default::createPipelines() {
 	// create objects pipelines
-	for(uint32_t topology = 1; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_obj); topology++)
+	for(uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineCreate(context.device, shader_obj, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
 			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_T2_N3), vertexBindingDescriptions_P3_T2_N3,
@@ -248,7 +248,7 @@ void VulkanRenderer_default::createPipelines() {
 			&pipeline_obj[topology]);
 
 	// create objects pipelines wire frame
-	for (uint32_t topology = 1; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_obj_wf); topology++)
+	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineCreate(context.device, shader_obj, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
 			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_T2_N3), vertexBindingDescriptions_P3_T2_N3,
@@ -257,7 +257,7 @@ void VulkanRenderer_default::createPipelines() {
 			&pipeline_obj_wf[topology]);
 
 	// create debug pipelines
-	for (uint32_t topology = 1; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_debug); topology++)
+	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineCreate(context.device, shader_debug, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
 			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_C4), vertexBindingDescriptions_P3_C4,
@@ -266,7 +266,7 @@ void VulkanRenderer_default::createPipelines() {
 			&pipeline_debug[topology]);
 
 	// create GUI pipelines
-	for (uint32_t topology = 1; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_gui); topology++)
+	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineCreate(context.device, shader_gui, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
 			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_C4_T2), vertexBindingDescriptions_P4_C4_T2,
@@ -345,16 +345,16 @@ void VulkanRenderer_default::destroyShaders() {
 // VulkanRenderer_default::destroyPipelines
 void VulkanRenderer_default::destroyPipelines() {
 	// destroy GUI pipelines
-	for (uint32_t topology = 0; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_gui); topology++)
+	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineDestroy(context.device, pipeline_gui[topology]);
 	// destroy debug pipelines
-	for (uint32_t topology = 0; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_debug); topology++)
+	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineDestroy(context.device, pipeline_debug[topology]);
 	// destroy objects pipelines wire frame
-	for (uint32_t topology = 0; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_obj_wf); topology++)
+	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineDestroy(context.device, pipeline_obj_wf[topology]);
 		// destroy objects pipelines
-	for (uint32_t topology = 0; topology < VKT_ARRAY_ELEMENTS_COUNT(pipeline_obj); topology++)
+	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineDestroy(context.device, pipeline_obj[topology]);
 }
 
@@ -437,16 +437,15 @@ void VulkanRenderer_default::drawScene(VulkanScene* scene)
 
 	// VkRect2D (scissor)
 	VkRect2D scissor{};
-	scissor.offset.x = 0;
-	scissor.offset.y = 0;
+	scissor.offset = {0, 0};
 	scissor.extent = swapchain.surfaceCapabilities.currentExtent;
 	vkCmdSetScissor(commandBuffers[frameIndex].commandBuffer, 0, 1, &scissor);
 	
 	// set line width
 	vkCmdSetLineWidth(commandBuffers[frameIndex].commandBuffer, 1.0f);
 
-	// inside render pass
-	insideRenderPass(commandBuffers[frameIndex], scene);
+	// present render pass
+	presentRenderPass(commandBuffers[frameIndex], scene);
 
 	// end render pass
 	vkCmdEndRenderPass(commandBuffers[frameIndex].commandBuffer);
@@ -496,7 +495,7 @@ void VulkanRenderer_default::beforeRenderPass(
 }
 
 // VulkanRenderer_default::insideRenderPass
-void VulkanRenderer_default::insideRenderPass(
+void VulkanRenderer_default::presentRenderPass(
 	VulkanCommandBuffer& commandBuffer,
 	VulkanScene*         scene)
 {
@@ -510,7 +509,8 @@ void VulkanRenderer_default::insideRenderPass(
 		if (model->visible) {
 			for (auto& mesh : model->meshes) {
 				// bind pipeline
-				assert(mesh->primitiveTopology == VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
+				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
+				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
 				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer,
 					VK_PIPELINE_BIND_POINT_GRAPHICS,
 					pipeline_obj[mesh->primitiveTopology].pipeline);
@@ -522,7 +522,8 @@ void VulkanRenderer_default::insideRenderPass(
 		if (model->visibleDebug) {
 			for (auto& mesh : model->meshesDebug) {
 				// bind pipeline
-				assert(mesh->primitiveTopology == VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
+				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
+				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
 				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer,
 					VK_PIPELINE_BIND_POINT_GRAPHICS,
 					pipeline_debug[mesh->primitiveTopology].pipeline);

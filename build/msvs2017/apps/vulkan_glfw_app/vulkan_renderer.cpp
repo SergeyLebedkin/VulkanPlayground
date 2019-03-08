@@ -280,6 +280,7 @@ void VulkanRenderer_default::destroySwapchain() {
 	// destroy swapchain
 	vulkanSwapchainDestroy(context.device, swapchain);
 	// clear frames count
+	frameIndex = 0;
 	framesCount = 0;
 }
 
@@ -360,17 +361,19 @@ void VulkanRenderer_default::destroyPipelines() {
 
 // VulkanRenderer_default::reinitialize
 void VulkanRenderer_default::reinitialize() {
+	// wait device
+	VKT_CHECK(vkQueueWaitIdle(context.device.queueGraphics));
 	// destroy all related handles
 	destroyPipelines();
-	destroyRenderPass();
 	destroyFramebuffers();
+	destroyRenderPass();
 	destroyImages();
 	destroySwapchain();
 	// create all related handles
 	createSwapchain();
 	createImages();
-	createFramebuffers();
 	createRenderPass();
+	createFramebuffers();
 	createPipelines();
 }
 
@@ -394,6 +397,7 @@ float VulkanRenderer_default::getViewAspect() {
 void VulkanRenderer_default::drawScene(VulkanScene* scene) 
 {
 	// acquire next frame index
+	uint32_t imageIndex{};
 	VKT_CHECK(vkAcquireNextImageKHR(context.device.device, swapchain.swapchain, UINT64_MAX, presentSemaphores[frameIndex].semaphore, VK_NULL_HANDLE, &imageIndex));
 
 	// VkCommandBufferBeginInfo
@@ -445,7 +449,7 @@ void VulkanRenderer_default::drawScene(VulkanScene* scene)
 	vkCmdSetLineWidth(commandBuffers[frameIndex].commandBuffer, 1.0f);
 
 	// present render pass
-	presentRenderPass(commandBuffers[frameIndex], scene);
+	presentSubPass(commandBuffers[frameIndex], scene);
 
 	// end render pass
 	vkCmdEndRenderPass(commandBuffers[frameIndex].commandBuffer);
@@ -495,7 +499,7 @@ void VulkanRenderer_default::beforeRenderPass(
 }
 
 // VulkanRenderer_default::insideRenderPass
-void VulkanRenderer_default::presentRenderPass(
+void VulkanRenderer_default::presentSubPass(
 	VulkanCommandBuffer& commandBuffer,
 	VulkanScene*         scene)
 {

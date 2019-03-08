@@ -7,6 +7,15 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+// global renderer
+VulkanRenderer* renderer{};
+
+// framebufferSizeFunc
+void framebufferSizeFunc(GLFWwindow* window, int width, int height) {
+	assert(renderer);
+	renderer->reinitialize();
+}
+
 // main
 int main(int argc, char ** argv)
 {
@@ -15,6 +24,7 @@ int main(int argc, char ** argv)
 	if (!glfwVulkanSupported()) assert(0 && "Vulkan not supported");
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow* window = glfwCreateWindow(800, 600, "Simple example", NULL, NULL);
+	glfwSetFramebufferSizeCallback(window, framebufferSizeFunc);
 
 	// vulkan extensions
 	std::vector<const char *> enabledInstanceLayerNames{ "VK_LAYER_LUNARG_standard_validation" };
@@ -39,18 +49,18 @@ int main(int argc, char ** argv)
 	glfwCreateWindowSurface(context->instance.instance, window, NULL, &surface->surface);
 
 	// create vulkan renderer
-	VulkanRenderer* renderer = new VulkanRenderer_default(*context, *surface);
+	renderer = new VulkanRenderer_default(*context, *surface);
 
 	// create assets manages
 	VulkanAssetManager* assetsManager = new VulkanAssetManager(*context);
 	//assetsManager->loadFromFileObj("models/train/train.obj", "models/train");
-	assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
-	//assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
+	//assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
+	assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
 
 	// get loaded models
 	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/train/train.obj");
-	VulkanModel* model = assetsManager->createModelByMeshGroupName("models/rock/rock.obj");
-	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/tea/tea.obj");
+	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/rock/rock.obj");
+	VulkanModel* model = assetsManager->createModelByMeshGroupName("models/tea/tea.obj");
 
 	// create scene
 	VulkanScene* scene = new VulkanScene(*context);

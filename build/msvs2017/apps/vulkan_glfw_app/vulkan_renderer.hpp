@@ -37,7 +37,6 @@ protected:
 	VulkanSwapchain swapchain{};
 protected:
 	// swapchain frames and image indexes
-	uint32_t imageIndex{};
 	uint32_t frameIndex{};
 	uint32_t framesCount{};
 protected:
@@ -106,6 +105,6 @@ public:
 protected:
 	// render pass functions
 	void beforeRenderPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene);
-	void presentRenderPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene);
+	void presentSubPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene);
 	void afterRenderPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene);
 };

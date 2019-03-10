@@ -29,76 +29,24 @@ public:
 	~VulkanContext();
 };
 
+// VulkanContextObject
+class VulkanContextObject {
+protected:
+	// parent context
+	VulkanContext & context;
+public:
+	// constructor and destructor
+	VulkanContextObject(VulkanContext& context) : context(context) {}
+	virtual ~VulkanContextObject() {}
+
+	// update
+	virtual void update(VulkanCommandBuffer& commandBuffer) {};
+};
+
+/*
 // VesuvioEngine
 namespace VesuvioEngine
 {
-	// VulkanContextObject
-	class VulkanContextObject {
-	protected:
-		// parent context
-		VulkanContext & context;
-	public:
-		// constructor and destructor
-		VulkanContextObject(VulkanContext& context) : context(context) {}
-		virtual ~VulkanContextObject() {}
-
-		// update
-		virtual void update(VulkanCommandBuffer& commandBuffer) {};
-	};
-
-	// VulkanMaterial
-	class VulkanMaterial : public VulkanContextObject {
-	protected:
-		VulkanDescriptorSet descriptorSet{};
-	public:
-		// constructor and destructor
-		VulkanMaterial(VulkanContext& context) : VulkanContextObject(context) {};
-		~VulkanMaterial() {}
-
-		// bind
-		virtual void bind(VulkanCommandBuffer& commandBuffer) {
-			// bind descriptor set
-			vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-				context.pipelineLayout.pipelineLayout, 0, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
-		};
-	};
-
-	// VulkanMaterialColors
-	struct VulkanMaterialColors {
-		float diffuseColor[4];
-		float ambientColor[4];
-		float specularColor[4];
-		float emissionColor[4];
-	};
-
-	// VulkanMaterial_colored
-	class VulkanMaterial_colored : public VulkanMaterial {
-	protected:
-		// buffer material colors
-		VulkanBuffer bufferMaterialColors{};
-	public:
-		// material colors
-		VulkanMaterialColors materialColors{};
-	public:
-		// constructor and destructor
-		VulkanMaterial_colored(VulkanContext& context) : VulkanMaterial(context) {};
-		~VulkanMaterial_colored() {}
-
-		// update
-		void update(VulkanCommandBuffer& commandBuffer) {
-			vkCmdUpdateBuffer(commandBuffer.commandBuffer, bufferMaterialColors.buffer, 0, sizeof(materialColors), &materialColors);
-		};
-	};
-
-	// VulkanMaterial_textured
-	class VulkanMaterial_textured : public VulkanMaterial_colored {
-	public:
-		// diffuse image
-		void setDiffuseImage(VulkanImage* image) {
-			vulkanDescriptorSetUpdateImage(context.device, descriptorSet, *image, context.defaultSampler, 0);
-		}
-	};
-
 	// VulkanMesh
 	class VulkanMesh : public VulkanContextObject {
 	public:
@@ -159,9 +107,6 @@ namespace VesuvioEngine
 
 	// VulkanModel
 	class VulkanModel : public VulkanContextObject {
-	protected:
-		// mdoel descriptor set
-		VulkanDescriptorSet descriptorSet{};
 	protected:
 		// model matrix buffer
 		VulkanBuffer bufferModelMatrix{};
@@ -236,3 +181,4 @@ namespace VesuvioEngine
 		};
 	};
 }
+*/

@@ -242,8 +242,8 @@ void VulkanRenderer_default::createPipelines() {
 	for(uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineCreate(context.device, shader_obj, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_T2_N3), vertexBindingDescriptions_P3_T2_N3,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P3_T2_N3), vertexInputAttributeDescriptions_P3_T2_N3,
+			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
+			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
 			VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 			&pipeline_obj[topology]);
 
@@ -251,8 +251,8 @@ void VulkanRenderer_default::createPipelines() {
 	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineCreate(context.device, shader_obj, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_T2_N3), vertexBindingDescriptions_P3_T2_N3,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P3_T2_N3), vertexInputAttributeDescriptions_P3_T2_N3,
+			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
+			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
 			VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 			&pipeline_obj_wf[topology]);
 
@@ -260,8 +260,8 @@ void VulkanRenderer_default::createPipelines() {
 	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineCreate(context.device, shader_debug, context.pipelineLayout, renderPass, 0,
 			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P3_C4), vertexBindingDescriptions_P3_C4,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P3_C4), vertexInputAttributeDescriptions_P3_C4,
+			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_C4), vertexBindingDescriptions_P4_C4,
+			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_C4), vertexInputAttributeDescriptions_P4_C4,
 			VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 			&pipeline_debug[topology]);
 
@@ -495,7 +495,7 @@ void VulkanRenderer_default::beforeRenderPass(
 	VulkanScene*         scene) 
 {
 	// scene before render pass
-	scene->beforeRender(commandBuffer);
+	scene->update(commandBuffer);
 }
 
 // VulkanRenderer_default::insideRenderPass
@@ -524,7 +524,7 @@ void VulkanRenderer_default::presentSubPass(
 		}
 		// draw debug meshes
 		if (model->visibleDebug) {
-			for (auto& mesh : model->meshesDebug) {
+			for (auto& mesh : model->meshes_debug) {
 				// bind pipeline
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
@@ -543,6 +543,4 @@ void VulkanRenderer_default::afterRenderPass(
 	VulkanCommandBuffer& commandBuffer,
 	VulkanScene*         scene)
 {
-	// scene after render pass
-	scene->afterRender(commandBuffer);
 }

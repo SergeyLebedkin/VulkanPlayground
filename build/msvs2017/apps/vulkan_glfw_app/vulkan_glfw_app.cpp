@@ -54,18 +54,18 @@ int main(int argc, char ** argv)
 	// create assets manages
 	VulkanAssetManager* assetsManager = new VulkanAssetManager(*context);
 	//assetsManager->loadFromFileObj("models/train/train.obj", "models/train");
-	//assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
+	assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
 	assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
 
 	// get loaded models
 	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/train/train.obj");
-	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/rock/rock.obj");
-	VulkanModel* model = assetsManager->createModelByMeshGroupName("models/tea/tea.obj");
+	VulkanModel* model = assetsManager->createModelByMeshGroupName("models/rock/rock.obj");
+	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/tea/tea.obj");
 
 	// create scene
 	VulkanScene* scene = new VulkanScene(*context);
-	scene->matView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	scene->matProj = glm::perspective(glm::radians(45.0f), renderer->getViewAspect(), 0.1f, 10.f);
+	scene->matrixView = glm::lookAt(glm::vec3(0.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	scene->matrixProjection = glm::perspective(glm::radians(45.0f), renderer->getViewAspect(), 0.1f, 10.f);
 	scene->models.push_back(model);
 
 	// create time stamp
@@ -80,7 +80,7 @@ int main(int argc, char ** argv)
 		timeStampPrint(std::cout, timeStamp, 1.0f);
 
 		// rotate model
-		model->matModel = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), timeStamp.accumTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		model->matrixModel = glm::rotate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / 1.0f)), timeStamp.accumTime, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		// draw scene
 		renderer->drawScene(scene);

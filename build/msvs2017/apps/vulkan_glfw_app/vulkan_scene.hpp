@@ -1,28 +1,30 @@
 #pragma once
 
 #include "vulkan_model.hpp"
-#include <vector>
 
 // VulkanScene
-class VulkanScene {
+class VulkanScene : public VulkanContextObject {
 protected:
-	VulkanContext& context;
-protected:
-	VulkanBuffer        bufferViewProjMatrices;
+	// scene descriptor set
 	VulkanDescriptorSet descriptorSet{};
+protected:
+	// view-projection matrices buffer
+	VulkanBuffer bufferViewProjectionMatrices;
 public:
+	// models
 	std::vector<VulkanModel*> models{};
-	glm::mat4                 matView;
-	glm::mat4                 matProj;
+public:
+	// view and projection matrices
+	glm::mat4 matrixView;
+	glm::mat4 matrixProjection;
 public:
 	// constructor and destructor
 	VulkanScene(VulkanContext& context);
-	virtual ~VulkanScene();
+	~VulkanScene();
+
+	// update
+	void update(VulkanCommandBuffer& commandBuffer) override;
 
 	// bind
 	virtual void bind(VulkanCommandBuffer& commandBuffer);
-
-	// render
-	virtual void beforeRender(VulkanCommandBuffer& commandBuffer);
-	virtual void afterRender(VulkanCommandBuffer& commandBuffer);
 };

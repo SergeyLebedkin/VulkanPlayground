@@ -3,7 +3,7 @@
 
 // VulkanModel::VulkanModel
 VulkanModel::VulkanModel(VulkanContext& context) :
-	context(context), visible(VK_TRUE), visibleDebug(VK_FALSE), matModel(glm::mat4(1.0f))
+	VulkanContextObject(context), matrixModel(1.0f), visible(VK_TRUE), visibleDebug(VK_FALSE)
 {
 	// create model matrix buffer
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4), &bufferModelMatrix);
@@ -22,11 +22,17 @@ VulkanModel::~VulkanModel()
 	vulkanBufferDestroy(context.device, bufferModelMatrix);
 }
 
-// VulkanModel::beforeRender
-void VulkanModel::beforeRender(VulkanCommandBuffer& commandBuffer)
+// VulkanModel::update
+void VulkanModel::update(VulkanCommandBuffer& commandBuffer)
 {
-	// update scene descriptor set
-	vkCmdUpdateBuffer(commandBuffer.commandBuffer, bufferModelMatrix.buffer, 0, sizeof(matModel), &matModel);
+	// update model matrix
+	vkCmdUpdateBuffer(commandBuffer.commandBuffer, bufferModelMatrix.buffer, 0, sizeof(matrixModel), &matrixModel);
+	// update meshes
+	for (auto& mesh : meshes)
+		mesh->update(commandBuffer);
+	// update debug meshes
+	for (auto& mesh : meshes_debug)
+		mesh->update(commandBuffer);
 }
 
 // VulkanModel::draw
@@ -34,10 +40,4 @@ void VulkanModel::bind(VulkanCommandBuffer& commandBuffer)
 {
 	// bind descriptor set
 	vkCmdBindDescriptorSets(commandBuffer.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, context.pipelineLayout.pipelineLayout, 1, 1, &descriptorSet.descriptorSet, 0, VK_NULL_HANDLE);
-}
-
-// VulkanModel::afterRender
-void VulkanModel::afterRender(VulkanCommandBuffer& commandBuffer)
-{
-	// nothing
 }

@@ -26,30 +26,30 @@ const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P4_C4_T
 //////////////////////////////////////////////////////////////////////////
 
 // VkVertexInputBindingDescription
-const VkVertexInputBindingDescription vertexBindingDescriptions_P3_T2_N3[]{
-{ 0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
+const VkVertexInputBindingDescription vertexBindingDescriptions_P4_T2_N3[]{
+{ 0, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
 { 1, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX },
 { 2, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
 };
 
 // VkVertexInputAttributeDescription
-const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P3_T2_N3[]{
-{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 }, // position - 3
-{ 1, 1, VK_FORMAT_R32G32_SFLOAT   , 0 }, // texCoord - 2
-{ 2, 2, VK_FORMAT_R32G32B32_SFLOAT, 0 }, // normal   - 3
+const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P4_T2_N3[]{
+{ 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // position - 4
+{ 1, 1, VK_FORMAT_R32G32_SFLOAT      , 0 }, // texCoord - 2
+{ 2, 2, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // normal   - 3
 };
 
 //////////////////////////////////////////////////////////////////////////
 
 // VkVertexInputBindingDescription
-const VkVertexInputBindingDescription vertexBindingDescriptions_P3_C4[]{
-{ 0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
+const VkVertexInputBindingDescription vertexBindingDescriptions_P4_C4[]{
+{ 0, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
 { 1, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
 };
 
 // VkVertexInputAttributeDescription
-const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P3_C4[]{
-{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT,    0 }, // position - 3
+const VkVertexInputAttributeDescription vertexInputAttributeDescriptions_P4_C4[]{
+{ 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // position - 4
 { 1, 1, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // color    - 4
 };
 

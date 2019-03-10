@@ -5,31 +5,31 @@
 #include <vector>
 
 // VulkanModel
-class VulkanModel {
+class VulkanModel : public VulkanContextObject {
 protected:
-	// context
-	VulkanContext& context;
+	// model descriptor set
+	VulkanDescriptorSet descriptorSet{};
 protected:
-	VulkanBuffer        bufferModelMatrix;
-	VulkanDescriptorSet descriptorSet;
+	// model matrix buffer
+	VulkanBuffer bufferModelMatrix{};
+public:
+	// model matrix
+	glm::mat4 matrixModel = glm::mat4(1.0f);
 public:
 	// meshes
-	std::vector<VulkanMesh*>       meshes{};
-	std::vector<VulkanMesh_debug*> meshesDebug{};
+	std::vector<VulkanMesh_material*> meshes{};
+	std::vector<VulkanMesh_color*>    meshes_debug{};
 public:
 	VkBool32 visible{};
 	VkBool32 visibleDebug{};
-public:
-	glm::mat4 matModel;
 public:
 	// constructor and destructor
 	VulkanModel(VulkanContext& context);
 	virtual ~VulkanModel();
 
+	// update
+	void update(VulkanCommandBuffer& commandBuffer) override;
+
 	// bind
 	virtual void bind(VulkanCommandBuffer& commandBuffer);
-
-	// render
-	virtual void beforeRender(VulkanCommandBuffer& commandBuffer);
-	virtual void afterRender(VulkanCommandBuffer& commandBuffer);
 };

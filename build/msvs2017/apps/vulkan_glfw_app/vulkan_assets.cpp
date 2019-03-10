@@ -9,8 +9,8 @@ VulkanAssetManager::VulkanAssetManager(VulkanContext& context)
 	: context(context)
 {
 	// create default material
-	defaultMaterial = new VulkanMaterial(context);
-	defaultMaterial->setImage(context.defaultImage, context.defaultSampler, 0);
+	defaultMaterial = new VulkanMaterial_textured(context);
+	defaultMaterial->setDiffuseImage(&context.defaultImage, &context.defaultSampler);
 };
 
 // VulkanAssetManager::~VulkanAssetManager
@@ -132,7 +132,7 @@ void VulkanAssetManager::addMeterialFromObj(
 	// check material name
 	assert(material_obj.name.size() > 0);
 	// create material
-	VulkanMaterial* material = new VulkanMaterial(context);
+	VulkanMaterial_textured* material = new VulkanMaterial_textured(context);
 	addMaterial(material_obj.name, material);
 	VulkanImage* imageDeffuse = &context.defaultImage;
 	// load diffuse image
@@ -145,11 +145,11 @@ void VulkanAssetManager::addMeterialFromObj(
 		if (image) imageDeffuse = image;
 	}
 	// set diffuse image
-	material->setImage(*imageDeffuse, context.defaultSampler, 0);
+	material->setDiffuseImage(imageDeffuse, &context.defaultSampler);
 }
 
 // VulkanAssetManager::addMesh
-void VulkanAssetManager::addMesh(const std::string name, VulkanMesh* mesh) {
+void VulkanAssetManager::addMesh(const std::string name, VulkanMesh_material* mesh) {
 	// check name
 	assert(name.size() > 0);
 	// add if not exist
@@ -251,7 +251,7 @@ VulkanModel* VulkanAssetManager::createModelByMeshNames(const std::vector<std::s
 				if (mesh_item->mesh) 
 					model->meshes.push_back(mesh_item->mesh);
 				if (mesh_item->meshDebug) 
-					model->meshesDebug.push_back(mesh_item->meshDebug);
+					model->meshes_debug.push_back(mesh_item->meshDebug);
 			}
 		}
 	}
@@ -270,7 +270,7 @@ VulkanModel* VulkanAssetManager::createModelByMeshGroupName(const std::string na
 			if (mesh_item->mesh) 
 				model->meshes.push_back(mesh_item->mesh);
 			if (mesh_item->meshDebug) 
-				model->meshesDebug.push_back(mesh_item->meshDebug);
+				model->meshes_debug.push_back(mesh_item->meshDebug);
 		}
 		return model;
 	}
@@ -317,13 +317,13 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 	std::vector<std::string> mesh_names;
 
 	// allocate buffers mesh
-	std::vector<glm::vec3> vectorPos{};
+	std::vector<glm::vec4> vectorPos{};
 	std::vector<glm::vec3> vectorNrm{};
 	std::vector<glm::vec3> vectorTan{};
 	std::vector<glm::vec3> vectorBit{};
 	std::vector<glm::vec2> vectorTex{};
 	// allocate buffers normals
-	std::vector<glm::vec3> vectorNrmPos{};
+	std::vector<glm::vec4> vectorNrmPos{};
 	std::vector<glm::vec4> vectorNrmCol{};
 	for (const auto& shape : shapes)
 	{
@@ -348,11 +348,11 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 		{
 			// if vertex exists
 			if (index.vertex_index >= 0)
-				vectorPos.push_back(glm::vec3(
-				(attribs.vertices[3 * index.vertex_index + 0] - centerPos.x) * scale,
+				vectorPos.push_back(glm::vec4(
+					(attribs.vertices[3 * index.vertex_index + 0] - centerPos.x) * scale,
 					(attribs.vertices[3 * index.vertex_index + 1] - centerPos.y) * scale,
-					(attribs.vertices[3 * index.vertex_index + 2] - centerPos.z) * scale));
-			else vectorPos.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
+					(attribs.vertices[3 * index.vertex_index + 2] - centerPos.z) * scale, 1.0f));
+			else vectorPos.push_back(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 			// if normal exists
 			if (index.normal_index >= 0)
@@ -373,9 +373,9 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 		// calculate bi-normal and tangent
 		for (size_t i = 0; i < vectorPos.size(); i += 3) {
 			// Shortcuts for vertices
-			glm::vec3& v0 = vectorPos[i + 0];
-			glm::vec3& v1 = vectorPos[i + 1];
-			glm::vec3& v2 = vectorPos[i + 2];
+			glm::vec4& v0 = vectorPos[i + 0];
+			glm::vec4& v1 = vectorPos[i + 1];
+			glm::vec4& v2 = vectorPos[i + 2];
 
 			// Shortcuts for UVs
 			glm::vec2& uv0 = vectorTex[i + 0];
@@ -405,17 +405,17 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 		// add normals, tangents and bi-normals
 		for (size_t i = 0; i < vectorPos.size(); i++) {
 			vectorNrmPos.push_back(vectorPos[i]);
-			vectorNrmPos.push_back(vectorPos[i] + vectorNrm[i] * 0.05f);
+			vectorNrmPos.push_back(vectorPos[i] + glm::vec4(vectorNrm[i] * 0.05f, 1.0f));
 			vectorNrmCol.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 			vectorNrmCol.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
 			vectorNrmPos.push_back(vectorPos[i]);
-			vectorNrmPos.push_back(vectorPos[i] + vectorTan[i] * 0.05f);
+			vectorNrmPos.push_back(vectorPos[i] + glm::vec4(vectorTan[i] * 0.05f, 1.0f));
 			vectorNrmCol.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
 			vectorNrmCol.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
 
 			vectorNrmPos.push_back(vectorPos[i]);
-			vectorNrmPos.push_back(vectorPos[i] + vectorBit[i] * 0.05f);
+			vectorNrmPos.push_back(vectorPos[i] + glm::vec4(vectorBit[i] * 0.05f, 1.0f));
 			vectorNrmCol.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 			vectorNrmCol.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 		}
@@ -430,12 +430,13 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 		if (!material) material = defaultMaterial;
 
 		// create mesh
-		VulkanMesh* mesh = new VulkanMesh_obj(
+		VulkanMesh_obj* mesh = new VulkanMesh_obj(
 			context, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-			material, vectorPos, vectorTex, vectorNrm);
+			vectorPos, vectorTex, vectorNrm);
+		mesh->setMaterial(material);
 
 		// create debug mesh
-		VulkanMesh_debug* meshDebug = new VulkanMesh_debug(
+		VulkanMesh_color* meshDebug = new VulkanMesh_color(
 			context, VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
 			vectorNrmPos, vectorNrmCol);
 

@@ -26,13 +26,13 @@ struct VulkanMaterialItem {
 
 // VulkanMeshItem
 struct VulkanMeshItem {
-	std::string       name{};
-	VulkanMesh*       mesh{};
-	VulkanMesh_debug* meshDebug{};
+	std::string          name{};
+	VulkanMesh_material* mesh{};
+	VulkanMesh_color*    meshDebug{};
 	VulkanMeshItem(
-		std::string       name,
-		VulkanMesh*       mesh,
-		VulkanMesh_debug* meshDebug) :
+		std::string          name,
+		VulkanMesh_material* mesh,
+		VulkanMesh_color*    meshDebug) :
 		name(name),
 		mesh(mesh),
 		meshDebug(meshDebug) {}
@@ -64,7 +64,7 @@ protected:
 	VulkanMeshItem*     getMeshItemByName(const std::string name);
 public:
 	// default material
-	VulkanMaterial* defaultMaterial{};
+	VulkanMaterial_textured* defaultMaterial{};
 public:
 	// constructor and destructor
 	VulkanAssetManager(VulkanContext& context);
@@ -81,7 +81,7 @@ public:
 	void addImageFromfile(const std::string fileName);
 	void addMaterial(const std::string name, VulkanMaterial* material);
 	void addMeterialFromObj(const std::string basePath, const tinyobj::material_t& material_obj);
-	void addMesh(const std::string name, VulkanMesh* mesh);
+	void addMesh(const std::string name, VulkanMesh_material* mesh);
 	void addMeshGroup(const std::string name, const std::vector<std::string> meshNames);
 
 	// get functions

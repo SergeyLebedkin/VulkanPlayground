@@ -24,7 +24,7 @@ void VulkanMaterial::bind(VulkanCommandBuffer& commandBuffer) {
 
 // VulkanMaterial_textured::setDiffuseImage
 void VulkanMaterial_textured::setDiffuseImage(VulkanImage* image, VulkanSampler* sampler) {
-	// set deffuse image to descryptor set (binding 0)
+	// set diffuse image to descriptor set (binding 0)
 	vulkanDescriptorSetUpdateImage(context.device, descriptorSet, *image, *sampler, 0);
 }
 
@@ -33,8 +33,8 @@ void VulkanMaterial_textured::setDiffuseImage(VulkanImage* image, VulkanSampler*
 // VulkanMaterial_colored::VulkanMaterial_colored
 VulkanMaterial_colored::VulkanMaterial_colored(VulkanContext& context) : VulkanMaterial_textured(context) {
 	// create buffers
-	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(materialColors), &bufferMaterialColors);
-	// set deffuse image to descryptor set (binding 1)
+	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(materialInfo), &bufferMaterialColors);
+	// set descriptor set (binding 1)
 	vulkanDescriptorSetUpdateBufferUniform(context.device, descriptorSet, bufferMaterialColors, 1);
 };
 
@@ -46,56 +46,56 @@ VulkanMaterial_colored::~VulkanMaterial_colored() {
 
 // VulkanMaterial_colored::setDiffuseColor
 void VulkanMaterial_colored::setDiffuseColor(const glm::vec4 color) {
-	materialColors.diffuseColor = color;
+	materialInfo.diffuseColor = color;
 }
 
 // VulkanMaterial_colored::setAmbientColor
 void VulkanMaterial_colored::setAmbientColor(const glm::vec4 color) {
-	materialColors.ambientColor = color;
+	materialInfo.ambientColor = color;
 }
 
 // VulkanMaterial_colored::setEmissionColor
 void VulkanMaterial_colored::setEmissionColor(const glm::vec4 color) {
-	materialColors.emissionColor = color;
+	materialInfo.emissionColor = color;
 }
 
 // VulkanMaterial_colored::setSpecularColor
 void VulkanMaterial_colored::setSpecularColor(const glm::vec4 color) {
-	materialColors.specularColor = color;
+	materialInfo.specularColor = color;
 }
 
 // VulkanMaterial_colored::setSpecularFactor
 void VulkanMaterial_colored::setSpecularFactor(float factor) {
-	materialColors.specularFactor = factor;
+	materialInfo.specularFactor = factor;
 }
 
 // VulkanMaterial_colored::getDiffuseColor
 glm::vec4 VulkanMaterial_colored::getDiffuseColor() const {
-	return materialColors.diffuseColor;
+	return materialInfo.diffuseColor;
 }
 
 // VulkanMaterial_colored::getAmbientColor
 glm::vec4 VulkanMaterial_colored::getAmbientColor() const {
-	return materialColors.ambientColor;
+	return materialInfo.ambientColor;
 }
 
 // VulkanMaterial_colored::getEmissionColor
 glm::vec4 VulkanMaterial_colored::getEmissionColor() const {
-	return materialColors.emissionColor;
+	return materialInfo.emissionColor;
 }
 
 // VulkanMaterial_colored::getSpecularColor
 glm::vec4 VulkanMaterial_colored::getSpecularColor() const {
-	return materialColors.specularColor;
+	return materialInfo.specularColor;
 }
 
 // VulkanMaterial_colored::getSpecularFactor
 float VulkanMaterial_colored::getSpecularFactor() const {
-	return materialColors.specularFactor;
+	return materialInfo.specularFactor;
 }
 
 // VulkanMaterial_colored::update
 void VulkanMaterial_colored::update(VulkanCommandBuffer& commandBuffer) {
 	// update material color buffers
-	vkCmdUpdateBuffer(commandBuffer.commandBuffer, bufferMaterialColors.buffer, 0, sizeof(materialColors), &materialColors);
+	vkCmdUpdateBuffer(commandBuffer.commandBuffer, bufferMaterialColors.buffer, 0, sizeof(materialInfo), &materialInfo);
 };

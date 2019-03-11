@@ -354,7 +354,7 @@ void VulkanRenderer_default::destroyPipelines() {
 	// destroy objects pipelines wire frame
 	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineDestroy(context.device, pipeline_obj_wf[topology]);
-		// destroy objects pipelines
+	// destroy objects pipelines
 	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
 		vulkanPipelineDestroy(context.device, pipeline_obj[topology]);
 }
@@ -515,8 +515,7 @@ void VulkanRenderer_default::presentSubPass(
 				// bind pipeline
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
-				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer,
-					VK_PIPELINE_BIND_POINT_GRAPHICS,
+				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 					pipeline_obj[mesh->primitiveTopology].pipeline);
 				// draw mesh
 				mesh->draw(commandBuffers[frameIndex]);
@@ -528,8 +527,7 @@ void VulkanRenderer_default::presentSubPass(
 				// bind pipeline
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
-				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer,
-					VK_PIPELINE_BIND_POINT_GRAPHICS,
+				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 					pipeline_debug[mesh->primitiveTopology].pipeline);
 				// draw mesh
 				mesh->draw(commandBuffers[frameIndex]);

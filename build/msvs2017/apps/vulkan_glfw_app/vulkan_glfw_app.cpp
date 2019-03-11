@@ -55,7 +55,7 @@ int main(int argc, char ** argv)
 	VulkanAssetManager* assetsManager = new VulkanAssetManager(*context);
 	//assetsManager->loadFromFileObj("models/train/train.obj", "models/train");
 	assetsManager->loadFromFileObj("models/rock/rock.obj", "models/rock");
-	assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
+	//assetsManager->loadFromFileObj("models/tea/tea.obj", "models/tea");
 
 	// get loaded models
 	//VulkanModel* model = assetsManager->createModelByMeshGroupName("models/train/train.obj");

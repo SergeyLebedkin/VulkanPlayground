@@ -26,13 +26,13 @@ public:
 	void setDiffuseImage(VulkanImage* image, VulkanSampler* sampler);
 };
 
-// VulkanMaterialColors
-struct VulkanMaterialColors {
-	glm::vec4 diffuseColor{};
-	glm::vec4 ambientColor{};
-	glm::vec4 emissionColor{};
-	glm::vec4 specularColor{};
-	float specularFactor{};
+// VulkanMaterialInfo
+struct VulkanMaterialInfo {
+	glm::vec4 diffuseColor = glm::vec4(1.0f);
+	glm::vec4 ambientColor = glm::vec4(1.0f);
+	glm::vec4 emissionColor = glm::vec4(1.0f);
+	glm::vec4 specularColor = glm::vec4(1.0f);
+	float specularFactor = 32.0f;
 };
 
 // VulkanMaterial_colored
@@ -40,9 +40,9 @@ class VulkanMaterial_colored : public VulkanMaterial_textured {
 protected:
 	// buffer material colors
 	VulkanBuffer bufferMaterialColors{};
-public:
-	// material colors
-	VulkanMaterialColors materialColors{};
+protected:
+	// material info
+	VulkanMaterialInfo materialInfo{};
 public:
 	// constructor and destructor
 	VulkanMaterial_colored(VulkanContext& context);

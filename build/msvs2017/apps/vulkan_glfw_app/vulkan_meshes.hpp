@@ -6,18 +6,15 @@
 #include <array>
 
 // VulkanMesh
-class VulkanMesh : public VulkanContextObject {
+class VulkanMesh : public VulkanContextDrawableObject {
 public:
 	// primitive topology
 	VkPrimitiveTopology primitiveTopology{};
 public:
 	// constructor and destructor
 	VulkanMesh(VulkanContext& context, VkPrimitiveTopology primitiveTopology) :
-		VulkanContextObject(context), primitiveTopology(primitiveTopology) {};
+		VulkanContextDrawableObject(context), primitiveTopology(primitiveTopology) {};
 	~VulkanMesh() {}
-
-	// draw
-	virtual void draw(VulkanCommandBuffer& commandBuffer) = 0;
 };
 
 // VulkanMesh_color

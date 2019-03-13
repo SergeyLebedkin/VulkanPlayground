@@ -3,27 +3,14 @@
 #include "vulkan_context.hpp"
 #include <glm/vec4.hpp>
 
-// VulkanMaterial
-class VulkanMaterial : public VulkanContextObject {
-protected:
-	VulkanDescriptorSet descriptorSet{};
-public:
-	// constructor and destructor
-	VulkanMaterial(VulkanContext& context);
-	~VulkanMaterial();
-
-	// bind
-	virtual void bind(VulkanCommandBuffer& commandBuffer);
-};
-
-// VulkanMaterial_textured
-class VulkanMaterial_textured : public VulkanMaterial {
-public:
-	// constructor and destructor
-	VulkanMaterial_textured(VulkanContext& context) : VulkanMaterial(context) {};
-
-	// set diffuse image
-	void setDiffuseImage(VulkanImage* image, VulkanSampler* sampler);
+// VulkanMaterialUsage
+enum VulkanMaterialUsage {
+	VULKAN_MATERIAL_USAGE_COLOR = 0,
+	VULKAN_MATERIAL_USAGE_COLOR_LIGHT = 1,
+	VULKAN_MATERIAL_USAGE_COLOR_TEXTURE = 2,
+	VULKAN_MATERIAL_USAGE_COLOR_TEXTURE_LIGHT = 3,
+	VULKAN_MATERIAL_USAGE_COLOR_TEXTURE_LIGHT_BUMPMAP = 4,
+	VULKAN_MATERIAL_USAGE_COLOR_TEXTURE_LIGHT_PBR = 5
 };
 
 // VulkanMaterialInfo
@@ -35,18 +22,22 @@ struct VulkanMaterialInfo {
 	float specularFactor = 32.0f;
 };
 
-// VulkanMaterial_colored
-class VulkanMaterial_colored : public VulkanMaterial_textured {
+// VulkanMaterial
+class VulkanMaterial : public VulkanContextObject {
 protected:
+	// descriptor set
+	VulkanDescriptorSet descriptorSet{};
 	// buffer material colors
 	VulkanBuffer bufferMaterialColors{};
-protected:
 	// material info
 	VulkanMaterialInfo materialInfo{};
+public: 
+	// material usage
+	VulkanMaterialUsage materialUsage{};
 public:
 	// constructor and destructor
-	VulkanMaterial_colored(VulkanContext& context);
-	~VulkanMaterial_colored();
+	VulkanMaterial(VulkanContext& context);
+	~VulkanMaterial();
 
 	// set colors
 	void setDiffuseColor(const glm::vec4 color);
@@ -62,7 +53,13 @@ public:
 	glm::vec4 getSpecularColor() const;
 	float getSpecularFactor() const;
 
-	// update
-	void update(VulkanCommandBuffer& commandBuffer);
-};
+	// set diffuse image
+	void setDiffuseImage(VulkanImage* image, VulkanSampler* sampler);
+	void setNormalMapImage(VulkanImage* image, VulkanSampler* sampler);
 
+	// update
+	void update(VulkanCommandBuffer& commandBuffer) override;
+
+	// bind
+	virtual void bind(VulkanCommandBuffer& commandBuffer);
+};

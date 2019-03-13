@@ -64,7 +64,7 @@ protected:
 	VulkanMeshItem*     getMeshItemByName(const std::string name);
 public:
 	// default material
-	VulkanMaterial_textured* defaultMaterial{};
+	VulkanMaterial* defaultMaterial{};
 public:
 	// constructor and destructor
 	VulkanAssetManager(VulkanContext& context);

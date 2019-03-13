@@ -9,7 +9,7 @@ VulkanAssetManager::VulkanAssetManager(VulkanContext& context)
 	: context(context)
 {
 	// create default material
-	defaultMaterial = new VulkanMaterial_textured(context);
+	defaultMaterial = new VulkanMaterial(context);
 	defaultMaterial->setDiffuseImage(&context.defaultImage, &context.defaultSampler);
 };
 
@@ -132,7 +132,7 @@ void VulkanAssetManager::addMeterialFromObj(
 	// check material name
 	assert(material_obj.name.size() > 0);
 	// create material
-	VulkanMaterial_textured* material = new VulkanMaterial_textured(context);
+	VulkanMaterial* material = new VulkanMaterial(context);
 	addMaterial(material_obj.name, material);
 	VulkanImage* imageDeffuse = &context.defaultImage;
 	// load diffuse image

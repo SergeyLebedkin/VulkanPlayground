@@ -490,18 +490,14 @@ void VulkanRenderer_default::drawScene(VulkanScene* scene)
 }
 
 // VulkanRenderer_default::beforeRenderPass
-void VulkanRenderer_default::beforeRenderPass(
-	VulkanCommandBuffer& commandBuffer,
-	VulkanScene*         scene) 
+void VulkanRenderer_default::beforeRenderPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene) 
 {
 	// scene before render pass
 	scene->update(commandBuffer);
 }
 
 // VulkanRenderer_default::insideRenderPass
-void VulkanRenderer_default::presentSubPass(
-	VulkanCommandBuffer& commandBuffer,
-	VulkanScene*         scene)
+void VulkanRenderer_default::presentSubPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene)
 {
 	// bind scene data to shader
 	scene->bind(commandBuffers[frameIndex]);
@@ -537,8 +533,6 @@ void VulkanRenderer_default::presentSubPass(
 }
 
 // VulkanRenderer_default::afterRenderPass
-void VulkanRenderer_default::afterRenderPass(
-	VulkanCommandBuffer& commandBuffer,
-	VulkanScene*         scene)
+void VulkanRenderer_default::afterRenderPass(VulkanCommandBuffer& commandBuffer, VulkanScene* scene)
 {
 }

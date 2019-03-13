@@ -4,6 +4,12 @@
 #include "vulkan_scene.hpp"
 
 // VulkanRenderer
+class VulkanRenderer;
+
+// renderer callback function type
+typedef void(* VulkanRendererCallbackFunc)(VulkanRenderer& renderer, VulkanCommandBuffer& commandBuffer);
+
+// VulkanRenderer
 class VulkanRenderer {
 protected:
 	// base handles

@@ -252,29 +252,29 @@ void VulkanRenderer_default::createPipelines() {
 			// create pipeline mesh object
 			vulkanPipelineCreate(context.device, shader_mesh_obj[materialUsage], context.pipelineLayout, renderPass, 0,
 				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
-				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
-				VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj), vertexBindingDescriptions_mesh_obj,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj), vertexAttributeDescriptions_mesh_obj,
 				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 				&pipeline_mesh_obj[materialUsage][topology]);
 			// create pipeline mesh object (wireframe)
 			vulkanPipelineCreate(context.device, shader_mesh_obj[materialUsage], context.pipelineLayout, renderPass, 0,
 				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
-				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
-				VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj), vertexBindingDescriptions_mesh_obj,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj), vertexAttributeDescriptions_mesh_obj,
 				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 				&pipeline_mesh_obj_wf[materialUsage][topology]);
 			// create pipeline mesh object skin
 			vulkanPipelineCreate(context.device, shader_mesh_obj_skin[materialUsage], context.pipelineLayout, renderPass, 0,
 				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
-				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
-				VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj_skin), vertexBindingDescriptions_mesh_obj_skin,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj_skin), vertexAttributeDescriptions_mesh_obj_skin,
 				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 				&pipeline_mesh_obj_skin[materialUsage][topology]);
 			// create pipeline mesh object skin (wireframe)
 			vulkanPipelineCreate(context.device, shader_mesh_obj_skin[materialUsage], context.pipelineLayout, renderPass, 0,
 				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
-				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
-				VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj_skin), vertexBindingDescriptions_mesh_obj_skin,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj_skin), vertexAttributeDescriptions_mesh_obj_skin,
 				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 				&pipeline_mesh_obj_skin_wf[materialUsage][topology]);
 		}

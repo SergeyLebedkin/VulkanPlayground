@@ -5,6 +5,8 @@
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec2 aTexCoords;
 layout(location = 2) in vec3 aNormal;
+layout(location = 3) in vec3 aTargent;
+layout(location = 4) in vec3 aBinormal;
 
 // outputs
 layout(location = 0) out vec3 vPosition;

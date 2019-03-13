@@ -39,29 +39,77 @@
     <ClInclude Include="vulkan_descriptors.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\debug.frag.glsl">
+    <None Include="shaders\mesh_obj_color.frag.glsl">
       <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\debug.vert.glsl">
+    </None>
+    <None Include="shaders\mesh_obj_color.vert.glsl">
       <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\gui.frag.glsl">
+    </None>
+    <None Include="shaders\mesh_obj_color_light.frag.glsl">
       <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\gui.vert.glsl">
+    </None>
+    <None Include="shaders\mesh_obj_color_light.vert.glsl">
       <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\obj.frag.glsl">
+    </None>
+    <None Include="shaders\mesh_obj_color_texture.frag.glsl">
       <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\obj.vert.glsl">
+    </None>
+    <None Include="shaders\mesh_obj_color_texture.vert.glsl">
       <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\shadow.vert.glsl">
+    </None>
+    <None Include="shaders\mesh_obj_color_texture_bump.frag.glsl">
       <Filter>shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\shadow.frag.glsl">
+    </None>
+    <None Include="shaders\mesh_obj_color_texture_bump.vert.glsl">
       <Filter>shaders</Filter>
-    </CustomBuild>
+    </None>
+    <None Include="shaders\mesh_obj_color_texture_light.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_color_texture_light.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_color_texture_pbr.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_color_texture_pbr.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_light.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_light.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_texture.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_texture.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_texture_bump.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_texture_bump.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_texture_light.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_texture_light.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_texture_pbr.frag.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\mesh_obj_skin_color_texture_pbr.vert.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

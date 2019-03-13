@@ -63,16 +63,52 @@ protected:
 	std::vector<VulkanSemaphore> renderSemaphores{};
 	std::vector<VulkanSemaphore> presentSemaphores{};
 protected:
+	// mesh object vertex shader files
+	const char* shaders_mesh_obj_files_vert[VULKAN_MATERIAL_USAGE_RANGE_SIZE]{
+		"shaders/mesh_obj_color.vert.spv",
+		"shaders/mesh_obj_color_light.vert.spv",
+		"shaders/mesh_obj_color_texture.vert.spv",
+		"shaders/mesh_obj_color_texture_light.vert.spv",
+		"shaders/mesh_obj_color_texture_bump.vert.spv",
+		"shaders/mesh_obj_color_texture_pbr.vert.spv"
+	};
+	// mesh object fragment shader files
+	const char* shaders_mesh_obj_files_frag[VULKAN_MATERIAL_USAGE_RANGE_SIZE]{
+		"shaders/mesh_obj_color.frag.spv",
+		"shaders/mesh_obj_color_light.frag.spv",
+		"shaders/mesh_obj_color_texture.frag.spv",
+		"shaders/mesh_obj_color_texture_light.frag.spv",
+		"shaders/mesh_obj_color_texture_bump.frag.spv",
+		"shaders/mesh_obj_color_texture_pbr.frag.spv"
+	};
+	// mesh object skin vertex shader files
+	const char* shaders_mesh_obj_skin_files_vert[VULKAN_MATERIAL_USAGE_RANGE_SIZE]{
+		"shaders/mesh_obj_skin_color.vert.spv",
+		"shaders/mesh_obj_skin_color_light.vert.spv",
+		"shaders/mesh_obj_skin_color_texture.vert.spv",
+		"shaders/mesh_obj_skin_color_texture_light.vert.spv",
+		"shaders/mesh_obj_skin_color_texture_bump.vert.spv",
+		"shaders/mesh_obj_skin_color_texture_pbr.vert.spv"
+	};
+	// mesh object skin fragment shader files
+	const char* shaders_mesh_obj_skin_files_frag[VULKAN_MATERIAL_USAGE_RANGE_SIZE]{
+		"shaders/mesh_obj_skin_color.frag.spv",
+		"shaders/mesh_obj_skin_color_light.frag.spv",
+		"shaders/mesh_obj_skin_color_texture.frag.spv",
+		"shaders/mesh_obj_skin_color_texture_light.frag.spv",
+		"shaders/mesh_obj_skin_color_texture_bump.frag.spv",
+		"shaders/mesh_obj_skin_color_texture_pbr.frag.spv"
+	};
 	// shaders
-	VulkanShader shader_obj{};
-	VulkanShader shader_debug{};
-	VulkanShader shader_shadow{};
-	VulkanShader shader_gui{};
+	VulkanShader shader_mesh_obj[VULKAN_MATERIAL_USAGE_RANGE_SIZE]{};
+	VulkanShader shader_mesh_obj_skin[VULKAN_MATERIAL_USAGE_RANGE_SIZE]{};
+	VulkanShader shader_shadow_mesh_obj{};
+	VulkanShader shader_shadow_mesh_obj_skin{};
 	// objects pipelines
-	VulkanPipeline pipeline_obj[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
-	VulkanPipeline pipeline_obj_wf[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
-	VulkanPipeline pipeline_debug[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
-	VulkanPipeline pipeline_gui[VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
+	VulkanPipeline pipeline_mesh_obj[VULKAN_MATERIAL_USAGE_RANGE_SIZE][VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
+	VulkanPipeline pipeline_mesh_obj_wf[VULKAN_MATERIAL_USAGE_RANGE_SIZE][VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
+	VulkanPipeline pipeline_mesh_obj_skin[VULKAN_MATERIAL_USAGE_RANGE_SIZE][VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
+	VulkanPipeline pipeline_mesh_obj_skin_wf[VULKAN_MATERIAL_USAGE_RANGE_SIZE][VK_PRIMITIVE_TOPOLOGY_RANGE_SIZE]{};
 protected:
 	// create functions
 	void createSwapchain();

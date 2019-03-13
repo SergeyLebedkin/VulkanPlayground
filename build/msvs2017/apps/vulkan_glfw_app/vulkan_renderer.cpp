@@ -230,49 +230,55 @@ void VulkanRenderer_default::createSemaphores() {
 // VulkanRenderer_default::createShaders
 void VulkanRenderer_default::createShaders() {
 	// create all shaders
-	vulkanShaderCreate(context.device, "shaders/obj.vert.spv", "shaders/obj.frag.spv", &shader_obj);
-	vulkanShaderCreate(context.device, "shaders/debug.vert.spv", "shaders/debug.frag.spv", &shader_debug);
-	vulkanShaderCreate(context.device, "shaders/shadow.vert.spv", "shaders/shadow.frag.spv", &shader_shadow);
-	vulkanShaderCreate(context.device, "shaders/gui.vert.spv", "shaders/gui.frag.spv", &shader_gui);
+	for (uint32_t materialUsage = VULKAN_MATERIAL_USAGE_BEGIN_RANGE; materialUsage <= VULKAN_MATERIAL_USAGE_END_RANGE; materialUsage++) {
+		// create mesh object shaders
+		vulkanShaderCreate(context.device,
+			shaders_mesh_obj_files_vert[materialUsage],
+			shaders_mesh_obj_files_frag[materialUsage],
+			&shader_mesh_obj[materialUsage]);
+		// create mesh object skin shaders
+		vulkanShaderCreate(context.device,
+			shaders_mesh_obj_skin_files_vert[materialUsage],
+			shaders_mesh_obj_skin_files_frag[materialUsage],
+			&shader_mesh_obj_skin[materialUsage]);
+	}
 }
 
 // VulkanRenderer_default::createPipelines
 void VulkanRenderer_default::createPipelines() {
-	// create objects pipelines
-	for(uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
-		vulkanPipelineCreate(context.device, shader_obj, context.pipelineLayout, renderPass, 0,
-			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
-			VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
-			&pipeline_obj[topology]);
-
-	// create objects pipelines wire frame
-	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
-		vulkanPipelineCreate(context.device, shader_obj, context.pipelineLayout, renderPass, 0,
-			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
-			VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
-			&pipeline_obj_wf[topology]);
-
-	// create debug pipelines
-	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
-		vulkanPipelineCreate(context.device, shader_debug, context.pipelineLayout, renderPass, 0,
-			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_C4), vertexBindingDescriptions_P4_C4,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_C4), vertexInputAttributeDescriptions_P4_C4,
-			VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
-			&pipeline_debug[topology]);
-
-	// create GUI pipelines
-	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
-		vulkanPipelineCreate(context.device, shader_gui, context.pipelineLayout, renderPass, 0,
-			(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_C4_T2), vertexBindingDescriptions_P4_C4_T2,
-			VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_C4_T2), vertexInputAttributeDescriptions_P4_C4_T2,
-			VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
-			&pipeline_gui[topology]);
+	// create all pipelines
+	for (uint32_t materialUsage = VULKAN_MATERIAL_USAGE_BEGIN_RANGE; materialUsage <= VULKAN_MATERIAL_USAGE_END_RANGE; materialUsage++) {
+		for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++) {
+			// create pipeline mesh object
+			vulkanPipelineCreate(context.device, shader_mesh_obj[materialUsage], context.pipelineLayout, renderPass, 0,
+				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
+				&pipeline_mesh_obj[materialUsage][topology]);
+			// create pipeline mesh object (wireframe)
+			vulkanPipelineCreate(context.device, shader_mesh_obj[materialUsage], context.pipelineLayout, renderPass, 0,
+				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
+				&pipeline_mesh_obj_wf[materialUsage][topology]);
+			// create pipeline mesh object skin
+			vulkanPipelineCreate(context.device, shader_mesh_obj_skin[materialUsage], context.pipelineLayout, renderPass, 0,
+				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
+				&pipeline_mesh_obj_skin[materialUsage][topology]);
+			// create pipeline mesh object skin (wireframe)
+			vulkanPipelineCreate(context.device, shader_mesh_obj_skin[materialUsage], context.pipelineLayout, renderPass, 0,
+				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_P4_T2_N3), vertexBindingDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexInputAttributeDescriptions_P4_T2_N3), vertexInputAttributeDescriptions_P4_T2_N3,
+				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
+				&pipeline_mesh_obj_skin_wf[materialUsage][topology]);
+		}
+	}
 }
 
 // VulkanRenderer_default::destroySwapchain
@@ -337,26 +343,23 @@ void VulkanRenderer_default::destroySemaphores() {
 // VulkanRenderer_default::destroyShaders
 void VulkanRenderer_default::destroyShaders() {
 	// destroy all shaders
-	vulkanShaderDestroy(context.device, shader_gui);
-	vulkanShaderDestroy(context.device, shader_shadow);
-	vulkanShaderDestroy(context.device, shader_debug);
-	vulkanShaderDestroy(context.device, shader_obj);
+	for (uint32_t materialUsage = VULKAN_MATERIAL_USAGE_BEGIN_RANGE; materialUsage <= VULKAN_MATERIAL_USAGE_END_RANGE; materialUsage++) {
+		vulkanShaderDestroy(context.device, shader_mesh_obj_skin[materialUsage]);
+		vulkanShaderDestroy(context.device, shader_mesh_obj[materialUsage]);
+	}
 }
 
 // VulkanRenderer_default::destroyPipelines
 void VulkanRenderer_default::destroyPipelines() {
-	// destroy GUI pipelines
-	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
-		vulkanPipelineDestroy(context.device, pipeline_gui[topology]);
-	// destroy debug pipelines
-	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
-		vulkanPipelineDestroy(context.device, pipeline_debug[topology]);
-	// destroy objects pipelines wire frame
-	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
-		vulkanPipelineDestroy(context.device, pipeline_obj_wf[topology]);
-	// destroy objects pipelines
-	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++)
-		vulkanPipelineDestroy(context.device, pipeline_obj[topology]);
+	// destroy all pipelines
+	for (uint32_t materialUsage = VULKAN_MATERIAL_USAGE_BEGIN_RANGE; materialUsage <= VULKAN_MATERIAL_USAGE_END_RANGE; materialUsage++) {
+		for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++) {
+			vulkanPipelineDestroy(context.device, pipeline_mesh_obj_skin_wf[materialUsage][topology]);
+			vulkanPipelineDestroy(context.device, pipeline_mesh_obj_skin[materialUsage][topology]);
+			vulkanPipelineDestroy(context.device, pipeline_mesh_obj_wf[materialUsage][topology]);
+			vulkanPipelineDestroy(context.device, pipeline_mesh_obj[materialUsage][topology]);
+		}
+	}
 }
 
 // VulkanRenderer_default::reinitialize
@@ -511,10 +514,10 @@ void VulkanRenderer_default::presentSubPass(VulkanCommandBuffer& commandBuffer, 
 				// bind pipeline
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
-				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-					pipeline_obj[mesh->primitiveTopology].pipeline);
-				// draw mesh
-				mesh->draw(commandBuffers[frameIndex]);
+// 				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+// 					pipeline_obj[mesh->primitiveTopology].pipeline);
+// 				// draw mesh
+// 				mesh->draw(commandBuffers[frameIndex]);
 			}
 		}
 		// draw debug meshes
@@ -523,10 +526,10 @@ void VulkanRenderer_default::presentSubPass(VulkanCommandBuffer& commandBuffer, 
 				// bind pipeline
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
-				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-					pipeline_debug[mesh->primitiveTopology].pipeline);
-				// draw mesh
-				mesh->draw(commandBuffers[frameIndex]);
+// 				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+// 					pipeline_debug[mesh->primitiveTopology].pipeline);
+// 				// draw mesh
+// 				mesh->draw(commandBuffers[frameIndex]);
 			}
 		}
 	}

@@ -17,8 +17,9 @@ public:
 	glm::mat4 matrixModel = glm::mat4(1.0f);
 public:
 	// meshes
-	std::vector<VulkanMesh_material*> meshes{};
-	std::vector<VulkanMesh_color*>    meshes_debug{};
+	std::vector<VulkanMeshMatObj*> meshes{};
+	std::vector<VulkanMeshMatObj*> meshes_debug{};
+	std::vector<VulkanMeshMatObjSkinned*> meshes_skinned{};
 public:
 	VkBool32 visible{};
 	VkBool32 visibleDebug{};

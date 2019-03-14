@@ -28,11 +28,17 @@ void VulkanModel::update(VulkanCommandBuffer& commandBuffer)
 	// update model matrix
 	vkCmdUpdateBuffer(commandBuffer.commandBuffer, bufferModelMatrix.buffer, 0, sizeof(matrixModel), &matrixModel);
 	// update meshes
-	for (auto& mesh : meshes)
+	for (auto& mesh : meshes) {
+		if (mesh->material) 
+			mesh->material->update(commandBuffer);
 		mesh->update(commandBuffer);
+	}
 	// update debug meshes
-	for (auto& mesh : meshes_debug)
+	for (auto& mesh : meshes_debug) {
+		if (mesh->material)
+			mesh->material->update(commandBuffer);
 		mesh->update(commandBuffer);
+	}
 }
 
 // VulkanModel::draw

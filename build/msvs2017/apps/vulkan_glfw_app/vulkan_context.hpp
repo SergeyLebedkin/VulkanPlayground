@@ -33,7 +33,7 @@ public:
 class VulkanContextObject {
 protected:
 	// parent context
-	VulkanContext & context;
+	VulkanContext& context;
 public:
 	// constructor and destructor
 	VulkanContextObject(VulkanContext& context) : context(context) {}

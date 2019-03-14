@@ -12,10 +12,10 @@ layout(set = 0, binding = 0) uniform sampler2D diffuseTexture;
 // material colors
 layout(set = 0, binding = 1) uniform materialColors{
 	vec4 diffuseColor;
-vec4 ambientColor;
-vec4 emissionColor;
-vec4 specularColor;
-float specularFactor;
+	vec4 ambientColor;
+	vec4 emissionColor;
+	vec4 specularColor;
+	float specularFactor;
 } uMaterialColors;
 
 // outputs

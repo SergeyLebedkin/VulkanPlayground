@@ -1,108 +1,13 @@
 #include "vulkan_meshes.hpp"
 #include "vulkan_context.hpp"
 
-//////////////////////////////////////////////////////////////////////////
-
-// VulkanMesh_debug::VulkanMesh_debug
-VulkanMesh_color::VulkanMesh_color(
+// VulkanMeshMatObj::VulkanMeshMatObj
+VulkanMeshMatObj::VulkanMeshMatObj(
 	VulkanContext&          context,
-	VkPrimitiveTopology     primitiveTopology,
-	std::vector<glm::vec4>& pos,
-	std::vector<glm::vec4>& col) :
-	VulkanMesh(context, primitiveTopology)
-{
-	// create buffers
-	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
-	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(col), &bufferCol);
-	// write buffers
-	vulkanBufferWrite(context.device, bufferPos, 0, VKT_VECTOR_DATA_SIZE(pos), pos.data());
-	vulkanBufferWrite(context.device, bufferCol, 0, VKT_VECTOR_DATA_SIZE(col), col.data());
-	vertexCount = (uint32_t)pos.size();
-	// setup buffer handles and offsets
-	bufferHandles = { bufferPos.buffer, bufferCol.buffer };
-	bufferOffsets = { 0, 0 };
-}
-
-// VulkanMesh_debug::~VulkanMesh_debug
-VulkanMesh_color::~VulkanMesh_color()
-{
-	// destroy buffers
-	vulkanBufferDestroy(context.device, bufferCol);
-	vulkanBufferDestroy(context.device, bufferPos);
-}
-
-// VulkanMesh_debug::draw(
-void VulkanMesh_color::draw(VulkanCommandBuffer& commandBuffer)
-{
-	// render
-	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 2, bufferHandles.data(), bufferOffsets.data());
-	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
-};
-
-//////////////////////////////////////////////////////////////////////////
-
-// update
-void VulkanMesh_material::update(VulkanCommandBuffer& commandBuffer) {
-	// update material if exists
-	if (material)
-		material->update(commandBuffer);
-};
-
-
-// VulkanMesh_material
-void VulkanMesh_material::draw(VulkanCommandBuffer& commandBuffer) {
-	// bind material if exists
-	if (material)
-		material->bind(commandBuffer);
-}
-
-//////////////////////////////////////////////////////////////////////////
-
-// VulkanMesh_gui::~VulkanMesh_gui
-VulkanMesh_gui::VulkanMesh_gui(
-	VulkanContext&                      context,
-	VkPrimitiveTopology                 primitiveTopology,
-	std::vector<VertexStruct_P4_C4_T2>& verts) :
-	VulkanMesh_material(context, primitiveTopology)
-{
-	// create buffers
-	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(verts), &bufferVerteces);
-	// write buffers
-	vulkanBufferWrite(context.device, bufferVerteces, 0, VKT_VECTOR_DATA_SIZE(verts), verts.data());
-	vertexCount = (uint32_t)verts.size();
-	// setup buffer handles and offsets
-	bufferHandles = { bufferVerteces.buffer };
-	bufferOffsets = { 0 };
-}
-
-// VulkanMesh_gui::~VulkanMesh_gui
-VulkanMesh_gui::~VulkanMesh_gui()
-{
-	// destroy buffers
-	vulkanBufferDestroy(context.device, bufferVerteces);
-}
-
-// VulkanMesh_gui::draw
-void VulkanMesh_gui::draw(VulkanCommandBuffer& commandBuffer)
-{
-	// bind material
-	VulkanMesh_material::draw(commandBuffer);
-
-	// render
-	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 1, bufferHandles.data(), bufferOffsets.data());
-	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
-};
-
-//////////////////////////////////////////////////////////////////////////
-
-// VulkanMesh_obj::VulkanMesh_obj
-VulkanMesh_obj::VulkanMesh_obj(
-	VulkanContext&          context,
-	VkPrimitiveTopology     primitiveTopology,
 	std::vector<glm::vec4>& pos,
 	std::vector<glm::vec2>& tex,
 	std::vector<glm::vec3>& nrm) :
-	VulkanMesh_material(context, primitiveTopology)
+	VulkanMeshMaterial(context)
 {
 	// create buffers
 	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(pos), &bufferPos);
@@ -118,22 +23,123 @@ VulkanMesh_obj::VulkanMesh_obj(
 	bufferOffsets = { 0, 0, 0 };
 }
 
-// VulkanMesh_obj::~VulkanMesh_obj
-VulkanMesh_obj::~VulkanMesh_obj()
-{	
+// VulkanMeshMatObj::~VulkanMeshMatObj
+VulkanMeshMatObj::~VulkanMeshMatObj() {
 	// destroy buffers
 	vulkanBufferDestroy(context.device, bufferNrm);
 	vulkanBufferDestroy(context.device, bufferTex);
 	vulkanBufferDestroy(context.device, bufferPos);
 }
 
-// VulkanMesh_obj::draw
-void VulkanMesh_obj::draw(VulkanCommandBuffer& commandBuffer)
-{
-	// bind material
-	VulkanMesh_material::draw(commandBuffer);
-
-	// render
-	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, 3, bufferHandles.data(), bufferOffsets.data());
+// VulkanMeshMatObj::draw
+void VulkanMeshMatObj::draw(VulkanCommandBuffer& commandBuffer) {
+	// bind and draw
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, (uint32_t)bufferHandles.size(), bufferHandles.data(), bufferOffsets.data());
 	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
-};
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+// VulkanMeshMatObjIndexed::VulkanMeshMatObjIndexed
+VulkanMeshMatObjIndexed::VulkanMeshMatObjIndexed(
+	VulkanContext&          context,
+	std::vector<glm::vec4>& pos,
+	std::vector<glm::vec2>& tex,
+	std::vector<glm::vec3>& nrm,
+	std::vector<uint32_t>&  ind) :
+	VulkanMeshMatObj(context, pos, tex, nrm)
+{
+	// create index buffer
+	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(ind), &bufferInd);
+	// write index buffers
+	vulkanBufferWrite(context.device, bufferInd, 0, VKT_VECTOR_DATA_SIZE(ind), ind.data());
+	indexCount = (uint32_t)ind.size();
+}
+
+// VulkanMeshMatObjIndexed::~VulkanMeshMatObjIndexed
+VulkanMeshMatObjIndexed::~VulkanMeshMatObjIndexed()
+{
+	// destroy buffers
+	vulkanBufferDestroy(context.device, bufferInd);
+}
+
+// draw
+void VulkanMeshMatObjIndexed::draw(VulkanCommandBuffer& commandBuffer) {
+	// bind and draw
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, (uint32_t)bufferHandles.size(), bufferHandles.data(), bufferOffsets.data());
+	vkCmdBindIndexBuffer(commandBuffer.commandBuffer, bufferInd.buffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(commandBuffer.commandBuffer, indexCount, 1, 0, 0, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+// VulkanMeshMatObjTBN::VulkanMeshMatObjTBN
+VulkanMeshMatObjTBN::VulkanMeshMatObjTBN(
+	VulkanContext&          context,
+	std::vector<glm::vec4>& pos,
+	std::vector<glm::vec2>& tex,
+	std::vector<glm::vec3>& nrm,
+	std::vector<glm::vec3>& tng,
+	std::vector<glm::vec3>& bnm) : 
+	VulkanMeshMatObj(context, pos, tex, nrm)
+{
+	// create buffers
+	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(tng), &bufferTng);
+	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(bnm), &bufferBnm);
+	// write buffers
+	vulkanBufferWrite(context.device, bufferTng, 0, VKT_VECTOR_DATA_SIZE(tng), tng.data());
+	vulkanBufferWrite(context.device, bufferBnm, 0, VKT_VECTOR_DATA_SIZE(bnm), bnm.data());
+	// setup buffer handles and offsets
+	bufferHandlesTB = { bufferTng.buffer, bufferBnm.buffer };
+	bufferOffsetsTB = { 0, 0 };
+}
+
+// VulkanMeshMatObjTBN::~VulkanMeshMatObjTBN
+VulkanMeshMatObjTBN::~VulkanMeshMatObjTBN() {
+	// destroy buffers
+	vulkanBufferDestroy(context.device, bufferBnm);
+	vulkanBufferDestroy(context.device, bufferTng);
+}
+
+// VulkanMeshMatObjTBN::draw
+void VulkanMeshMatObjTBN::draw(VulkanCommandBuffer& commandBuffer) {
+	// bind and draw
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, (uint32_t)bufferHandles.size(), bufferHandles.data(), bufferOffsets.data());
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 3, (uint32_t)bufferHandlesTB.size(), bufferHandlesTB.data(), bufferOffsetsTB.data());
+	vkCmdDraw(commandBuffer.commandBuffer, vertexCount, 1, 0, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+// VulkanMeshMatObjTBNIndexed::VulkanMeshMatObjTBNIndexed
+VulkanMeshMatObjTBNIndexed::VulkanMeshMatObjTBNIndexed(
+	VulkanContext&          context,
+	std::vector<glm::vec4>& pos,
+	std::vector<glm::vec2>& tex,
+	std::vector<glm::vec3>& nrm,
+	std::vector<glm::vec3>& tng,
+	std::vector<glm::vec3>& bnm,
+	std::vector<uint32_t>&  ind) : 
+	VulkanMeshMatObjTBN(context, pos, tex, nrm, tng, bnm)
+{
+	// create index buffer
+	vulkanBufferCreate(context.device, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VKT_VECTOR_DATA_SIZE(ind), &bufferInd);
+	// write index buffers
+	vulkanBufferWrite(context.device, bufferInd, 0, VKT_VECTOR_DATA_SIZE(ind), ind.data());
+	indexCount = (uint32_t)ind.size();
+}
+
+// VulkanMeshMatObjTBNIndexed::~VulkanMeshMatObjTBNIndexed
+VulkanMeshMatObjTBNIndexed::~VulkanMeshMatObjTBNIndexed() {
+	// destroy buffers
+	vulkanBufferDestroy(context.device, bufferInd);
+}
+
+// VulkanMeshMatObjTBNIndexed::draw
+void VulkanMeshMatObjTBNIndexed::draw(VulkanCommandBuffer& commandBuffer) {
+	// bind and draw
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 0, (uint32_t)bufferHandles.size(), bufferHandles.data(), bufferOffsets.data());
+	vkCmdBindVertexBuffers(commandBuffer.commandBuffer, 3, (uint32_t)bufferHandlesTB.size(), bufferHandlesTB.data(), bufferOffsetsTB.data());
+	vkCmdBindIndexBuffer(commandBuffer.commandBuffer, bufferInd.buffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(commandBuffer.commandBuffer, indexCount, 1, 0, 0, 0);
+}

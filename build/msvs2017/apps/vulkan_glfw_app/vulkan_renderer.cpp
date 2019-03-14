@@ -511,25 +511,29 @@ void VulkanRenderer_default::presentSubPass(VulkanCommandBuffer& commandBuffer, 
 		// draw meshes
 		if (model->visible) {
 			for (auto& mesh : model->meshes) {
+				// bind material if exists
+				if (mesh->material) mesh->material->bind(commandBuffer);
 				// bind pipeline
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
-// 				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-// 					pipeline_obj[mesh->primitiveTopology].pipeline);
-// 				// draw mesh
-// 				mesh->draw(commandBuffers[frameIndex]);
+ 				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+					pipeline_mesh_obj[mesh->materialUsage][mesh->primitiveTopology].pipeline);
+ 				// draw mesh
+ 				mesh->draw(commandBuffers[frameIndex]);
 			}
 		}
 		// draw debug meshes
 		if (model->visibleDebug) {
 			for (auto& mesh : model->meshes_debug) {
+				// bind material if exists
+				if (mesh->material) mesh->material->bind(commandBuffer);
 				// bind pipeline
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
 				assert(mesh->primitiveTopology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
-// 				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-// 					pipeline_debug[mesh->primitiveTopology].pipeline);
-// 				// draw mesh
-// 				mesh->draw(commandBuffers[frameIndex]);
+				vkCmdBindPipeline(commandBuffers[frameIndex].commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+					pipeline_mesh_obj[mesh->materialUsage][mesh->primitiveTopology].pipeline);
+ 				// draw mesh
+ 				mesh->draw(commandBuffers[frameIndex]);
 			}
 		}
 	}

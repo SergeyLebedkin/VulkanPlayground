@@ -35,9 +35,6 @@ protected:
 	VulkanBuffer bufferMaterialColors{};
 	// material info
 	VulkanMaterialInfo materialInfo{};
-public: 
-	// material usage
-	VulkanMaterialUsage materialUsage{};
 public:
 	// constructor and destructor
 	VulkanMaterial(VulkanContext& context);

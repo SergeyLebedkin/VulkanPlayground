@@ -24,8 +24,8 @@ layout(location = 0) out vec4 fragColor;
 // main
 void main()
 {
-	fragColor = texture(diffuseTexture, vTexCoords);
+	//fragColor = texture(diffuseTexture, vTexCoords);
 	//fragColor = vec4(vPosition, 1.0f);
 	//fragColor = vec4(vTexCoords, 0.0f, 1.0f);
-	//fragColor = vec4(vNormal, 1.0f);
+	fragColor = vec4(vNormal, 1.0f);
 }

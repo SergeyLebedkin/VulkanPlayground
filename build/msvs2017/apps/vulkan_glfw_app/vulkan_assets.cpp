@@ -149,7 +149,7 @@ void VulkanAssetManager::addMeterialFromObj(
 }
 
 // VulkanAssetManager::addMesh
-void VulkanAssetManager::addMesh(const std::string name, VulkanMesh_material* mesh) {
+void VulkanAssetManager::addMesh(const std::string name, VulkanMeshMatObj* mesh) {
 	// check name
 	assert(name.size() > 0);
 	// add if not exist
@@ -430,18 +430,20 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 		if (!material) material = defaultMaterial;
 
 		// create mesh
-		VulkanMesh_obj* mesh = new VulkanMesh_obj(
-			context, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		VulkanMeshMatObj* mesh = new VulkanMeshMatObj(context,
 			vectorPos, vectorTex, vectorNrm);
-		mesh->setMaterial(material);
+		mesh->material = material;
+		mesh->materialUsage = VULKAN_MATERIAL_USAGE_COLOR_TEXTURE;
+		mesh->primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		//mesh->materialUsage = VULKAN_MATERIAL_USAGE_COLOR;
 
 		// create debug mesh
-		VulkanMesh_color* meshDebug = new VulkanMesh_color(
-			context, VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
-			vectorNrmPos, vectorNrmCol);
+		//VulkanMeshMatObj* mesh_debug = new VulkanMesh_color(
+		//	context, VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+		//	vectorNrmPos, vectorNrmCol);
 
 		// create and add mesh item
-		VulkanMeshItem* mesh_item = new VulkanMeshItem(shape.name, mesh, meshDebug);
+		VulkanMeshItem* mesh_item = new VulkanMeshItem(shape.name, mesh, nullptr);
 		meshItems.push_back(mesh_item);
 
 		// store local meshes

@@ -1,6 +1,7 @@
 #include "vulkan_assets.hpp"
 #include "vulkan_loaders.hpp"
 #include "vulkan_renderer.hpp"
+#include "vulkan_geometry.hpp"
 #include <tiny_obj_loader.h>
 #include <algorithm>
 
@@ -371,36 +372,7 @@ std::vector<std::string> VulkanAssetManager::loadFromFileObj(
 		}
 
 		// calculate bi-normal and tangent
-		for (size_t i = 0; i < vectorPos.size(); i += 3) {
-			// Shortcuts for vertices
-			glm::vec4& v0 = vectorPos[i + 0];
-			glm::vec4& v1 = vectorPos[i + 1];
-			glm::vec4& v2 = vectorPos[i + 2];
-
-			// Shortcuts for UVs
-			glm::vec2& uv0 = vectorTex[i + 0];
-			glm::vec2& uv1 = vectorTex[i + 1];
-			glm::vec2& uv2 = vectorTex[i + 2];
-
-			// Edges of the triangle : position delta
-			glm::vec3 deltaPos1 = v1 - v0;
-			glm::vec3 deltaPos2 = v2 - v0;
-
-			// UV delta
-			glm::vec2 deltaUV1 = uv1 - uv0;
-			glm::vec2 deltaUV2 = uv2 - uv0;
-
-			float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
-			glm::vec3 tangent = glm::normalize((deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y)*r);
-			glm::vec3 bitangent = glm::normalize((deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x)*r);
-
-			vectorTan.push_back(tangent);
-			vectorTan.push_back(tangent);
-			vectorTan.push_back(tangent);
-			vectorBit.push_back(bitangent);
-			vectorBit.push_back(bitangent);
-			vectorBit.push_back(bitangent);
-		}
+		calcTangentSpace(vectorPos, vectorTex, vectorNrm, vectorTan, vectorBit);
 
 		// add normals, tangents and bi-normals
 		for (size_t i = 0; i < vectorPos.size(); i++) {

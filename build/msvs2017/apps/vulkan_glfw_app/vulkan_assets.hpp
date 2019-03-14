@@ -1,7 +1,6 @@
 #pragma once
 #include "vulkan_renderer.hpp"
 #include <tiny_obj_loader.h>
-#include <memory>
 
 // VulkanContext
 class VulkanContext;

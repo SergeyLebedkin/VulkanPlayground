@@ -30,8 +30,6 @@ const VkVertexInputBindingDescription vertexBindingDescriptions_mesh_obj[]{
 { 0, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
 { 1, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX },
 { 2, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
-{ 3, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
-{ 4, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
 };
 
 // VkVertexInputAttributeDescription
@@ -39,14 +37,53 @@ const VkVertexInputAttributeDescription vertexAttributeDescriptions_mesh_obj[]{
 { 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // position - 4
 { 1, 1, VK_FORMAT_R32G32_SFLOAT      , 0 }, // texCoord - 2
 { 2, 2, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // normal   - 3
+};
+
+//////////////////////////////////////////////////////////////////////////
+
+// VkVertexInputBindingDescription
+const VkVertexInputBindingDescription vertexBindingDescriptions_mesh_obj_bump[]{
+{ 0, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
+{ 1, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX },
+{ 2, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
+{ 3, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
+{ 4, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
+};
+
+// VkVertexInputAttributeDescription
+const VkVertexInputAttributeDescription vertexAttributeDescriptions_mesh_obj_bump[]{
+{ 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // position - 4
+{ 1, 1, VK_FORMAT_R32G32_SFLOAT      , 0 }, // texCoord - 2
+{ 2, 2, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // normal   - 3
 { 3, 3, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // tangent  - 3
-{ 4, 4, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // binormal - 3
+{ 4, 4, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // bi-normal - 3
 };
 
 //////////////////////////////////////////////////////////////////////////
 
 // VkVertexInputBindingDescription
 const VkVertexInputBindingDescription vertexBindingDescriptions_mesh_obj_skin[]{
+{ 0, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
+{ 1, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX },
+{ 2, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
+{ 5, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
+{ 6, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
+};
+
+// VkVertexInputAttributeDescription
+const VkVertexInputAttributeDescription vertexAttributeDescriptions_mesh_obj_skin[]{
+{ 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // position - 4
+{ 1, 1, VK_FORMAT_R32G32_SFLOAT      , 0 }, // texCoord - 2
+{ 2, 2, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // normal   - 3
+{ 5, 5, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // weights  - 4
+{ 6, 6, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // indexes  - 4
+};
+
+
+//////////////////////////////////////////////////////////////////////////
+
+// VkVertexInputBindingDescription
+const VkVertexInputBindingDescription vertexBindingDescriptions_mesh_obj_skin_bump[]{
 { 0, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX },
 { 1, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX },
 { 2, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX },
@@ -57,12 +94,12 @@ const VkVertexInputBindingDescription vertexBindingDescriptions_mesh_obj_skin[]{
 };
 
 // VkVertexInputAttributeDescription
-const VkVertexInputAttributeDescription vertexAttributeDescriptions_mesh_obj_skin[]{
+const VkVertexInputAttributeDescription vertexAttributeDescriptions_mesh_obj_skin_bump[]{
 { 0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // position - 4
 { 1, 1, VK_FORMAT_R32G32_SFLOAT      , 0 }, // texCoord - 2
 { 2, 2, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // normal   - 3
 { 3, 3, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // tangent  - 3
-{ 4, 4, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // binormal - 3
+{ 4, 4, VK_FORMAT_R32G32B32_SFLOAT   , 0 }, // bi-normal - 3
 { 5, 5, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // weights  - 4
 { 6, 6, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }, // indexes  - 4
 };

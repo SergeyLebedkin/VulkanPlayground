@@ -41,29 +41,77 @@
     <ClInclude Include="vulkan_geometry.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\mesh_obj_color.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_light.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_light.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_texture.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_texture.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_texture_bump.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_texture_bump.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_texture_light.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_texture_light.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_texture_pbr.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_color_texture_pbr.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_light.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_light.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_texture.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_texture.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_bump.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_bump.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_light.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_light.vert.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_pbr.frag.glsl" />
-    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_pbr.vert.glsl" />
+    <CustomBuild Include="shaders\mesh_obj_color.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_light.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_light.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_texture.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_texture.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_texture_bump.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_texture_bump.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_texture_light.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_texture_light.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_texture_pbr.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_color_texture_pbr.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_light.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_light.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_texture.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_texture.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_bump.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_bump.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_light.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_light.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_pbr.frag.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\mesh_obj_skin_color_texture_pbr.vert.glsl">
+      <Filter>shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

@@ -247,8 +247,9 @@ void VulkanRenderer_default::createShaders() {
 // VulkanRenderer_default::createPipelines
 void VulkanRenderer_default::createPipelines() {
 	// create all pipelines
-	for (uint32_t materialUsage = VULKAN_MATERIAL_USAGE_BEGIN_RANGE; materialUsage <= VULKAN_MATERIAL_USAGE_END_RANGE; materialUsage++) {
-		for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++) {
+	for (uint32_t topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST; topology <= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY; topology++) {
+		// create pipelines for materials
+		for (uint32_t materialUsage = VULKAN_MATERIAL_USAGE_COLOR; materialUsage <= VULKAN_MATERIAL_USAGE_COLOR_TEXTURE_LIGHT; materialUsage++) {
 			// create pipeline mesh object
 			vulkanPipelineCreate(context.device, shader_mesh_obj[materialUsage], context.pipelineLayout, renderPass, 0,
 				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
@@ -256,7 +257,7 @@ void VulkanRenderer_default::createPipelines() {
 				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj), vertexAttributeDescriptions_mesh_obj,
 				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 				&pipeline_mesh_obj[materialUsage][topology]);
-			// create pipeline mesh object (wireframe)
+			// create pipeline mesh object (wire-frame)
 			vulkanPipelineCreate(context.device, shader_mesh_obj[materialUsage], context.pipelineLayout, renderPass, 0,
 				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
 				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj), vertexBindingDescriptions_mesh_obj,
@@ -270,11 +271,42 @@ void VulkanRenderer_default::createPipelines() {
 				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj_skin), vertexAttributeDescriptions_mesh_obj_skin,
 				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 				&pipeline_mesh_obj_skin[materialUsage][topology]);
-			// create pipeline mesh object skin (wireframe)
+			// create pipeline mesh object skin (wire-frame)
 			vulkanPipelineCreate(context.device, shader_mesh_obj_skin[materialUsage], context.pipelineLayout, renderPass, 0,
 				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
 				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj_skin), vertexBindingDescriptions_mesh_obj_skin,
 				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj_skin), vertexAttributeDescriptions_mesh_obj_skin,
+				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
+				&pipeline_mesh_obj_skin_wf[materialUsage][topology]);
+		}
+		// create pipelines for bump materials
+		for (uint32_t materialUsage = VULKAN_MATERIAL_USAGE_COLOR_TEXTURE_LIGHT_BUMPMAP; materialUsage <= VULKAN_MATERIAL_USAGE_COLOR_TEXTURE_LIGHT_PBR; materialUsage++) {
+			// create pipeline mesh object
+			vulkanPipelineCreate(context.device, shader_mesh_obj[materialUsage], context.pipelineLayout, renderPass, 0,
+				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj_bump), vertexBindingDescriptions_mesh_obj_bump,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj_bump), vertexAttributeDescriptions_mesh_obj_bump,
+				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
+				&pipeline_mesh_obj[materialUsage][topology]);
+			// create pipeline mesh object (wire-frame)
+			vulkanPipelineCreate(context.device, shader_mesh_obj[materialUsage], context.pipelineLayout, renderPass, 0,
+				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj_bump), vertexBindingDescriptions_mesh_obj_bump,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj_bump), vertexAttributeDescriptions_mesh_obj_bump,
+				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
+				&pipeline_mesh_obj_wf[materialUsage][topology]);
+			// create pipeline mesh object skin
+			vulkanPipelineCreate(context.device, shader_mesh_obj_skin[materialUsage], context.pipelineLayout, renderPass, 0,
+				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_FILL,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj_skin_bump), vertexBindingDescriptions_mesh_obj_skin_bump,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj_skin_bump), vertexAttributeDescriptions_mesh_obj_skin_bump,
+				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
+				&pipeline_mesh_obj_skin[materialUsage][topology]);
+			// create pipeline mesh object skin (wire-frame)
+			vulkanPipelineCreate(context.device, shader_mesh_obj_skin[materialUsage], context.pipelineLayout, renderPass, 0,
+				(VkPrimitiveTopology)topology, VK_POLYGON_MODE_LINE,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexBindingDescriptions_mesh_obj_skin_bump), vertexBindingDescriptions_mesh_obj_skin_bump,
+				VKT_ARRAY_ELEMENTS_COUNT(vertexAttributeDescriptions_mesh_obj_skin_bump), vertexAttributeDescriptions_mesh_obj_skin_bump,
 				VKT_ARRAY_ELEMENTS_COUNT(pipelineColorBlendAttachmentStates_default), pipelineColorBlendAttachmentStates_default,
 				&pipeline_mesh_obj_skin_wf[materialUsage][topology]);
 		}

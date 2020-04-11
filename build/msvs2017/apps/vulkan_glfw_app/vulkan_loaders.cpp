@@ -1,5 +1,6 @@
 #include "vulkan_loaders.hpp"
 #include <algorithm>
+#include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION

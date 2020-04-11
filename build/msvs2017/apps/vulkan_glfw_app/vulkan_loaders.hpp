@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vktoolkit.hpp>
+#include <iostream>
 
 void createImageProcedural(
 	VulkanDevice& device,

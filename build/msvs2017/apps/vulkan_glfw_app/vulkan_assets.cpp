@@ -182,7 +182,7 @@ VulkanImage* VulkanAssetManager::getImageByName(const std::string name) {
 	for (auto image_item : imageItems) 
 		if (image_item->name == name) 
 			return image_item->image;
-	return false;
+	return nullptr;
 }
 
 // VulkanAssetManager::getMaterialByName
@@ -190,7 +190,7 @@ VulkanMaterial* VulkanAssetManager::getMaterialByName(const std::string name) {
 	for (auto material_item : materialItems) 
 		if (material_item->name == name) 
 			return material_item->material;
-	return false;
+	return nullptr;
 }
 
 // VulkanAssetManager::getMeshByName
@@ -198,7 +198,7 @@ VulkanMesh* VulkanAssetManager::getMeshByName(const std::string name) {
 	for (auto mesh_item : meshItems) 
 		if (mesh_item->name == name) 
 			return mesh_item->mesh;
-	return false;
+	return nullptr;
 }
 
 // VulkanAssetManager::getMeshGroupByName
@@ -206,7 +206,7 @@ VulkanMeshGroup* VulkanAssetManager::getMeshGroupByName(const std::string name) 
 	for (auto mesh_group : meshGroups) 
 		if (mesh_group->name == name) 
 			return mesh_group;
-	return false;
+	return nullptr;
 }
 
 // VulkanAssetManager::getImageNames
